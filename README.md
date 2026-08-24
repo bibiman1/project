@@ -13,3 +13,6 @@
 
 ## 注意
 入力内容はサーバーへ送信しません。GitHub Pagesで動く静的サイトです。
+
+## ロゴ画像
+ロゴは `images/logo_fp9_ver1.2f.png` をローカル参照します。HubSpot Filesへの外部参照はありません。
