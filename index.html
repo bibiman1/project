@@ -1,84 +1,36 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="人生の出来事と気持ちを振り返るライフラインチャート">
+<title>FP9 ライフラインチャート</title>
+<link rel="preconnect" href="https://242476225.fs1.hubspotusercontent-na2.net">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
 <section class="fp9-lifechart" data-fp9-lifechart>
-  <div class="fp9-lifechart__inner">
-    <header class="fp9-lifechart__intro">
-      <div class="fp9-lifechart__brandline">
-        <img class="fp9-lifechart__logo" src="https://242476225.fs1.hubspotusercontent-na2.net/hubfs/242476225/logo/logo_fp9_ver1.2f.png" alt="FP9">
-        <p class="fp9-lifechart__eyebrow">LIFE LINE CHART</p>
-      </div>
-      <h2 class="fp9-lifechart__title">人生の出来事を、気持ちと一緒に振り返る</h2>
-      <p class="fp9-lifechart__lead">思いついた出来事から、順に追加してください。<br>うれしかったこと、迷ったこと、立ち止まったこと。<br>あなたの歩みが、気持ちの波としてライフラインチャートに表示されます。</p>
-      <p class="fp9-lifechart__lead fp9-lifechart__lead--note">入力内容は保存・送信されず、ページを閉じると消えます。保存・コピーした内容は、ご自身の端末やクリップボードに残ります。メモ欄には、個人が特定される情報を入力しないでください。ニックネームは画像に表示する名称です。本名でなくてもかまいません。</p>
-    </header>
-
-    <div class="fp9-lifechart__workarea">
-      <div class="fp9-lifechart__box">
-        <div class="fp9-lifechart__field">
-          <label class="fp9-lifechart__label" for="lifechart-nickname">ニックネーム <span>任意</span></label>
-          <input id="lifechart-nickname" class="fp9-lifechart__input" type="text" data-nickname placeholder="例：たろう、Aさん" maxlength="24">
-        </div>
-
-        <div class="fp9-lifechart__field">
-          <label class="fp9-lifechart__label" for="lifechart-age-range">出来事が起こったときの年齢 <span>必須</span></label>
-          <div class="fp9-lifechart__range-row"><span>0歳</span><input id="lifechart-age-range" class="fp9-lifechart__range fp9-lifechart__range--age" type="range" data-age-range min="0" max="100" step="1" value="30"><span>100歳</span></div>
-          <div class="fp9-lifechart__age-number-row"><input class="fp9-lifechart__input fp9-lifechart__age-number" type="number" data-age-number min="0" max="100" inputmode="numeric" value="30"><span>歳</span></div>
-        </div>
-
-        <div class="fp9-lifechart__field">
-          <p class="fp9-lifechart__label">出来事・テーマ <span>任意・複数選択可</span></p>
-          <div class="fp9-lifechart__chips" data-chip-group="tag" data-multiple="true">
-            <button type="button" data-value="進学・卒業">🎓 進学・卒業</button>
-            <button type="button" data-value="仕事">💼 仕事</button>
-            <button type="button" data-value="就職">💼 就職</button>
-            <button type="button" data-value="転職">💼 転職</button>
-            <button type="button" data-value="独立・起業">💼 独立・起業</button>
-            <button type="button" data-value="退職">🌙 退職</button>
-            <button type="button" data-value="結婚">💍 結婚</button>
-            <button type="button" data-value="恋愛">💗 恋愛</button>
-            <button type="button" data-value="出産・子育て">👶 出産・子育て</button>
-            <button type="button" data-value="家族の変化">👪 家族の変化</button>
-            <button type="button" data-value="人との関係">🤝 人との関係</button>
-            <button type="button" data-value="住宅購入">🏠 住宅購入</button>
-            <button type="button" data-value="引っ越し">🏠 引っ越し</button>
-            <button type="button" data-value="収入・お金">💰 収入・お金</button>
-            <button type="button" data-value="病気・けが">🩺 病気・けが</button>
-            <button type="button" data-value="介護">🩺 介護</button>
-            <button type="button" data-value="別れ・死別">🌙 別れ・死別</button>
-            <button type="button" data-value="挑戦">🔥 挑戦</button>
-            <button type="button" data-value="学び・資格">🎓 学び・資格</button>
-            <button type="button" data-value="趣味">🎨 趣味</button>
-            <button type="button" data-value="その他">✨ その他</button>
-          </div>
-        </div>
-
-        <div class="fp9-lifechart__field">
-          <label class="fp9-lifechart__label" for="lifechart-title">出来事メモ <span>任意</span></label>
-          <input id="lifechart-title" class="fp9-lifechart__input" type="text" data-title placeholder="例：初めての転職、家族との大きな出来事" maxlength="120">
-        </div>
-
-        <div class="fp9-lifechart__field">
-          <label class="fp9-lifechart__label" for="lifechart-emotion">その時の気持ち</label>
-          <div class="fp9-lifechart__range-row"><span>-10</span><input id="lifechart-emotion" class="fp9-lifechart__range" type="range" data-score min="-10" max="10" step="1" value="0"><span>+10</span></div>
-          <p class="fp9-lifechart__score-label" data-score-label>0 ふつう</p>
-        </div>
-
-        <div class="fp9-lifechart__actions"><button type="button" class="fp9-lifechart__primary" data-add-event>＋ 出来事に追加</button><button type="button" class="fp9-lifechart__ghost" data-clear-input>入力を消す</button></div>
-        <p class="fp9-lifechart__message" data-message></p>
-      </div>
-
-      <section class="fp9-lifechart__box fp9-lifechart__events">
-        <div class="fp9-lifechart__events-head"><h3>追加した出来事</h3><p data-empty-text>まだ出来事は追加されていません。</p></div>
-        <div class="fp9-lifechart__event-list" data-event-list></div>
-        <div class="fp9-lifechart__actions" data-events-actions hidden><button type="button" class="fp9-lifechart__primary" data-build-chart>ライフラインチャートを作る</button><button type="button" class="fp9-lifechart__ghost" data-reset-all>すべて消す</button></div>
-      </section>
-    </div>
-
-    <section class="fp9-lifechart__result" data-result-section hidden>
-      <div class="fp9-lifechart__result-head fp9-lifechart__result-head--hero"><div><h3 data-result-title>ライフラインチャート</h3><p>年齢順に整理し、出来事ごとに等間隔で見せています。詳細はレポートに整理しています。</p></div><span class="fp9-lifechart__theme-badge">テーマ：気持ちの波から見る人生の節目</span></div>
-      <div class="fp9-lifechart__chart-wrap"><svg class="fp9-lifechart__chart" data-chart role="img" aria-label="ライフラインチャート"></svg></div>
-      <div class="fp9-lifechart__save-actions"><button type="button" class="fp9-lifechart__primary" data-save-chart>結果を画像で保存</button><button type="button" class="fp9-lifechart__ghost" data-copy-report>レポートをテキストでコピー</button><p>保存ボタンを使うと、グラフとレポートをPNG画像として保存できます。</p><p class="fp9-lifechart__save-status" data-save-status></p></div>
-      <section class="fp9-lifechart__report"><h3>振り返りレポート</h3><p>入力された出来事を、グラフと同じ年齢順で整理しています。</p><div class="fp9-lifechart__report-list" data-report-list></div></section>
-      <section class="fp9-lifechart__reflection"><h3>振り返りの観点</h3><div class="fp9-lifechart__reflection-grid" data-reflection></div></section>
-      <p class="fp9-lifechart__save-note">この結果はブラウザ内だけで表示されます。入力内容は保存されません。</p>
-    </section>
-  </div>
+<div class="fp9-lifechart__inner">
+<header class="fp9-lifechart__intro">
+<div class="fp9-lifechart__brandline"><img class="fp9-lifechart__logo" src="https://242476225.fs1.hubspotusercontent-na2.net/hubfs/242476225/logo/logo_fp9_ver1.2f.png" alt="FP9"><p class="fp9-lifechart__eyebrow">LIFE LINE CHART</p></div>
+<h1 class="fp9-lifechart__title">人生の出来事を、気持ちと一緒に振り返る</h1>
+<p class="fp9-lifechart__lead">思いついた出来事から、順に追加してください。<br>うれしかったこと、迷ったこと、立ち止まったこと。<br>あなたの歩みが、気持ちの波としてライフラインチャートに表示されます。</p>
+<p class="fp9-lifechart__lead fp9-lifechart__lead--note">入力内容は保存・送信されず、ページを閉じると消えます。保存・コピーした内容は、ご自身の端末やクリップボードに残ります。メモ欄には、個人が特定される情報を入力しないでください。</p>
+</header>
+<div class="fp9-lifechart__workarea">
+<div class="fp9-lifechart__box">
+<div class="fp9-lifechart__field"><label class="fp9-lifechart__label" for="nickname">ニックネーム <span>任意</span></label><input id="nickname" class="fp9-lifechart__input" type="text" data-nickname placeholder="例：たろう、Aさん" maxlength="24"></div>
+<div class="fp9-lifechart__field"><label class="fp9-lifechart__label" for="age-range">出来事が起こったときの年齢 <span>必須</span></label><div class="fp9-lifechart__range-row"><span>0歳</span><input id="age-range" class="fp9-lifechart__range" type="range" data-age-range min="0" max="100" value="30"><span>100歳</span></div><div class="fp9-lifechart__age-number-row"><input class="fp9-lifechart__input fp9-lifechart__age-number" type="number" data-age-number min="0" max="100" value="30"><span>歳</span></div></div>
+<div class="fp9-lifechart__field"><p class="fp9-lifechart__label">出来事・テーマ <span>任意・複数選択可</span></p><div class="fp9-lifechart__chips" data-chip-group="tag"></div></div>
+<div class="fp9-lifechart__field"><label class="fp9-lifechart__label" for="event-title">出来事メモ <span>任意</span></label><input id="event-title" class="fp9-lifechart__input" type="text" data-title placeholder="例：初めての転職" maxlength="120"></div>
+<div class="fp9-lifechart__field"><label class="fp9-lifechart__label" for="emotion">その時の気持ち</label><div class="fp9-lifechart__range-row"><span>-10</span><input id="emotion" class="fp9-lifechart__range" type="range" data-score min="-10" max="10" value="0"><span>+10</span></div><p class="fp9-lifechart__score-label" data-score-label>0 ふつう</p></div>
+<div class="fp9-lifechart__actions"><button type="button" class="fp9-lifechart__primary" data-add-event>＋ 出来事に追加</button><button type="button" class="fp9-lifechart__ghost" data-clear-input>入力を消す</button></div><p class="fp9-lifechart__message" data-message aria-live="polite"></p>
+</div>
+<section class="fp9-lifechart__box fp9-lifechart__events"><div class="fp9-lifechart__events-head"><h2>追加した出来事</h2><p data-empty-text>まだ出来事は追加されていません。</p></div><div class="fp9-lifechart__event-list" data-event-list></div><div class="fp9-lifechart__actions" data-events-actions hidden><button type="button" class="fp9-lifechart__primary" data-build-chart>ライフラインチャートを作る</button><button type="button" class="fp9-lifechart__ghost" data-reset-all>すべて消す</button></div></section>
+</div>
+<section class="fp9-lifechart__result" data-result-section hidden><div class="fp9-lifechart__result-head"><div><h2 data-result-title>ライフラインチャート</h2><p>年齢順に整理しています。</p></div><span class="fp9-lifechart__theme-badge">テーマ：気持ちの波から見る人生の節目</span></div><div class="fp9-lifechart__chart-wrap"><svg class="fp9-lifechart__chart" data-chart role="img" aria-label="ライフラインチャート"></svg></div><div class="fp9-lifechart__save-actions"><button type="button" class="fp9-lifechart__primary" data-save-chart>結果を画像で保存</button><button type="button" class="fp9-lifechart__ghost" data-copy-report>レポートをテキストでコピー</button><p class="fp9-lifechart__save-status" data-save-status aria-live="polite"></p></div><section class="fp9-lifechart__report"><h2>振り返りレポート</h2><div class="fp9-lifechart__report-list" data-report-list></div></section><section class="fp9-lifechart__reflection"><h2>振り返りの観点</h2><div class="fp9-lifechart__reflection-grid" data-reflection></div></section><p class="fp9-lifechart__save-note">この結果はブラウザ内だけで表示されます。入力内容は保存されません。</p></section>
+</div>
 </section>
+<script src="script.js"></script>
+</body>
+</html>
