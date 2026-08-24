@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="GitHub Pages公開テスト用のインタラクティブサイトです。">
+  <title>お金の使い方ミニ診断</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="container">
+    <section class="card" aria-labelledby="page-title">
+      <p class="eyebrow">GitHub Pages 公開テスト</p>
+      <h1 id="page-title">お金の使い方ミニ診断</h1>
+      <p class="lead">3つの質問に答えると、現在の傾向を簡単に表示します。</p>
+
+      <div id="quiz" class="quiz">
+        <fieldset class="question">
+          <legend>1. 臨時収入が入ったら？</legend>
+          <label><input type="radio" name="q1" value="save"> まず貯める</label>
+          <label><input type="radio" name="q1" value="use"> 欲しかったものを買う</label>
+          <label><input type="radio" name="q1" value="grow"> 将来のために運用する</label>
+        </fieldset>
+
+        <fieldset class="question">
+          <legend>2. 毎月の支出は把握していますか？</legend>
+          <label><input type="radio" name="q2" value="save"> かなり把握している</label>
+          <label><input type="radio" name="q2" value="grow"> 大体把握している</label>
+          <label><input type="radio" name="q2" value="use"> あまり把握していない</label>
+        </fieldset>
+
+        <fieldset class="question">
+          <legend>3. お金で重視したいことは？</legend>
+          <label><input type="radio" name="q3" value="save"> 安心を守る</label>
+          <label><input type="radio" name="q3" value="use"> 今を楽しむ</label>
+          <label><input type="radio" name="q3" value="grow"> 将来の選択肢を増やす</label>
+        </fieldset>
+
+        <p id="error" class="error" role="alert" aria-live="polite"></p>
+        <button id="diagnose" class="primary-button" type="button">診断結果を見る</button>
+      </div>
+
+      <section id="result" class="result" aria-live="polite" hidden>
+        <p class="result-label">診断結果</p>
+        <h2 id="result-title"></h2>
+        <p id="result-text"></p>
+        <button id="reset" class="secondary-button" type="button">もう一度試す</button>
+      </section>
+
+      <p class="note">※これはGitHub Pagesの公開・動作確認用サンプルです。金融アドバイスではありません。</p>
+    </section>
+  </main>
+  <script src="script.js"></script>
+</body>
+</html>
