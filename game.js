@@ -174,6 +174,10 @@ function detail(){
  if(atTarget&&isEnemyExplored){const occIssues=occupationProblems(f,p);a+=`<button id="occupyNow" ${occIssues.length?'disabled':''}>占領する（この星系）</button>${occIssues.length?`<div class="routeWarning">${occIssues.join(' / ')}</div>`:(f.ships.every(s=>s.type==='scout')?'<div class="scoutOccupation">探査船のみでも占領できますが、成功率は低めです。</div>':'')}`}
  a+=`<button id="verbTransport" ${hasTransport?'':'disabled'}>資源輸送</button>${hasTransport?'':'<div class="routeWarning">輸送には輸送船を含む実行艦隊が必要です</div>'}`;
  if(isOwn&&p.explored&&p.usable)a+=`<button id="verbBuild">この星系に施設を建築</button>`;
+ const stationedHere=f&&f.at===tp&&f.target===null;const canSupply=stationedHere&&canRefuel(p)&&p.usable;const fuelFull=f&&f.ships.every(s=>s.fuel>=SHIPS[s.type].maxFuel+(s.upgrade?.tank||0)*5-0.001);const supplyReason=!f?'実行艦隊がありません':!stationedHere?'補給は現在地に停泊中の艦隊のみ可能です':!canRefuel(p)?'この星系では補給できません（自国または友好勢力の星系が必要）':!p.usable?'利用可能な惑星がなく補給できません':fuelFull?'すでに満タンです':'';
+ a+=`<button id="verbSupply" ${supplyReason?'disabled':''}>補給</button>${supplyReason&&stationedHere?`<div class="routeWarning">${supplyReason}</div>`:''}`;
+ const isStranded=f&&f.order==='燃料切れ・漂流';
+ if(isStranded)a+=`<button id="verbScuttle" class="danger">艦隊を自沈</button><div class="routeWarning">燃料切れで漂流中です。自沈すると艦隊を失いますが、司令官は生還します（1階級降格・能力低下）。</div>`;
  a+=`</div><div class="manageBlock"><button id="verbAssign">司令官を任命・交代</button><button id="verbRepair">修理</button><button id="verbOK" class="primary">OK（星系マップへ）</button></div>`;
  $('actions').innerHTML=a;
  $('actFleet').onchange=e=>{activeFleetId=+e.target.value;focus=true;route={fid:activeFleetId,pid:tp};detail();draw()};
@@ -182,14 +186,96 @@ function detail(){
  if($('verbTransport'))$('verbTransport').onclick=()=>{if(hasTransport)openTransport(f);else log('輸送には輸送船を含む実行艦隊が必要です。','warn')};
  if($('verbBuild'))$('verbBuild').onclick=()=>openFacilities(tp);
  $('verbAssign').onclick=()=>openRoster(f?f.id:null);
+ if($('verbSupply'))$('verbSupply').onclick=()=>{if(!f)return log('実行艦隊がありません。','warn');if(!(f.at===tp&&f.target===null))return log('補給は現在地に停泊中の艦隊のみ可能です。','warn');if(!canRefuel(p)||!p.usable)return log('この星系では補給できません。','warn');const got=refuelAtOwnedStar(f,p);if(got<=0)log('補給する燃料がありません（星系の燃料が不足、または既に満タンです）。','warn');detail();draw()};
+ if($('verbScuttle'))$('verbScuttle').onclick=()=>{if(!f)return;modal('艦隊を自沈',`<div class="routeWarning">${f.name}を自沈します。<br>艦隊は失われますが、司令官${commander(f)?`（${commander(f).name}）`:''}は生還し、1階級降格・能力低下となります。<br>よろしいですか？</div>`,[['自沈する',()=>{closeModal();scuttleFleet(f.id)}],['キャンセル',()=>closeModal()]])};
  $('verbRepair').onclick=()=>{if(f)repairFleet(f);else log('実行艦隊がありません。','warn')};
  $('verbOK').onclick=()=>{focus=false;route=null;log('選択を解除し、星系マップへ戻りました。','info');render()};
 }
 function transform(){const w=map.clientWidth,h=map.clientHeight,scale=Math.min(w,h)/200;return{w,h,scale,ox:(w-200*scale)/2,oy:(h-200*scale)/2}}function screen(p,t=transform()){return{x:t.ox+p.x*t.scale,y:t.oy+p.y*t.scale}}function draw(){const t=transform(),d=devicePixelRatio||1;map.width=t.w*d;map.height=t.h*d;ctx.setTransform(d,0,0,d,0,0);ctx.clearRect(0,0,t.w,t.h);S.planets.forEach(p=>{const q=screen(p,t);ctx.beginPath();ctx.arc(q.x,q.y,8,0,7);ctx.fillStyle=p.explored?TYPES[p.type][1]:'#718092';ctx.fill();ctx.fillStyle='#bfd0dc';ctx.fillText(p.explored?p.name:`未踏星系-${p.id}`,q.x+11,q.y+3)});const __af=activeFleet();if(__af&&route&&route.pid!=null){const f=__af,q=screen(currentPos(f),t),r=range(f)*t.scale;ctx.strokeStyle='#5dd7ff';ctx.setLineDash([6,5]);ctx.beginPath();ctx.arc(q.x,q.y,r,0,7);ctx.stroke();ctx.setLineDash([]);const z=screen(S.planets[route.pid],t);ctx.strokeStyle=routeInfo(f,route.pid).ok?'#71df9c':'#ff7078';ctx.beginPath();ctx.moveTo(q.x,q.y);ctx.lineTo(z.x,z.y);ctx.stroke()}S.fleets.filter(f=>f.owner==='player'||detectFleet(f)).forEach(f=>{const q=screen(currentPos(f),t);ctx.fillStyle=f.owner==='player'?'#fff':(FACS[f.owner]?.[1]||'#b7c0c8');ctx.beginPath();ctx.moveTo(q.x,q.y-8);ctx.lineTo(q.x+7,q.y+7);ctx.lineTo(q.x-7,q.y+7);ctx.fill();if(f.owner==='player'&&f.id===activeFleetId){ctx.strokeStyle='#5dd7ff';ctx.lineWidth=2;ctx.beginPath();ctx.arc(q.x,q.y+2,11,0,7);ctx.stroke()}})}
 function selectMap(e){const rect=map.getBoundingClientRect(),t=transform(),sx=e.clientX-rect.left,sy=e.clientY-rect.top;let bestF=null,bfd=13;playerFleets().forEach(f=>{const q=screen(currentPos(f),t),d=Math.hypot(q.x-sx,q.y-sy);if(d<bfd){bestF=f;bfd=d}});let bestP=null,bpd=1e9;S.planets.forEach(p=>{const q=screen(p,t),d=Math.hypot(q.x-sx,q.y-sy);if(d<bpd){bestP=p;bpd=d}});const planetHit=bestP&&bpd<=14;if(bestF&&bfd<=13&&(!planetHit||bfd<=bpd)){activeFleetId=bestF.id;focus=true;sel={kind:'planet',id:bestF.at};route={fid:bestF.id,pid:bestF.at};log(`${bestF.name}を実行艦隊に選択しました。星をクリックで目的地を指定できます。`,'info');return render()}if(planetHit){focus=true;sel={kind:'planet',id:bestP.id};const v=contextVerb(null,bestP);const f=ensureActiveFor(bestP.id,v.preferScout);route=f?{fid:f.id,pid:bestP.id}:null;return render()}}
+// ===== v2.1.5 手続き生成 海軍軍人風 顔アバター（SVG・画像生成なし） =====
+function avatarRng(seed){let a=(seed>>>0)||1;return()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function avatarFeatures(p){
+ // 属性ごとに独立シードで確定。id のみに依存し、階級・年齢などの分岐に消費順が影響しないため、
+ // 昇進・降格・戦死などで idx が変わっても、肌・髪・性別・年齢・髭は不変（同一人物で一貫）。
+ const base=(p.id+1)*2654435761;
+ const seedFor=k=>{let h=base^Math.imul(k,0x9E3779B1);h=Math.imul(h^h>>>15,0x85EBCA77);h=Math.imul(h^h>>>13,0xC2B2AE3D);return(h^h>>>16)>>>0};
+ const val=k=>seedFor(k)/4294967296; // 0..1（属性kごとに独立・決定論的）
+ const chooseFrom=(k,arr)=>arr[Math.floor(val(k)*arr.length)];
+ const skins=['#f2c9a0','#e7b78f','#d69c6e','#bd7f4f','#9c6438','#7c4a28'];
+ const youngHair=['#2b2b2b','#3a2a18','#5a3a20','#6b4a25','#101010','#8a6a3a'];
+ const greyHair=['#c9c9c9','#b3b3b3','#9c9c9c','#e2e2e2'];
+ const gender=val(1)<0.5?'f':'m';
+ const ageRoll=val(2);const age=ageRoll<0.34?'young':ageRoll<0.7?'mid':'senior';
+ const skin=chooseFrom(3,skins);
+ const isGrey=age==='senior'&&val(4)<0.7;
+ const hair=isGrey?chooseFrom(5,greyHair):chooseFrom(6,youngHair);
+ let beard='none';
+ if(gender==='m'&&age!=='young'&&val(7)<0.55)beard=chooseFrom(8,['stubble','mustache','full']);
+ else if(gender==='m'&&val(9)<0.2)beard='stubble';
+ const idx=RANKS.indexOf(personRank(p)); // 表示用（帽装飾の量）にのみ使用。色属性には非関与。
+ // 顔の細部ゆらぎ用の決定論的乱数（描画装飾のみ。色・性別・年齢には影響しない）
+ const detail=avatarRng(seedFor(99));
+ return{skin,hair,gender,age,beard,idx,r:detail}
+}
+function esc(n){return Math.round(n*100)/100}
+function avatarSVG(p,opts={}){
+ const f=avatarFeatures(p);const killed=!!p.killed;
+ const cx=22;const navy='#1c2c4a',navyTrim='#e9eef5',capWhite='#f3f5f8',capBand='#141c2c',peak='#0e1420',gold='#e7c14d',goldDk='#b8912f';
+ let s=`<svg class="avatar${killed?' killed':''}" viewBox="0 0 44 54" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${(personRank(p)[0])} ${p.name}">`;
+ s+=`<rect x="0" y="0" width="44" height="54" rx="6" fill="#0a1626"/>`;
+ // 制服の肩
+ s+=`<path d="M4 54 C6 44 14 40 22 40 C30 40 38 44 40 54 Z" fill="${navy}"/>`;
+ s+=`<path d="M22 40 L18 54 M22 40 L26 54" stroke="${navyTrim}" stroke-width="1"/>`;
+ // 階級袖線/襟の金線（階級で本数）
+ const stripes=Math.max(0,Math.min(4,f.idx-3));
+ for(let i=0;i<stripes;i++){const yy=47+i*2;s+=`<path d="M8 ${yy} C14 ${yy-2} 30 ${yy-2} 36 ${yy}" stroke="${gold}" stroke-width="0.9" fill="none" opacity="0.9"/>`}
+ // 首
+ s+=`<rect x="18" y="33" width="8" height="9" rx="3" fill="${f.skin}"/>`;
+ // 耳
+ s+=`<ellipse cx="11.5" cy="26" rx="2.2" ry="3" fill="${f.skin}"/><ellipse cx="32.5" cy="26" rx="2.2" ry="3" fill="${f.skin}"/>`;
+ // 女性の横髪（頬まで）
+ if(f.gender==='f'){s+=`<path d="M10 20 C7 26 8 34 11 37 L14 36 C12 30 12 24 14 20 Z" fill="${f.hair}"/><path d="M34 20 C37 26 36 34 33 37 L30 36 C32 30 32 24 30 20 Z" fill="${f.hair}"/>`}
+ else{s+=`<rect x="10.5" y="22" width="2.4" height="6" rx="1" fill="${f.hair}"/><rect x="31.1" y="22" width="2.4" height="6" rx="1" fill="${f.hair}"/>`}
+ // 顔
+ s+=`<ellipse cx="${cx}" cy="25" rx="11" ry="12.5" fill="${f.skin}"/>`;
+ // 前髪（帽子の下から少し）
+ s+=`<path d="M12 17 C15 12 29 12 32 17 C29 15 15 15 12 17 Z" fill="${f.hair}"/>`;
+ // 眉
+ const browCol=f.age==='senior'?'#8a8a8a':f.hair;
+ s+=`<path d="M15 21 q3 -1.5 5 0" stroke="${browCol}" stroke-width="1.2" fill="none"/><path d="M24 21 q3 -1.5 5 0" stroke="${browCol}" stroke-width="1.2" fill="none"/>`;
+ // 目
+ s+=`<ellipse cx="18" cy="24.5" rx="1.5" ry="${f.gender==='f'?1.8:1.5}" fill="#1a1a1a"/><ellipse cx="26" cy="24.5" rx="1.5" ry="${f.gender==='f'?1.8:1.5}" fill="#1a1a1a"/>`;
+ if(f.gender==='f'){s+=`<path d="M16 23.4 q2 -1 3.4 0" stroke="#1a1a1a" stroke-width="0.7" fill="none"/><path d="M24.6 23.4 q2 -1 3.4 0" stroke="#1a1a1a" stroke-width="0.7" fill="none"/>`}
+ // 鼻
+ s+=`<path d="M22 25.5 L21 29 q1 0.8 2 0" stroke="#00000055" stroke-width="0.8" fill="none"/>`;
+ // 口（中立・真一文字。笑顔にしない）
+ s+=`<path d="M18.6 32 L25.4 32" stroke="#7a2f2f" stroke-width="1.1" fill="none" stroke-linecap="round"/>`;
+ // 髭
+ if(f.beard==='mustache'){s+=`<path d="M18 30 q4 1.5 8 0" stroke="${f.hair}" stroke-width="1.6" fill="none"/>`}
+ else if(f.beard==='full'){s+=`<path d="M13 27 C14 35 18 38 22 38 C26 38 30 35 31 27 C28 33 16 33 13 27 Z" fill="${f.hair}" opacity="0.9"/>`}
+ else if(f.beard==='stubble'){s+=`<g fill="${f.hair}" opacity="0.35">`;for(let i=0;i<14;i++){s+=`<circle cx="${esc(15+f.r()*14)}" cy="${esc(30+f.r()*5)}" r="0.5"/>`}s+=`</g>`}
+ // 老け：しわ
+ if(f.age==='senior'){s+=`<path d="M14 18.5 q8 -1.5 16 0" stroke="#00000030" stroke-width="0.7" fill="none"/><path d="M15 30 q1.5 3 0 5" stroke="#00000030" stroke-width="0.6" fill="none"/><path d="M29 30 q-1.5 3 0 5" stroke="#00000030" stroke-width="0.6" fill="none"/>`}
+ // ===== 海軍 制帽 =====
+ s+=`<ellipse cx="${cx}" cy="15.5" rx="14" ry="4.2" fill="${peak}"/>`; // つば
+ s+=`<rect x="8" y="10" width="28" height="6" rx="1.5" fill="${capBand}"/>`; // バンド
+ s+=`<path d="M8 11 C10 4 34 4 36 11 C30 8 14 8 8 11 Z" fill="${capWhite}"/>`; // クラウン
+ s+=`<path d="M8 11 C10 4 34 4 36 11" fill="none" stroke="#c9d2dd" stroke-width="0.7"/>`;
+ // 帽章（錨）
+ s+=`<circle cx="${cx}" cy="12.6" r="2.4" fill="${gold}" stroke="${goldDk}" stroke-width="0.5"/>`;
+ s+=`<path d="M22 11 L22 14.2 M20.5 13.6 q1.5 1.2 3 0 M22 10.7 a0.6 0.6 0 1 0 0.01 0" stroke="${goldDk}" stroke-width="0.5" fill="none"/>`;
+ // 将官・佐官のつば金モール（scrambled egg）
+ if(f.idx>=7){for(let i=0;i<7;i++){const bx=10+i*3.4;s+=`<path d="M${esc(bx)} 16.4 q1.6 1.6 3.2 0" stroke="${gold}" stroke-width="1" fill="none"/>`}s+=`<path d="M9 17.4 q13 3 26 0" stroke="${gold}" stroke-width="1" fill="none"/>`}
+ else if(f.idx>=4){for(let i=0;i<6;i++){const bx=11+i*3.4;s+=`<path d="M${esc(bx)} 16.6 q1.4 1.2 2.8 0" stroke="${gold}" stroke-width="0.8" fill="none" opacity="0.85"/>`}}
+ // 戦死者：喪章＋減光
+ if(killed){s+=`<rect x="0" y="0" width="44" height="54" rx="6" fill="#0a0f16" opacity="0.4"/>`;s+=`<rect x="30" y="2" width="12" height="4" rx="1" transform="rotate(35 36 4)" fill="#111"/>`}
+ s+=`</svg>`;
+ return s;
+}
 function openRoster(fid=null){
- const target=fid===null?null:S.fleets.find(f=>f.id===fid);const living=S.people.filter(p=>p.alive!==false&&!p.killed),fallen=S.people.filter(p=>p.killed);const rowOf=p=>{const r=personRank(p),assignedFleet=S.fleets.find(f=>f.id===p.assignment),isCurrent=target&&target.commander===p.id,available=!p.assignment||isCurrent;return `<tr><td><span class="rankBadge">${r[1]}</span></td><td><b>${r[0]} ${p.name}</b><span class="assignmentState ${available?'free':'busy'}">${isCurrent?'現在の司令官':assignedFleet?`${assignedFleet.name}に任命中`:'無任所'}</span></td><td>操艦 ${p.pilot}</td><td>武力 ${p.force}</td><td>外交 ${p.diplomacy}</td><td>${target?`<button data-assignperson="${p.id}" ${available&&!isCurrent?'':'disabled'}>${isCurrent?'任命中':'任命'}</button>`:''}</td></tr>`};const fallenRowOf=p=>{const r=personRank(p);return `<tr class="killed"><td><span class="rankBadge">${r[1]}</span></td><td><b>${r[0]} ${p.name}</b><span class="killedMark">戦死（二階級特進）</span></td><td>操艦 ${p.pilot}</td><td>武力 ${p.force}</td><td>外交 ${p.diplomacy}</td><td>—</td></tr>`};const rows=living.map(rowOf).join('')+(fallen.length?`<tr class="rosterDivider"><td colspan="6">━━ 戦死者（名簿記録・任命不可） ━━</td></tr>`+fallen.map(fallenRowOf).join(''):'');
- modal(target?`${target.name} 司令官任命`:'人事名簿',`<table class="roster"><tr><th>階級章</th><th>階級・氏名・任務</th><th>操艦</th><th>武力</th><th>外交</th><th></th></tr>${rows}</table>`,[['OK',closeModal]]);
+ const target=fid===null?null:S.fleets.find(f=>f.id===fid);const living=S.people.filter(p=>p.alive!==false&&!p.killed),fallen=S.people.filter(p=>p.killed);const rowOf=p=>{const r=personRank(p),assignedFleet=S.fleets.find(f=>f.id===p.assignment),isCurrent=target&&target.commander===p.id,available=!p.assignment||isCurrent;return `<tr><td class="avatarCell">${avatarSVG(p)}</td><td><span class="rankBadge">${r[1]}</span></td><td><b>${r[0]} ${p.name}</b><span class="assignmentState ${available?'free':'busy'}">${isCurrent?'現在の司令官':assignedFleet?`${assignedFleet.name}に任命中`:'無任所'}</span></td><td>操艦 ${p.pilot}</td><td>武力 ${p.force}</td><td>外交 ${p.diplomacy}</td><td>${target?`<button data-assignperson="${p.id}" ${available&&!isCurrent?'':'disabled'}>${isCurrent?'任命中':'任命'}</button>`:''}</td></tr>`};const fallenRowOf=p=>{const r=personRank(p);return `<tr class="killed"><td class="avatarCell">${avatarSVG(p)}</td><td><span class="rankBadge">${r[1]}</span></td><td><b>${r[0]} ${p.name}</b><span class="killedMark">戦死（二階級特進）</span></td><td>操艦 ${p.pilot}</td><td>武力 ${p.force}</td><td>外交 ${p.diplomacy}</td><td>—</td></tr>`};const rows=living.map(rowOf).join('')+(fallen.length?`<tr class="rosterDivider"><td colspan="7">━━ 戦死者（名簿記録・任命不可） ━━</td></tr>`+fallen.map(fallenRowOf).join(''):'');
+ modal(target?`${target.name} 司令官任命`:'人事名簿',`<table class="roster"><tr><th>顔</th><th>階級章</th><th>階級・氏名・任務</th><th>操艦</th><th>武力</th><th>外交</th><th></th></tr>${rows}</table>`,[['OK',closeModal]]);
  $('modalBody').querySelectorAll('[data-assignperson]').forEach(button=>button.addEventListener('click',()=>assignCommander(fid,+button.dataset.assignperson)));
 }
 function assignCommander(fid,pid){
@@ -239,6 +325,8 @@ save=function(manual){S.saveVersion='2.1.0';localStorage.setItem(SAVE_KEY,JSON.s
 load=function(){const raw=localStorage.getItem(SAVE_KEY)||localStorage.getItem('pg150');if(!raw)return result('読込不可','セーブデータがありません。',()=>render());try{S=JSON.parse(raw);migrateState();closeModal(false);sel={kind:'planet',id:S.planets.findIndex(p=>p.owner==='player')};route=null;render();speed(1);log('セーブデータを読み込みました。','good')}catch(e){result('読込エラー','セーブデータを読み込めません。新しい星域を開始してください。',()=>render())}};
 function gainXp(f,amount,reason){const p=commander(f);if(!p)return;const before=personRank(p)[0];p.xp+=amount;const after=personRank(p)[0];log(`${p.name}が${reason}で経験値${amount}を獲得しました。`,'info');if(before!==after)result('昇進',`${p.name}は${after}へ昇進しました。`,()=>render())}
 function commanderCasualty(f,reason){const p=commander(f);if(!p)return;const idx=rankIndexByXp(p.xp),post=Math.min(idx+2,RANKS.length-1);p.postRankIndex=post;p.killed=true;p.alive=false;p.assignment=null;f.commander=null;log(`${p.name}は${reason}により戦死。二階級特進で${RANKS[post][0]}となりました（名簿に記録）。`,'bad')}
+function commanderDemote(f,reason){const p=commander(f);if(!p)return null;const before=personRank(p)[0],idx=rankIndexByXp(p.xp),newIdx=Math.max(0,idx-1);p.xp=RANKS[newIdx][2];p.pilot=Math.max(5,Math.round(p.pilot*.85));p.force=Math.max(5,Math.round(p.force*.85));p.diplomacy=Math.max(5,Math.round(p.diplomacy*.85));const after=personRank(p)[0];p.assignment=null;f.commander=null;log(`${p.name}は${reason}の責任を問われ${before}から${after}へ降格。能力が低下しました。`,'warn');return{before,after,person:p}}
+function scuttleFleet(fid){const f=S.fleets.find(x=>x.id===fid);if(!f)return;if(f.owner!=='player')return;if(f.order!=='燃料切れ・漂流')return log('自沈できるのは燃料切れで漂流中の艦隊のみです。','warn');const demo=commanderDemote(f,'艦隊の自沈');f.ships=[];pruneEmptyFleets();const body=`漂流していた${f.name}を自沈処分しました。`+(demo?`<br>司令官 ${demo.person.name} は生還し、${demo.before}から${demo.after}へ降格（能力低下）となりました。`:'<br>司令官はいませんでした。');result('艦隊を自沈',body,()=>{sel={kind:'planet',id:f.at};route=null;activeFleetId=(typeof activeFleetId!=='undefined'&&activeFleetId===fid)?null:activeFleetId;render()})}
 function hostileToPlayer(owner){return owner&&owner!=='player'&&!String(owner).startsWith('independent-')&&(S.relations[owner]||0)<0}
 function detectFleet(f){if(f.owner==='player')return true;const pos=currentPos(f);return S.planets.some(p=>p.owner==='player'&&p.explored&&distance(pos,p)<=10+(p.facilities?.sensor||0)*18)}
 function collapseFaction(faction,captured){if(!['zora','mira','nox'].includes(faction))return;S.defeated[faction]=true;S.planets.filter(p=>p.owner===faction&&p.id!==captured.id).forEach(p=>{p.owner=`independent-${p.id}`;p.independent=true;p.homeworld=null});S.fleets.filter(f=>f.owner===faction).forEach(f=>{f.owner=`independent-${f.at}`;f.order='独立防衛'});log(`${FACS[faction][0]}は母星喪失により崩壊しました。残存星系は独立国となりました。`,'good')}
@@ -270,4 +358,4 @@ openDock=function(pid=null){const docks=S.planets.filter(p=>p.owner==='player'&&
 function renderDiplomacy(){const host=$('diplomacy');host.innerHTML=['zora','mira','nox'].map(f=>{const known=S.contacted?.[f]||S.planets.some(p=>p.explored&&p.owner===f),v=S.relations[f]||0;return `<div class="card"><b>${known?FACS[f][0]:'未接触勢力'}</b><br>関係 ${known?v:'不明'}${known?`<div><button data-dip="${f}" data-delta="10">支援</button><button data-ally="${f}" ${v>=50?'':'disabled'}>同盟</button><button data-war="${f}">敵対</button></div>`:''}</div>`}).join('');host.querySelectorAll('[data-dip]').forEach(b=>b.onclick=()=>{const f=b.dataset.dip;if(S.money<300)return log('支援資金が不足しています。','warn');S.money-=300;S.relations[f]=Math.min(100,(S.relations[f]||0)+10);render()});host.querySelectorAll('[data-ally]').forEach(b=>b.onclick=()=>{S.relations[b.dataset.ally]=60;checkVictory();render()});host.querySelectorAll('[data-war]').forEach(b=>b.onclick=()=>{S.relations[b.dataset.war]=-100;render()})}
 const originalRender=render;
 render=function(){originalRender();renderDiplomacy()};
-map.onpointerup=selectMap;window.onresize=draw;document.querySelectorAll('[data-speed]').forEach(b=>b.onclick=()=>speed(+b.dataset.speed));document.querySelectorAll('[data-build]').forEach(b=>b.onclick=()=>build(b.dataset.build));$('facilityMenu').onclick=()=>openFacilities();$('roster').onclick=openRoster;$('systemMenu').onclick=openSystems;$('dockMenu').onclick=openDock;$('shipStatusMenu').onclick=openShips;$('saveMenu').onclick=()=>modal('セーブ管理','',[['保存',()=>save(true)],['読込',load],['OK',closeModal]]);$('history').onclick=()=>modal('通知履歴',history.map(x=>`<div class="card ${x.k}">${x.text}</div>`).join(''),[['OK',closeModal]]);$('newWorld').onclick=()=>result('新しい星域','新しい星域を作成します。',newGame);try{if(typeof ResizeObserver!=='undefined'){const __ro=new ResizeObserver(()=>{try{draw()}catch(e){}});__ro.observe(map)}}catch(e){}newGame();
+map.onpointerup=selectMap;window.onresize=draw;document.querySelectorAll('[data-speed]').forEach(b=>b.onclick=()=>speed(+b.dataset.speed));document.querySelectorAll('[data-build]').forEach(b=>b.onclick=()=>build(b.dataset.build));$('facilityMenu').onclick=()=>openFacilities();$('roster').onclick=openRoster;$('systemMenu').onclick=openSystems;$('dockMenu').onclick=openDock;$('shipStatusMenu').onclick=openShips;$('saveMenu').onclick=()=>modal('セーブ管理','',[['保存',()=>save(true)],['読込',load],['OK',closeModal]]);$('history').onclick=()=>modal('通知履歴',history.map(x=>`<div class="card ${x.k}">${x.text}</div>`).join(''),[['OK',closeModal]]);$('newWorld').onclick=()=>modal('新しい星域','<div class="routeWarning">現在のゲームを終了し、新しい星域を作成します。<br>この操作は元に戻せません。よろしいですか？</div>',[['作成する',()=>{closeModal();newGame()}],['キャンセル',()=>closeModal()]]);try{if(typeof ResizeObserver!=='undefined'){const __ro=new ResizeObserver(()=>{try{draw()}catch(e){}});__ro.observe(map)}}catch(e){}newGame();

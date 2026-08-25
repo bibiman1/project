@@ -62,3 +62,7 @@
 @media (max-height:520px) and (max-width:900px){
   .space{min-height:200px}
 }
+/* v2.1.5 人事アバター */
+.avatar{width:44px;height:54px;display:block;border-radius:6px}
+.avatarCell{width:52px;padding:5px 6px}
+.roster tr.killed .avatar{filter:grayscale(1) brightness(.9)}
