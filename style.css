@@ -16,3 +16,6 @@
 .verbBlock #verbGo{font-weight:700}
 .manageBlock{display:grid;grid-template-columns:1fr 1fr;gap:6px}
 .manageBlock #verbOK{grid-column:1 / -1}
+.killed{color:var(--muted);opacity:.85}
+.killedMark{color:var(--red);font-weight:700;margin-left:4px}
+.rosterDivider td{background:#081522;color:var(--muted);text-align:center;font-size:10px;letter-spacing:1px}
