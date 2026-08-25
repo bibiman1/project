@@ -10,7 +10,7 @@ let S,sel={kind:'planet',id:0},timer,battleState,routePreview=null;const rnd=(a,
 function blankFac(){return{ore:0,fuel:0,habitat:0,defense:0,dock:0,sensor:0,battery:0,storage:0}}
 function mkPlanet(i){const type=pick(['earth','mars','gas']);let ore,deut,cap;if(type==='earth'){ore=rnd(35,70);deut=rnd(35,70);cap=rnd(500,1000)}else if(type==='mars'){ore=rnd(70,100);deut=rnd(10,35);cap=rnd(200,500)}else{ore=0;deut=rnd(80,120);cap=rnd(50,200)}return{id:i,name:PN[i],x:rnd(7,93),y:rnd(8,92),type,ore,deut,cap,pop:0,owner:null,explored:false,defense:rnd(10,45),facilities:blankFac(),construction:null,stock:{materials:0,fuel:0}}}
 function mkFleet(id,owner,at,ships,name){return{id,owner,at,target:null,progress:0,eta:0,ships:ships.map((t,i)=>({id:`${id}-${i}`,type:t,hp:SHIPS[t].hp,fuel:SHIPS[t].fuel})),name,commander:null,order:'待機',cargo:{materials:0,fuel:0,population:0},home:at}}
-function newGame(){let ps=[];for(let i=0;i<20;i++){let p;do{p=mkPlanet(i)}while(ps.some(q=>Math.hypot(p.x-q.x,p.y-q.y)<8));ps.push(p)}Object.assign(ps[0],{name:'プロキオン首都星',type:'earth',ore:50,deut:50,cap:600,pop:300,owner:'player',explored:true,defense:30,facilities:{...blankFac(),ore:1,fuel:1,dock:1,sensor:1},stock:{materials:500,fuel:500}});const rest=ps.slice(1).sort(()=>Math.random()-.5);['zora','mira','nox'].forEach((f,j)=>rest.slice(j*3,j*3+3).forEach((p,k)=>{p.owner=f;p.pop=rnd(100,Math.min(p.cap,450));p.facilities={...blankFac(),ore:1,fuel:1,dock:k?0:1,battery:k?0:1}}));const npcF=[];['zora','mira','nox'].forEach((f,j)=>npcF.push(mkFleet(100+j,f,rest[j*3].id,['battleship','battleship','transport'],`${FACS[f][0]}第1艦隊`)));const personnel=PEOPLE.map((name,i)=>({id:i,name,pilot:rnd(25,85),force:rnd(25,85),diplomacy:rnd(25,85),level:1,assignment:null}));S={year:1,turn:0,money:3000,planets:ps,fleets:[mkFleet(1,'player',0,['scout'],'第1探査艦隊'),...npcF],nextFleet:2,personnel,relations:{zora:0,mira:0,nox:0},contacted:{},over:false};const initialCommander=[...personnel].sort((a,b)=>b.pilot-a.pilot)[0];S.fleets[0].commander=initialCommander.id;initialCommander.assignment=S.fleets[0].id;sel={kind:'planet',id:0};routePreview=null;$('log').innerHTML='';setSpeed(1);log('星域統治を開始しました。左の艦隊を選ぶと命令画面が開きます。v0.9.2','good');render()}
+function newGame(){let ps=[];for(let i=0;i<20;i++){let p;do{p=mkPlanet(i)}while(ps.some(q=>Math.hypot(p.x-q.x,p.y-q.y)<8));ps.push(p)}Object.assign(ps[0],{name:'プロキオン首都星',type:'earth',ore:50,deut:50,cap:600,pop:300,owner:'player',explored:true,defense:30,facilities:{...blankFac(),ore:1,fuel:1,dock:1,sensor:1},stock:{materials:500,fuel:500}});const rest=ps.slice(1).sort(()=>Math.random()-.5);['zora','mira','nox'].forEach((f,j)=>rest.slice(j*3,j*3+3).forEach((p,k)=>{p.owner=f;p.pop=rnd(100,Math.min(p.cap,450));p.facilities={...blankFac(),ore:1,fuel:1,dock:k?0:1,battery:k?0:1}}));const npcF=[];['zora','mira','nox'].forEach((f,j)=>npcF.push(mkFleet(100+j,f,rest[j*3].id,['battleship','battleship','transport'],`${FACS[f][0]}第1艦隊`)));const personnel=PEOPLE.map((name,i)=>({id:i,name,pilot:rnd(25,85),force:rnd(25,85),diplomacy:rnd(25,85),level:1,assignment:null}));S={year:1,turn:0,money:3000,planets:ps,fleets:[mkFleet(1,'player',0,['scout'],'第1探査艦隊'),...npcF],nextFleet:2,personnel,relations:{zora:0,mira:0,nox:0},contacted:{},over:false};const initialCommander=[...personnel].sort((a,b)=>b.pilot-a.pilot)[0];S.fleets[0].commander=initialCommander.id;initialCommander.assignment=S.fleets[0].id;sel={kind:'planet',id:0};routePreview=null;$('log').innerHTML='';setSpeed(1);log('星域統治を開始しました。惑星または艦隊を選択してください。v0.9.3','good');renderLatestNotification();render()}
 function total(k){return Math.floor(S.planets.filter(p=>p.owner==='player').reduce((n,p)=>n+p.stock[k],0))}function cap(p){return 1000+p.facilities.storage*1000}function spend(k,n){for(const p of S.planets.filter(p=>p.owner==='player')){let x=Math.min(n,p.stock[k]);p.stock[k]-=x;n-=x;if(!n)break}}
 function tick(){if(S.over||battleState)return;S.turn++;moveFleets();construct();repairFleets();produce();if(S.turn%20===0)npcOrders();if(S.turn%10===0)saveGame(false);if(S.turn>=100){S.turn=0;S.year++;annual()}render()}
 function produce(){S.planets.filter(p=>p.owner==='player').forEach(p=>{p.stock.materials=Math.min(cap(p),p.stock.materials+p.ore*p.facilities.ore*.02);p.stock.fuel=Math.min(cap(p),p.stock.fuel+p.deut*p.facilities.fuel*.02)})}
@@ -81,7 +81,7 @@ function drawMap(){const w=map.clientWidth,h=map.clientHeight,d=devicePixelRatio
 function enemyVisible(f){const p=S.planets[f.at];return p.explored&&S.planets.filter(x=>x.owner==='player'&&x.facilities.sensor).some(x=>Math.hypot(x.x-p.x,x.y-p.y)<=12+x.facilities.sensor*6)}
 function log(t,c=''){$('log').insertAdjacentHTML('afterbegin',`<div class="${c}">${S?S.year:1}年${S?S.turn:0}T：${t}</div>`)}function dialog(title,body,buttons){setSpeed(0);$('dialogTitle').textContent=title;$('dialogBody').innerHTML=body;$('dialogButtons').innerHTML='';buttons.forEach(([l,fn])=>{const b=document.createElement('button');b.type='button';b.textContent=l;b.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();fn();render()});$('dialogButtons').appendChild(b)});$('dialog').classList.remove('hidden')}function closeDialog(){$('dialog').classList.add('hidden')}
 function setSpeed(v){clearInterval(timer);document.querySelectorAll('[data-speed]').forEach(b=>b.classList.toggle('active',+b.dataset.speed===v));if(v)timer=setInterval(tick,3000/v)}
-document.querySelectorAll('[data-speed]').forEach(b=>b.onclick=()=>setSpeed(+b.dataset.speed));map.onclick=e=>{const r=map.getBoundingClientRect(),x=(e.clientX-r.left)*100/r.width,y=(e.clientY-r.top)*100/r.height;let best,d=5;S.planets.forEach(p=>{const n=Math.hypot(p.x-x,p.y-y);if(n<d){d=n;best=p}});if(best){if(sel.kind==='fleet'){routePreview={fid:sel.id,pid:best.id}}else{sel={kind:'planet',id:best.id};routePreview=null}render()}};window.onresize=drawMap;
+document.querySelectorAll('[data-speed]').forEach(b=>b.onclick=()=>setSpeed(+b.dataset.speed));window.onresize=drawMap;
 
 
 const SAVE_KEY='planetGovernorOperationsV1';
@@ -101,7 +101,7 @@ function returnHome(fid){const f=S.fleets.find(x=>x.id===fid);sendFleet(fid,f.ho
 function repairFleets(){S.fleets.filter(f=>f.owner==='player'&&f.target===null).forEach(f=>{const p=S.planets[f.at];if(p.owner!=='player'||!p.facilities.dock)return;for(const ship of f.ships){const max=SHIPS[ship.type].hp;if(ship.hp<max&&p.stock.materials>=.25){ship.hp=Math.min(max,ship.hp+p.facilities.dock*.5);p.stock.materials-=.25}}})}
 
 
-// v0.9.2 command and fuel-operation overrides
+// v0.9.3 command and fuel-operation overrides
 const notificationHistory=[];
 function fuelPercent(ship){return Math.max(0,Math.min(100,ship.fuel/SHIPS[ship.type].fuel*100))}
 function fuelGauge(ship){const pct=fuelPercent(ship),cls=pct<20?'low':pct<50?'mid':'';return `<div class="fuelGauge ${cls}"><i style="width:${pct}%"></i></div>`}
@@ -179,11 +179,39 @@ function selectFleet(fid){
  render();
 }
 
-function log(t,c=''){const item={year:S?S.year:1,turn:S?S.turn:0,text:t,kind:c};notificationHistory.unshift(item);if(notificationHistory.length>100)notificationHistory.pop();$('log').innerHTML=`<div class="${c}">${item.year}年${item.turn}T：${t}</div>`}
+function renderLatestNotification(){
+ const host=$('log');if(!host)return;
+ const item=notificationHistory[0];
+ host.innerHTML=item?`<div class="${item.kind||'info'}">${item.year}年${item.turn}T：${item.text}</div>`:'<div class="info">通知はありません。</div>';
+}
+function log(t,c='info'){
+ const item={year:S?S.year:1,turn:S?S.turn:0,text:t,kind:c||'info'};
+ notificationHistory.unshift(item);if(notificationHistory.length>100)notificationHistory.pop();
+ renderLatestNotification();
+}
+
 function openNotificationHistory(){dialog('通知履歴',notificationHistory.map(n=>`<div class="card ${n.kind}">${n.year}年${n.turn}T：${n.text}</div>`).join('')||'<p>通知はありません。</p>',[['閉じる',closeDialog]])}
 function openSaveManager(){const raw=localStorage.getItem(SAVE_KEY),meta=raw?'セーブデータあり':'セーブデータなし';dialog('セーブ管理',`<div class="saveMeta">${meta}<br>自動セーブ：10ターンごと</div>`,[['手動セーブ',()=>{saveGame(true);closeDialog()}],['セーブを読込',()=>loadGame()],['セーブ削除',()=>confirmDeleteSave()],['閉じる',closeDialog]])}
 function confirmDeleteSave(){dialog('セーブ削除の確認','<p>保存されたゲームデータを削除します。この操作は元に戻せません。</p>',[['削除する',()=>{deleteSave();closeDialog()}],['キャンセル',openSaveManager]])}
 function confirmNewGame(){dialog('新しい星域','<p>現在のゲームを終了し、新しい星域を生成します。未保存の進行状況は失われます。</p>',[['新しい星域を作成',()=>{closeDialog();newGame()}],['キャンセル',closeDialog]])}
 
+function selectPlanetFromPointer(event){
+ event.preventDefault();
+ const rect=map.getBoundingClientRect();
+ const px=event.clientX-rect.left,py=event.clientY-rect.top;
+ let best=null,bestDistance=Infinity;
+ S.planets.forEach(p=>{
+  const x=p.x*rect.width/100,y=p.y*rect.height/100,d=Math.hypot(x-px,y-py);
+  if(d<bestDistance){bestDistance=d;best=p}
+ });
+ if(!best||bestDistance>28){log('惑星の丸印をクリックしてください。','warn');return}
+ sel={kind:'planet',id:best.id};routePreview=null;
+ const right=document.querySelector('aside.right');if(right)right.scrollTop=0;
+ log(`${best.explored?best.name:`未踏-${best.id}`}を選択しました。`,'info');
+ render();
+}
+map.addEventListener('pointerup',selectPlanetFromPointer);
+
 // Initialize after all override constants and functions exist.
 newGame();
+
