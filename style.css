@@ -13,3 +13,5 @@
 .scoutOccupation{padding:8px;border:1px solid var(--yellow);border-radius:7px;background:#211c0b;color:var(--yellow)}
 
 .assignmentState{display:block;margin-top:3px;color:var(--muted)}.assignmentState.free{color:var(--green)}.assignmentState.busy{color:var(--yellow)}
+
+.auditBanner{padding:9px;border:1px solid var(--blue);border-radius:8px;background:#081522;margin:8px 0}.actionGrid{display:grid;grid-template-columns:1fr 1fr;gap:6px}.facilityTabs,.dockTabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}.statusPill{display:inline-block;padding:2px 6px;border-radius:12px;background:#163047;color:var(--blue);margin:2px}.secret{color:var(--muted)}.resumeNote{color:var(--muted);font-size:10px;margin-top:7px}.dangerBox{padding:8px;border:1px solid var(--red);background:#2b1117;border-radius:7px}.successBox{padding:8px;border:1px solid var(--green);background:#0b2118;border-radius:7px}
