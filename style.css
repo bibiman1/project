@@ -11,3 +11,5 @@
 .occupyCheck{padding:9px;border:1px solid var(--line);border-radius:7px;background:#081522}.occupyCheck.ok{border-color:var(--green)}.occupyCheck.ng{border-color:var(--red)}.dockAssign{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;margin:7px 0;padding:9px;border:1px solid var(--line);border-radius:7px;background:#081522}
 
 .scoutOccupation{padding:8px;border:1px solid var(--yellow);border-radius:7px;background:#211c0b;color:var(--yellow)}
+
+.assignmentState{display:block;margin-top:3px;color:var(--muted)}.assignmentState.free{color:var(--green)}.assignmentState.busy{color:var(--yellow)}
