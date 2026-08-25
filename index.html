@@ -1,59 +1,6 @@
-<!doctype html>
-<html lang="ja">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>惑星総督 試作版</title>
-  <link rel="stylesheet" href="style.css">
-</head>
-<body>
-  <header class="topbar">
-    <div><strong>惑星総督</strong><span class="sub"> GitHub Pages 試作版</span></div>
-    <div class="stats">
-      <span>年 <b id="year">1</b></span><span>ターン <b id="turn">0</b>/100</span>
-      <span>資金 <b id="money">3000</b></span><span>総人口 <b id="population">300</b>万</span>
-      <span>資材 <b id="materials">500</b></span><span>燃料 <b id="fuel">500</b></span>
-    </div>
-    <div class="speed">
-      <button data-speed="0">停止</button><button class="active" data-speed="1">通常</button><button data-speed="3">高速</button><button data-speed="10">超高速</button>
-    </div>
-  </header>
-
-  <main>
-    <aside class="side left">
-      <h2>司令</h2>
-      <button id="newGame">新しい星域</button>
-      <button id="buildScout">探査船を建造</button>
-      <button id="buildBattleship">戦艦を建造</button>
-      <button id="buildTransport">輸送船を建造</button>
-      <h2>艦隊</h2>
-      <div id="fleetList"></div>
-      <h2>外交</h2>
-      <div id="diplomacyList"></div>
-    </aside>
-
-    <section class="mapWrap">
-      <canvas id="spaceMap" width="1100" height="700" aria-label="星域マップ"></canvas>
-      <div class="hint">惑星をクリックして選択。未踏惑星を選び「探査」を実行してください。</div>
-    </section>
-
-    <aside class="side right">
-      <h2>選択中</h2>
-      <div id="detail" class="detail">惑星を選択してください。</div>
-      <div id="actions" class="actions"></div>
-      <h2>通知</h2>
-      <div id="log" class="log"></div>
-    </aside>
-  </main>
-
-  <div id="modal" class="modal hidden">
-    <div class="modalCard">
-      <h2 id="modalTitle"></h2>
-      <p id="modalText"></p>
-      <div id="modalActions"></div>
-    </div>
-  </div>
-
-  <script src="game.js"></script>
-</body>
-</html>
+<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>惑星総督 施設建築版</title><link rel="stylesheet" href="style.css"></head><body>
+<header><strong>惑星総督</strong><div id="stats"></div><nav><button data-speed="0">停止</button><button class="active" data-speed="1">通常</button><button data-speed="4">高速</button><button data-speed="12">超高速</button></nav></header>
+<main><aside><h2>司令</h2><button id="newGame">新しい星域</button><button onclick="buildShip('scout')">探査船を建造</button><button onclick="buildShip('battleship')">戦艦を建造</button><button onclick="buildShip('transport')">輸送船を建造</button><h2>艦隊</h2><div id="fleets"></div><h2>外交</h2><div id="diplomacy"></div></aside>
+<section class="map"><canvas id="map"></canvas><p>惑星を選択してください。未踏惑星には探査船を派遣できます。</p></section>
+<aside class="right"><h2>惑星詳細</h2><div id="detail">惑星を選択してください。</div><div id="actions"></div><h2>通知</h2><div id="log"></div></aside></main>
+<div id="modal" class="modal hidden"><div><h2 id="modalTitle"></h2><p id="modalText"></p><section id="modalButtons"></section></div></div><script src="game.js"></script></body></html>
