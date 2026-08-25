@@ -10,7 +10,7 @@ let S,sel={kind:'planet',id:0},timer,battleState,routePreview=null;const rnd=(a,
 function blankFac(){return{ore:0,fuel:0,habitat:0,defense:0,dock:0,sensor:0,battery:0,storage:0}}
 function mkPlanet(i){const type=pick(['earth','mars','gas']);let ore,deut,cap;if(type==='earth'){ore=rnd(35,70);deut=rnd(35,70);cap=rnd(500,1000)}else if(type==='mars'){ore=rnd(70,100);deut=rnd(10,35);cap=rnd(200,500)}else{ore=0;deut=rnd(80,120);cap=rnd(50,200)}return{id:i,name:PN[i],x:rnd(7,93),y:rnd(8,92),type,ore,deut,cap,pop:0,owner:null,explored:false,defense:rnd(10,45),facilities:blankFac(),construction:null,stock:{materials:0,fuel:0}}}
 function mkFleet(id,owner,at,ships,name){return{id,owner,at,target:null,progress:0,eta:0,ships:ships.map((t,i)=>({id:`${id}-${i}`,type:t,hp:SHIPS[t].hp,fuel:SHIPS[t].fuel})),name,commander:null,order:'待機',cargo:{materials:0,fuel:0,population:0},home:at}}
-function newGame(){let ps=[];for(let i=0;i<20;i++){let p;do{p=mkPlanet(i)}while(ps.some(q=>Math.hypot(p.x-q.x,p.y-q.y)<8));ps.push(p)}Object.assign(ps[0],{name:'プロキオン首都星',type:'earth',ore:50,deut:50,cap:600,pop:300,owner:'player',explored:true,defense:30,facilities:{...blankFac(),ore:1,fuel:1,dock:1,sensor:1},stock:{materials:500,fuel:500}});const rest=ps.slice(1).sort(()=>Math.random()-.5);['zora','mira','nox'].forEach((f,j)=>rest.slice(j*3,j*3+3).forEach((p,k)=>{p.owner=f;p.pop=rnd(100,Math.min(p.cap,450));p.facilities={...blankFac(),ore:1,fuel:1,dock:k?0:1,battery:k?0:1}}));const npcF=[];['zora','mira','nox'].forEach((f,j)=>npcF.push(mkFleet(100+j,f,rest[j*3].id,['battleship','battleship','transport'],`${FACS[f][0]}第1艦隊`)));const personnel=PEOPLE.map((name,i)=>({id:i,name,pilot:rnd(25,85),force:rnd(25,85),diplomacy:rnd(25,85),level:1,assignment:null}));S={year:1,turn:0,money:3000,planets:ps,fleets:[mkFleet(1,'player',0,['scout'],'第1探査艦隊'),...npcF],nextFleet:2,personnel,relations:{zora:0,mira:0,nox:0},contacted:{},over:false};const initialCommander=[...personnel].sort((a,b)=>b.pilot-a.pilot)[0];S.fleets[0].commander=initialCommander.id;initialCommander.assignment=S.fleets[0].id;sel={kind:'planet',id:0};routePreview=null;$('log').innerHTML='';setSpeed(1);log('星域統治を開始しました。v0.8.2','good');render()}
+function newGame(){let ps=[];for(let i=0;i<20;i++){let p;do{p=mkPlanet(i)}while(ps.some(q=>Math.hypot(p.x-q.x,p.y-q.y)<8));ps.push(p)}Object.assign(ps[0],{name:'プロキオン首都星',type:'earth',ore:50,deut:50,cap:600,pop:300,owner:'player',explored:true,defense:30,facilities:{...blankFac(),ore:1,fuel:1,dock:1,sensor:1},stock:{materials:500,fuel:500}});const rest=ps.slice(1).sort(()=>Math.random()-.5);['zora','mira','nox'].forEach((f,j)=>rest.slice(j*3,j*3+3).forEach((p,k)=>{p.owner=f;p.pop=rnd(100,Math.min(p.cap,450));p.facilities={...blankFac(),ore:1,fuel:1,dock:k?0:1,battery:k?0:1}}));const npcF=[];['zora','mira','nox'].forEach((f,j)=>npcF.push(mkFleet(100+j,f,rest[j*3].id,['battleship','battleship','transport'],`${FACS[f][0]}第1艦隊`)));const personnel=PEOPLE.map((name,i)=>({id:i,name,pilot:rnd(25,85),force:rnd(25,85),diplomacy:rnd(25,85),level:1,assignment:null}));S={year:1,turn:0,money:3000,planets:ps,fleets:[mkFleet(1,'player',0,['scout'],'第1探査艦隊'),...npcF],nextFleet:2,personnel,relations:{zora:0,mira:0,nox:0},contacted:{},over:false};const initialCommander=[...personnel].sort((a,b)=>b.pilot-a.pilot)[0];S.fleets[0].commander=initialCommander.id;initialCommander.assignment=S.fleets[0].id;sel={kind:'planet',id:0};routePreview=null;$('log').innerHTML='';setSpeed(1);log('星域統治を開始しました。v0.9.0','good');render()}
 function total(k){return Math.floor(S.planets.filter(p=>p.owner==='player').reduce((n,p)=>n+p.stock[k],0))}function cap(p){return 1000+p.facilities.storage*1000}function spend(k,n){for(const p of S.planets.filter(p=>p.owner==='player')){let x=Math.min(n,p.stock[k]);p.stock[k]-=x;n-=x;if(!n)break}}
 function tick(){if(S.over||battleState)return;S.turn++;moveFleets();construct();repairFleets();produce();if(S.turn%20===0)npcOrders();if(S.turn%10===0)saveGame(false);if(S.turn>=100){S.turn=0;S.year++;annual()}render()}
 function produce(){S.planets.filter(p=>p.owner==='player').forEach(p=>{p.stock.materials=Math.min(cap(p),p.stock.materials+p.ore*p.facilities.ore*.02);p.stock.fuel=Math.min(cap(p),p.stock.fuel+p.deut*p.facilities.fuel*.02)})}
@@ -99,3 +99,57 @@ function loadCargo(fid,m,fuel){const fl=S.fleets.find(x=>x.id===fid),p=S.planets
 function unloadCargo(f,p){if(!f.cargo)return;p.stock.materials=Math.min(cap(p),p.stock.materials+(f.cargo.materials||0));p.stock.fuel=Math.min(cap(p),p.stock.fuel+(f.cargo.fuel||0));if(f.cargo.materials||f.cargo.fuel)log(`${f.name}が${p.name}へ貨物を荷下ろししました。`,'good');f.cargo={materials:0,fuel:0,population:0}}
 function returnHome(fid){const f=S.fleets.find(x=>x.id===fid);sendFleet(fid,f.home)}
 function repairFleets(){S.fleets.filter(f=>f.owner==='player'&&f.target===null).forEach(f=>{const p=S.planets[f.at];if(p.owner!=='player'||!p.facilities.dock)return;for(const ship of f.ships){const max=SHIPS[ship.type].hp;if(ship.hp<max&&p.stock.materials>=.25){ship.hp=Math.min(max,ship.hp+p.facilities.dock*.5);p.stock.materials-=.25}}})}
+
+
+// v0.9.0 command and fuel-operation overrides
+const notificationHistory=[];
+function fuelPercent(ship){return Math.max(0,Math.min(100,ship.fuel/SHIPS[ship.type].fuel*100))}
+function fuelGauge(ship){const pct=fuelPercent(ship),cls=pct<20?'low':pct<50?'mid':'';return `<div class="fuelGauge ${cls}"><i style="width:${pct}%"></i></div>`}
+function fleetFuelPercent(f){return f.ships.length?Math.min(...f.ships.map(fuelPercent)):0}
+function canRefuelAt(p,owner='player'){return p.owner===owner||(owner==='player'&&p.owner&&S.relations[p.owner]>=60)}
+function sendFleet(fid,pid,order='移動'){
+ const f=S.fleets.find(x=>x.id===fid);if(!f||!f.ships.length)return log('艦艇がありません。','warn');
+ if(f.commander===null){log('司令官未任命のため出航できません。','warn');openRoster(fid);return}
+ const r=routeInfo(f,pid);if(!r.reachable)return log('目的地は現在の航続力外です。途中で補給可能な惑星へ立ち寄ってください。','warn');
+ f.target=pid;f.progress=0;f.eta=r.turns;f.order=order;f.fuelPerTurn=r.fuelEach/r.turns;log(`${f.name}に「${order}」を命令。航行を開始しました。`,'good');render();
+}
+function moveFleets(){
+ for(const f of [...S.fleets]){
+  if(f.target===null)continue;
+  const burn=f.fuelPerTurn||0;
+  if(f.ships.some(s=>s.fuel<burn)){f.target=null;f.order='燃料切れ・漂流';f.fuelPerTurn=0;log(`${f.name}が燃料切れで漂流しています。`,'bad');continue}
+  f.ships.forEach(s=>s.fuel=Math.max(0,s.fuel-burn));
+  f.progress++;
+  if(f.progress>=f.eta){f.at=f.target;f.target=null;f.progress=0;f.fuelPerTurn=0;f.order='待機';arrive(f)}
+ }
+}
+function arrive(f){
+ const p=S.planets[f.at],enemy=S.fleets.find(x=>x.id!==f.id&&x.at===f.at&&x.target===null&&x.owner!==f.owner&&isHostile(f.owner,x.owner));
+ if(enemy){startBattle(f,enemy,'艦隊戦');return}
+ if(f.owner==='player'){
+  if(f.ships.some(s=>s.type==='scout')){p.explored=true;sel={kind:'planet',id:p.id};if(!p.owner){p.owner='player';p.pop=10;p.defense=5;log(`${p.name}を編入しました。`,'good')}else if(p.owner!=='player'&&!S.contacted[p.owner])contact(p.owner,p)}
+  if(canRefuelAt(p,'player')){refuel(f,p);unloadCargo(f,p);log(`${f.name}は${p.name}で補給しました。`,'good')}
+  else log(`${p.name}は自国・同盟惑星ではないため補給できません。`,'warn')
+ }else if(p.owner==='player'&&isHostile(f.owner,'player'))startPlanetBattle(f,p)
+}
+function commandOptions(f){
+ const hasScout=f.ships.some(s=>s.type==='scout'),hasBattle=f.ships.some(s=>s.type==='battleship'),hasTransport=f.ships.some(s=>s.type==='transport');
+ return [{id:'移動',ok:true},{id:'探査',ok:hasScout},{id:'惑星防衛',ok:hasBattle},{id:'占領',ok:hasBattle&&hasTransport},{id:'輸送',ok:hasTransport},{id:'帰還',ok:true}]
+}
+function issueCommand(fid){const f=S.fleets.find(x=>x.id===fid),cmd=$('commandType').value,pid=+$('commandDest').value;if(cmd==='帰還')return returnHome(fid);if(cmd==='占領'){const p=S.planets[pid];if(p.owner&&p.owner!=='player')return assault(fid,pid)}sendFleet(fid,pid,cmd)}
+function detail(){
+ if(sel.kind==='fleet'){
+  const f=S.fleets.find(x=>x.id===sel.id);if(!f)return;const p=S.planets[f.at],c=commander(f),preview=routePreview&&routePreview.fid===f.id?routeInfo(f,routePreview.pid):routeInfo(f,f.at),opts=commandOptions(f);
+  $('detail').innerHTML=`<h3>${f.name}</h3><span class="statusPill">${f.order}</span><div class="row"><span>現在地</span><b>${p.explored?p.name:'未確認地点'}</b></div><div class="row"><span>母港</span><b>${S.planets[f.home]?.name||'不明'}</b></div><div class="row"><span>司令官</span><b>${c?c.name:'未任命'}</b></div><div class="row"><span>攻撃力 / 耐久</span><b>${fleetPower(f)} / ${fleetHP(f)}</b></div><div class="row"><span>航続力</span><b>${fleetRange(f)}</b></div><h2>燃料</h2><div class="shipFuel"><b>艦隊最低残量 ${fleetFuelPercent(f).toFixed(0)}%</b><div class="fuelGauge ${fleetFuelPercent(f)<20?'low':fleetFuelPercent(f)<50?'mid':''}"><i style="width:${fleetFuelPercent(f)}%"></i></div></div>${f.ships.map(s=>`<div class="shipFuel">${SHIPS[s.type].name} ${Math.floor(s.fuel)}/${SHIPS[s.type].fuel}${fuelGauge(s)}</div>`).join('')}`;
+  $('actions').innerHTML=`<div class="commandPanel"><h3>艦隊命令</h3><label>命令<select id="commandType">${opts.map(o=>`<option ${o.ok?'':'disabled'}>${o.id}</option>`).join('')}</select></label><label>目的地<select id="commandDest" onchange="previewRoute(${f.id},this.value)">${S.planets.map(x=>{const r=routeInfo(f,x.id);return `<option value="${x.id}" ${routePreview&&routePreview.pid===x.id?'selected':''}>${r.reachable?'○':'×'} ${x.explored?x.name:`未踏-${x.id}`} 距離${r.distance.toFixed(1)}</option>`}).join('')}</select></label><div class="routeInfo ${preview.reachable?'reachable':'unreachable'}">距離 ${preview.distance.toFixed(1)} / 航続力 ${preview.range}<br>到着 ${preview.turns}ターン</div><button onclick="issueCommand(${f.id})">命令を実行</button></div><button onclick="openRoster(${f.id})">司令官を任命</button><button onclick="openFleetManager(${f.id})">艦隊編成</button><button onclick="openTransport(${f.id})">輸送物資を積載</button>`;return
+ }
+ const p=S.planets[sel.id];if(!p.explored){$('detail').innerHTML=`<h3>未踏惑星 ${p.id}</h3><p>所属・資源・防衛力は不明です。</p>`;const scouts=S.fleets.filter(f=>f.owner==='player'&&f.ships.some(s=>s.type==='scout')&&f.target===null);$('actions').innerHTML=scouts.map(f=>`<button onclick="sendFleet(${f.id},${p.id},'探査')">${f.name}で探査</button>`).join('');return}
+ const owner=p.owner?FACS[p.owner][0]:'無所属';$('detail').innerHTML=`<h3>${p.name}</h3><div class="row"><span>種類</span><b>${TYPES[p.type][0]}</b></div><div class="row"><span>所属</span><b>${owner}</b></div><div class="row"><span>人口</span><b>${Math.floor(p.pop)}万 / ${p.cap}万</b></div><div class="row"><span>鉱石 / 重水素</span><b>${p.ore} / ${p.deut}</b></div><div class="row"><span>防衛力</span><b>${p.defense}</b></div><div class="row"><span>補給</span><b>${canRefuelAt(p)?'可能':'不可'}</b></div>${facilityUI(p)}`;$('actions').innerHTML=''
+}
+function fleetList(){$('fleetList').innerHTML=S.fleets.filter(f=>f.owner==='player').map(f=>{const pct=fleetFuelPercent(f),cls=pct<20?'low':pct<50?'mid':'';return `<div class="card ${sel.kind==='fleet'&&sel.id===f.id?'selected':''}" onclick="sel={kind:'fleet',id:${f.id}};routePreview={fid:${f.id},pid:${f.at}};render()"><b>${f.name}</b><br>${f.ships.length}隻｜${f.order}<br><span class="commander">司令官：${commander(f)?.name||'未任命'}</span><div class="fuelGauge ${cls}"><i style="width:${pct}%"></i></div><small>燃料 ${pct.toFixed(0)}%</small></div>`}).join('')}
+function log(t,c=''){const item={year:S?S.year:1,turn:S?S.turn:0,text:t,kind:c};notificationHistory.unshift(item);if(notificationHistory.length>100)notificationHistory.pop();$('log').innerHTML=`<div class="${c}">${item.year}年${item.turn}T：${t}</div>`}
+function openNotificationHistory(){dialog('通知履歴',notificationHistory.map(n=>`<div class="card ${n.kind}">${n.year}年${n.turn}T：${n.text}</div>`).join('')||'<p>通知はありません。</p>',[['閉じる',closeDialog]])}
+function openSaveManager(){const raw=localStorage.getItem(SAVE_KEY),meta=raw?'セーブデータあり':'セーブデータなし';dialog('セーブ管理',`<div class="saveMeta">${meta}<br>自動セーブ：10ターンごと</div>`,[['手動セーブ',()=>{saveGame(true);closeDialog()}],['セーブを読込',()=>loadGame()],['セーブ削除',()=>confirmDeleteSave()],['閉じる',closeDialog]])}
+function confirmDeleteSave(){dialog('セーブ削除の確認','<p>保存されたゲームデータを削除します。この操作は元に戻せません。</p>',[['削除する',()=>{deleteSave();closeDialog()}],['キャンセル',openSaveManager]])}
+function confirmNewGame(){dialog('新しい星域','<p>現在のゲームを終了し、新しい星域を生成します。未保存の進行状況は失われます。</p>',[['新しい星域を作成',()=>{closeDialog();newGame()}],['キャンセル',closeDialog]])}
+$('newGame').onclick=confirmNewGame;
