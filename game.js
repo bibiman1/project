@@ -219,57 +219,126 @@ function avatarFeatures(p){
  return{skin,hair,gender,age,beard,idx,r:detail}
 }
 function esc(n){return Math.round(n*100)/100}
+function star(cx,cy,r,fill){let pts='';for(let i=0;i<5;i++){const a=-Math.PI/2+i*2*Math.PI/5,ax=cx+Math.cos(a)*r,ay=cy+Math.sin(a)*r;const b=a+Math.PI/5,bx=cx+Math.cos(b)*r*0.45,by=cy+Math.sin(b)*r*0.45;pts+=`${esc(ax)},${esc(ay)} ${esc(bx)},${esc(by)} `}return `<polygon points="${pts.trim()}" fill="${fill}"/>`}
 function avatarSVG(p,opts={}){
- const f=avatarFeatures(p);const killed=!!p.killed;
- const cx=22;const navy='#1c2c4a',navyTrim='#e9eef5',capWhite='#f3f5f8',capBand='#141c2c',peak='#0e1420',gold='#e7c14d',goldDk='#b8912f';
- let s=`<svg class="avatar${killed?' killed':''}" viewBox="0 0 44 54" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${(personRank(p)[0])} ${p.name}">`;
- s+=`<rect x="0" y="0" width="44" height="54" rx="6" fill="#0a1626"/>`;
- // 制服の肩
- s+=`<path d="M4 54 C6 44 14 40 22 40 C30 40 38 44 40 54 Z" fill="${navy}"/>`;
- s+=`<path d="M22 40 L18 54 M22 40 L26 54" stroke="${navyTrim}" stroke-width="1"/>`;
- // 階級袖線/襟の金線（階級で本数）
- const stripes=Math.max(0,Math.min(4,f.idx-3));
- for(let i=0;i<stripes;i++){const yy=47+i*2;s+=`<path d="M8 ${yy} C14 ${yy-2} 30 ${yy-2} 36 ${yy}" stroke="${gold}" stroke-width="0.9" fill="none" opacity="0.9"/>`}
- // 首
- s+=`<rect x="18" y="33" width="8" height="9" rx="3" fill="${f.skin}"/>`;
- // 耳
- s+=`<ellipse cx="11.5" cy="26" rx="2.2" ry="3" fill="${f.skin}"/><ellipse cx="32.5" cy="26" rx="2.2" ry="3" fill="${f.skin}"/>`;
- // 女性の横髪（頬まで）
- if(f.gender==='f'){s+=`<path d="M10 20 C7 26 8 34 11 37 L14 36 C12 30 12 24 14 20 Z" fill="${f.hair}"/><path d="M34 20 C37 26 36 34 33 37 L30 36 C32 30 32 24 30 20 Z" fill="${f.hair}"/>`}
- else{s+=`<rect x="10.5" y="22" width="2.4" height="6" rx="1" fill="${f.hair}"/><rect x="31.1" y="22" width="2.4" height="6" rx="1" fill="${f.hair}"/>`}
- // 顔
- s+=`<ellipse cx="${cx}" cy="25" rx="11" ry="12.5" fill="${f.skin}"/>`;
- // 前髪（帽子の下から少し）
- s+=`<path d="M12 17 C15 12 29 12 32 17 C29 15 15 15 12 17 Z" fill="${f.hair}"/>`;
- // 眉
- const browCol=f.age==='senior'?'#8a8a8a':f.hair;
- s+=`<path d="M15 21 q3 -1.5 5 0" stroke="${browCol}" stroke-width="1.2" fill="none"/><path d="M24 21 q3 -1.5 5 0" stroke="${browCol}" stroke-width="1.2" fill="none"/>`;
- // 目
- s+=`<ellipse cx="18" cy="24.5" rx="1.5" ry="${f.gender==='f'?1.8:1.5}" fill="#1a1a1a"/><ellipse cx="26" cy="24.5" rx="1.5" ry="${f.gender==='f'?1.8:1.5}" fill="#1a1a1a"/>`;
- if(f.gender==='f'){s+=`<path d="M16 23.4 q2 -1 3.4 0" stroke="#1a1a1a" stroke-width="0.7" fill="none"/><path d="M24.6 23.4 q2 -1 3.4 0" stroke="#1a1a1a" stroke-width="0.7" fill="none"/>`}
- // 鼻
- s+=`<path d="M22 25.5 L21 29 q1 0.8 2 0" stroke="#00000055" stroke-width="0.8" fill="none"/>`;
- // 口（中立・真一文字。笑顔にしない）
- s+=`<path d="M18.6 32 L25.4 32" stroke="#7a2f2f" stroke-width="1.1" fill="none" stroke-linecap="round"/>`;
+ const f=avatarFeatures(p);const killed=!!p.killed;const idx=f.idx;
+ // 参照画像（画像生成）を基にした比率。viewBox 120x132（縦長）。
+ const C={white:'#f3f4f6',band:'#0e1524',visor:'#0b1220',uni:'#152238',uniDk:'#0e1a2c',uniHi:'#1d2e49',gold:'#e6b93a',goldDk:'#b78e28',line:'#0a1220',collarWhite:'#eef2f7'};
+ const skin=f.skin, hair=f.hair;
+ // 肌の陰影色（skinを少し暗く）
+ const shade=(hex,amt)=>{const n=parseInt(hex.slice(1),16);let r=(n>>16)&255,g=(n>>8)&255,b=n&255;r=Math.max(0,Math.round(r*amt));g=Math.max(0,Math.round(g*amt));b=Math.max(0,Math.round(b*amt));return '#'+((1<<24)+(r<<16)+(g<<8)+b).toString(16).slice(1)};
+ const skinSh=shade(skin,0.86), skinLo=shade(skin,0.78);
+ let s=`<svg class="avatar${killed?' killed':''}" viewBox="0 0 120 132" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${personRank(p)[0]} ${p.name}">`;
+ s+=`<rect x="0" y="0" width="120" height="132" rx="10" fill="#0a1626"/>`;
+
+ // ===== 制服の胴・肩（詰襟。参照どおり肩幅広め・いかり肩） =====
+ s+=`<path d="M6 132 L6 108 C6 96 16 90 30 89 C40 88 50 90 60 92 C70 90 80 88 90 89 C104 90 114 96 114 108 L114 132 Z" fill="${C.uni}" stroke="${C.line}" stroke-width="1.5"/>`;
+ // 胴のハイライト
+ s+=`<path d="M60 92 C70 90 80 88 90 89 C100 90 108 94 111 102" fill="none" stroke="${C.uniHi}" stroke-width="1" opacity="0.5"/>`;
+
+ // ===== 首 =====
+ s+=`<path d="M48 84 C48 92 48 96 60 98 C72 96 72 92 72 84 Z" fill="${skin}"/>`;
+ s+=`<path d="M48 88 C52 95 68 95 72 88" fill="${skinSh}" opacity="0.5"/>`;
+
+ // ===== 詰襟（スタンドカラー：白縁＋濃紺の立ち襟＋前立て＋金ボタン） =====
+ // 立ち襟（首を囲む。顎下から）
+ s+=`<path d="M42 93 C48 86 72 86 78 93 L79 104 C72 96 48 96 41 104 Z" fill="${C.uni}" stroke="${C.line}" stroke-width="1.4"/>`;
+ // 白の襟縁（V字に開く内側の白）
+ s+=`<path d="M48 92 L60 100 L72 92" fill="none" stroke="${C.collarWhite}" stroke-width="2.4"/>`;
+ // 前立て（中央の縦ライン）
+ s+=`<path d="M60 100 L60 130" stroke="${C.collarWhite}" stroke-width="1.8"/>`;
+ s+=`<path d="M60 100 L60 130" stroke="${C.line}" stroke-width="0.6" opacity="0.6"/>`;
+ // 金ボタン3つ（前立て上に）
+ [107,116,125].forEach(y=>{s+=`<circle cx="60" cy="${y}" r="2.6" fill="${C.gold}" stroke="${C.goldDk}" stroke-width="0.6"/>`});
+
+ // ===== 顔（縦長の卵型・顎あり） =====
+ // 耳（顔の輪郭に接して配置）
+ s+=`<ellipse cx="34" cy="60" rx="4.5" ry="6.5" fill="${skin}" stroke="${C.line}" stroke-width="0.8"/><ellipse cx="86" cy="60" rx="4.5" ry="6.5" fill="${skin}" stroke="${C.line}" stroke-width="0.8"/>`;
+ s+=`<path d="M33 57 q2.5 2.5 1.5 6" fill="none" stroke="${skinLo}" stroke-width="1"/><path d="M87 57 q-2.5 2.5 -1.5 6" fill="none" stroke="${skinLo}" stroke-width="1"/>`;
+ // 顔輪郭
+ s+=`<path d="M34 52 C34 34 46 24 60 24 C74 24 86 34 86 52 C86 68 78 82 60 86 C42 82 34 68 34 52 Z" fill="${skin}" stroke="${C.line}" stroke-width="1.4"/>`;
+ // 頬の陰影
+ s+=`<path d="M36 54 C38 66 46 78 60 82 C50 78 44 66 42 54 Z" fill="${skinSh}" opacity="0.5"/>`;
+ // あご下の陰
+ s+=`<path d="M50 80 C54 84 66 84 70 80 C66 86 54 86 50 80 Z" fill="${skinLo}" opacity="0.4"/>`;
+
+ // 眉（太め・やや直線でキリッと）
+ const brow=f.age==='senior'?'#9a9a9a':shade(hair,0.9);
+ s+=`<path d="M40 50 Q48 46 55 49 L54 51 Q48 48.5 41 52 Z" fill="${brow}"/>`;
+ s+=`<path d="M80 50 Q72 46 65 49 L66 51 Q72 48.5 79 52 Z" fill="${brow}"/>`;
+
+ // 目（白目＋黒目＋上まぶた）
+ s+=`<ellipse cx="48" cy="57" rx="5.4" ry="3.4" fill="#fff"/><ellipse cx="72" cy="57" rx="5.4" ry="3.4" fill="#fff"/>`;
+ s+=`<circle cx="49" cy="57" r="2.2" fill="#20232a"/><circle cx="71" cy="57" r="2.2" fill="#20232a"/>`;
+ s+=`<circle cx="49.7" cy="56.3" r="0.6" fill="#fff"/><circle cx="71.7" cy="56.3" r="0.6" fill="#fff"/>`;
+ // 上まぶたライン
+ s+=`<path d="M42.6 55 Q48 52.4 53.4 55" fill="none" stroke="${C.line}" stroke-width="1.1"/>`;
+ s+=`<path d="M66.6 55 Q72 52.4 77.4 55" fill="none" stroke="${C.line}" stroke-width="1.1"/>`;
+ if(f.gender==='f'){s+=`<path d="M42.6 55 l-1.4 -0.6 M77.4 55 l1.4 -0.6" stroke="${C.line}" stroke-width="1"/>`}
+
+ // 鼻（鼻筋の陰影＋小鼻）
+ s+=`<path d="M60 58 L57 68 Q60 70 63 68" fill="none" stroke="${skinLo}" stroke-width="1.4"/>`;
+ s+=`<path d="M60 60 L61.5 67" fill="none" stroke="${skinSh}" stroke-width="1" opacity="0.6"/>`;
+
+ // 口（中立・真一文字。ニコニコさせない）
+ s+=`<path d="M52 76 Q60 78 68 76" fill="none" stroke="${shade(skin,0.55)}" stroke-width="1.6" stroke-linecap="round"/>`;
+ s+=`<path d="M53 74.6 Q60 73.6 67 74.6" fill="none" stroke="${skinLo}" stroke-width="0.9" opacity="0.5"/>`;
+
  // 髭
- if(f.beard==='mustache'){s+=`<path d="M18 30 q4 1.5 8 0" stroke="${f.hair}" stroke-width="1.6" fill="none"/>`}
- else if(f.beard==='full'){s+=`<path d="M13 27 C14 35 18 38 22 38 C26 38 30 35 31 27 C28 33 16 33 13 27 Z" fill="${f.hair}" opacity="0.9"/>`}
- else if(f.beard==='stubble'){s+=`<g fill="${f.hair}" opacity="0.35">`;for(let i=0;i<14;i++){s+=`<circle cx="${esc(15+f.r()*14)}" cy="${esc(30+f.r()*5)}" r="0.5"/>`}s+=`</g>`}
- // 老け：しわ
- if(f.age==='senior'){s+=`<path d="M14 18.5 q8 -1.5 16 0" stroke="#00000030" stroke-width="0.7" fill="none"/><path d="M15 30 q1.5 3 0 5" stroke="#00000030" stroke-width="0.6" fill="none"/><path d="M29 30 q-1.5 3 0 5" stroke="#00000030" stroke-width="0.6" fill="none"/>`}
- // ===== 海軍 制帽 =====
- s+=`<ellipse cx="${cx}" cy="15.5" rx="14" ry="4.2" fill="${peak}"/>`; // つば
- s+=`<rect x="8" y="10" width="28" height="6" rx="1.5" fill="${capBand}"/>`; // バンド
- s+=`<path d="M8 11 C10 4 34 4 36 11 C30 8 14 8 8 11 Z" fill="${capWhite}"/>`; // クラウン
- s+=`<path d="M8 11 C10 4 34 4 36 11" fill="none" stroke="#c9d2dd" stroke-width="0.7"/>`;
- // 帽章（錨）
- s+=`<circle cx="${cx}" cy="12.6" r="2.4" fill="${gold}" stroke="${goldDk}" stroke-width="0.5"/>`;
- s+=`<path d="M22 11 L22 14.2 M20.5 13.6 q1.5 1.2 3 0 M22 10.7 a0.6 0.6 0 1 0 0.01 0" stroke="${goldDk}" stroke-width="0.5" fill="none"/>`;
- // 将官・佐官のつば金モール（scrambled egg）
- if(f.idx>=7){for(let i=0;i<7;i++){const bx=10+i*3.4;s+=`<path d="M${esc(bx)} 16.4 q1.6 1.6 3.2 0" stroke="${gold}" stroke-width="1" fill="none"/>`}s+=`<path d="M9 17.4 q13 3 26 0" stroke="${gold}" stroke-width="1" fill="none"/>`}
- else if(f.idx>=4){for(let i=0;i<6;i++){const bx=11+i*3.4;s+=`<path d="M${esc(bx)} 16.6 q1.4 1.2 2.8 0" stroke="${gold}" stroke-width="0.8" fill="none" opacity="0.85"/>`}}
- // 戦死者：喪章＋減光
- if(killed){s+=`<rect x="0" y="0" width="44" height="54" rx="6" fill="#0a0f16" opacity="0.4"/>`;s+=`<rect x="30" y="2" width="12" height="4" rx="1" transform="rotate(35 36 4)" fill="#111"/>`}
+ if(f.beard==='mustache'){s+=`<path d="M50 73 Q60 77 70 73 Q66 71 60 72 Q54 71 50 73 Z" fill="${hair}"/>`}
+ else if(f.beard==='full'){s+=`<path d="M36 64 C38 78 48 86 60 86 C72 86 82 78 84 64 C78 76 42 76 36 64 Z" fill="${hair}" opacity="0.92"/>`;s+=`<path d="M52 76 Q60 78 68 76" fill="none" stroke="${shade(skin,0.5)}" stroke-width="1.4"/>`}
+ else if(f.beard==='stubble'){s+=`<g fill="${hair}" opacity="0.3">`;for(let i=0;i<26;i++){s+=`<circle cx="${esc(42+f.r()*36)}" cy="${esc(72+f.r()*12)}" r="0.7"/>`}s+=`</g>`}
+
+ // ===== 髪（顔・目鼻口の前、制帽の後ろ。頭頂ドームで帽子との隙間を無くす） =====
+ // 頭頂ドーム：顔上部を広く覆う（上端はクラウン内へ、下端はこめかみ）。帽子で上半分は隠れる。
+ s+=`<path d="M30 52 C28 28 44 20 60 20 C76 20 92 28 90 52 C86 40 78 33 60 33 C42 33 34 40 30 52 Z" fill="${hair}"/>`;
+ if(f.gender==='f'){
+  // サイド：頬の外側に沿って肩近くまで下ろす
+  s+=`<path d="M30 48 C26 62 28 78 36 86 L41 84 C35 74 34 60 35 48 Z" fill="${hair}"/>`;
+  s+=`<path d="M90 48 C94 62 92 78 84 86 L79 84 C85 74 86 60 85 48 Z" fill="${hair}"/>`;
+ } else {
+  // 短髪：こめかみのもみあげ（耳の内側）
+  s+=`<path d="M31 50 C29 57 30 63 33 67 L37 65 C35 59 35 53 36 48 Z" fill="${hair}"/>`;
+  s+=`<path d="M89 50 C91 57 90 63 87 67 L83 65 C85 59 85 53 84 48 Z" fill="${hair}"/>`;
+ }
+ // 生え際のハイライト
+ s+=`<path d="M34 50 C40 40 80 40 86 50" fill="none" stroke="${shade(hair,0.8)}" stroke-width="1" opacity="0.5"/>`;
+
+ // 老年：しわ（顔の上・帽子の下に見える範囲）
+ if(f.age==='senior'){s+=`<path d="M42 66 q-2 5 0 9" stroke="#00000022" stroke-width="0.9" fill="none"/><path d="M78 66 q2 5 0 9" stroke="#00000022" stroke-width="0.9" fill="none"/><path d="M53 68 q-2 3 -1 6 M67 68 q2 3 1 6" stroke="#00000022" stroke-width="0.8" fill="none"/>`}
+
+ // ===== 制帽（顔の上に被せる。生え際〜額を隠す位置） =====
+ // バイザー（黒・つや）：前方に垂れ下がるつば（下向きの弧）
+ s+=`<path d="M26 42 C34 44 86 44 94 42 C92 49 80 53 60 53 C40 53 28 49 26 42 Z" fill="${C.visor}" stroke="${C.line}" stroke-width="1.3"/>`;
+ s+=`<path d="M32 49 C42 51 78 51 88 49" fill="none" stroke="#33405e" stroke-width="1" opacity="0.7"/>`;
+ // バンド（濃紺）：つばの上、額を隠す。上辺y33・下辺y45で確実に塗り潰す（透けなし）
+ s+=`<path d="M22 33 C22 27 98 27 98 33 L98 45 C98 51 22 51 22 45 Z" fill="${C.band}" stroke="${C.line}" stroke-width="1.3"/>`;
+ // クラウン（白・横に広く前へせり出す高いドーム）：下辺はバンド上端(y34)に沿ってまっすぐ閉じる（塗り潰し・透けなし）
+ s+=`<path d="M16 34 C16 9 104 9 104 34 L104 34 C104 36 96 37 60 37 C24 37 16 36 16 34 Z" fill="${C.white}" stroke="${C.line}" stroke-width="1.6"/>`;
+ // 上部ハイライト（塗りなしの線のみ）
+ s+=`<path d="M24 24 C38 15 82 15 96 24" fill="none" stroke="#dbe1ea" stroke-width="1.4"/>`;
+ // 帽章（濃紺だ円に金の錨）：バンド中央に配置
+ s+=`<ellipse cx="60" cy="37" rx="8.5" ry="6.5" fill="${C.band}" stroke="${C.goldDk}" stroke-width="0.7"/>`;
+ s+=`<path d="M60 33 a1.4 1.4 0 1 0 0.01 0 M60 34.4 L60 41 M55.5 38 Q60 42.6 64.5 38 M56.5 35.6 L63.5 35.6" fill="none" stroke="${C.gold}" stroke-width="1.2"/>`;
+ // 帽章脇の金モール（将官・佐官）：バンド内（y38付近）に収める
+ if(idx>=7){for(let i=0;i<10;i++){const bx=26+i*7;s+=`<path d="M${bx} 37.5 q3 2.6 6 0" stroke="${C.gold}" stroke-width="1.5" fill="none"/>`}s+=`<path d="M24 39 q36 4 72 0" stroke="${C.gold}" stroke-width="1.2" fill="none"/>`}
+ else if(idx>=4){for(let i=0;i<8;i++){const bx=29+i*7.4;s+=`<path d="M${bx} 38 q2.8 2.2 5.6 0" stroke="${C.gold}" stroke-width="1.2" fill="none" opacity="0.9"/>`}}
+ // バイザー端の金ボタン
+ s+=`<circle cx="26" cy="42.5" r="1.7" fill="${C.gold}"/><circle cx="94" cy="42.5" r="1.7" fill="${C.gold}"/>`;
+
+ // ===== 肩章（長方形・角丸・金縁。参照どおり肩の上に平ら） =====
+ const shoulderStripes=idx<=0?0:Math.min(4,Math.max(1,idx-2));
+ const shoulderStars=Math.max(0,Math.min(3,idx-6));
+ [[14,'L'],[106,'R']].forEach(([cxb,side])=>{
+  const w=22,h=8,x=cxb-w/2,y=88;
+  s+=`<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="1.5" fill="${C.visor}" stroke="${C.gold}" stroke-width="1.1"/>`;
+  for(let i=0;i<shoulderStripes;i++){const yy=y+2.2+i*1.7;s+=`<line x1="${x+2.5}" y1="${esc(yy)}" x2="${x+w-2.5}" y2="${esc(yy)}" stroke="${C.gold}" stroke-width="1.1"/>`}
+  for(let i=0;i<shoulderStars;i++){const sx=x+4.5+i*4.2,sy=y+h/2;s+=star(sx,sy,2,C.gold)}
+ });
+
+ // ===== 戦死者：減光＋喪章 =====
+ if(killed){s+=`<rect x="0" y="0" width="120" height="132" rx="10" fill="#0a0f16" opacity="0.42"/>`;s+=`<rect x="86" y="6" width="30" height="8" rx="1.5" transform="rotate(35 101 10)" fill="#111"/>`}
+
  s+=`</svg>`;
  return s;
 }
