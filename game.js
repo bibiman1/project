@@ -76,9 +76,9 @@ function arrive(f){
  if(f.ships.some(s=>s.type==='scout')){
   p.explored=true;
   if(!p.usable)return result('探査結果',`${p.name}<br>利用可能な惑星はありません。`,()=>render());
-  if(!p.owner){p.owner='player';p.pop=10;return result('探査完了',`${p.name}を編入しました。`,()=>render())}
+  if(!p.owner){p.owner='player';p.pop=10;p.materials=Math.max(p.materials||0,220);p.fuel=Math.max(p.fuel||0,160);refuelAtOwnedStar(f,p);return result('探査完了',`${p.name}を自国へ編入しました。<br>開拓用資材220・燃料160を確保しました。<br>${f.name}は${p.name}で燃料補給しました。`,()=>{sel={kind:'planet',id:p.id};route=null;render()})}
  }
- if(canRefuel(p))f.ships.forEach(s=>{const n=SHIPS[s.type].maxFuel-s.fuel,t=Math.min(n,p.fuel);s.fuel+=t;p.fuel-=t});
+ refuelAtOwnedStar(f,p);
  arrivalDialog(f,p);
 }
 function npcArrive(f,p){
@@ -86,7 +86,7 @@ function npcArrive(f,p){
  if(f.ships.some(s=>s.type==='scout')&&p.usable&&!p.owner){p.owner=f.owner;p.pop=rand(8,20);p.fuel=80;p.materials=80;f.order='新星系調査完了'}else f.order='哨戒';
  const playerFleet=S.fleets.find(x=>x.owner==='player'&&x.at===p.id&&x.target===null&&x.ships.length);if(playerFleet&&S.relations[f.owner]<0)startFleetBattle(playerFleet,f,p);else{f.target=null;f.progress=0;f.burn=0}
 }
-function canRefuel(p){return p.owner==='player'||(p.owner&&S.relations[p.owner]>=60)}function send(fid,pid,order){const f=S.fleets.find(x=>x.id===fid),r=routeInfo(f,pid);if(!r.ok)return log('航続距離外です。','warn');f.target=pid;f.progress=0;f.eta=r.turns;f.burn=Math.ceil(r.d*Math.max(.5,1-(commander(f)?.pilot||0)*.004))/r.turns;f.order=order;if(order==='探査')result('探査命令',`${f.name}<br>未踏星系-${pid}へ向かいます。`,()=>render())}
+function canRefuel(p){return p.owner==='player'||(p.owner&&S.relations[p.owner]>=60)}function refuelAtOwnedStar(f,p){if(!canRefuel(p))return 0;if(p.owner==='player'&&(p.fuel||0)<80)p.fuel=80;let supplied=0;f.ships.forEach(ship=>{const max=SHIPS[ship.type].maxFuel+(ship.upgrade?.tank||0)*5,need=Math.max(0,max-ship.fuel),amount=Math.min(need,p.fuel||0);ship.fuel+=amount;p.fuel-=amount;supplied+=amount});if(supplied>0)log(`${f.name}が${p.name}で燃料${Math.floor(supplied)}を補給しました。`,'good');return supplied}function send(fid,pid,order){const f=S.fleets.find(x=>x.id===fid),r=routeInfo(f,pid);if(!r.ok)return log('航続距離外です。','warn');f.target=pid;f.progress=0;f.eta=r.turns;f.burn=Math.ceil(r.d*Math.max(.5,1-(commander(f)?.pilot||0)*.004))/r.turns;f.order=order;if(order==='探査')result('探査命令',`${f.name}<br>未踏星系-${pid}へ向かいます。`,()=>render())}
 function annualRecruit(){const active=S.people.filter(p=>p.alive!==false);if(active.length>=20)return;for(let i=0;i<Math.min(rand(1,3),20-active.length);i++){const id=Math.max(...S.people.map(p=>p.id))+1;S.people.push({id,name:`候補生-${id}`,xp:0,pilot:rand(15,35),force:rand(15,35),diplomacy:rand(15,35),assignment:null,alive:true})}}
 function facilityAllowed(p,k){if(p.type!=='gas')return true;return k==='fuelPlant'||FAC[k][1]==='orbital'}
 function facilityCost(p,k){const lv=p.facilities[k]+1,m=2**(lv-1),d=FAC[k];return{lv,money:d[2]*m,materials:d[3]*m,turns:d[4]+(lv-1)*10}}
@@ -102,18 +102,19 @@ function facilityProblem(p,k){
  if(p.materials<c.materials)problems.push(`${p.name}の資材が${Math.ceil(c.materials-p.materials)}不足`);
  return problems;
 }
+function transferConstructionMaterials(p,needed){const capital=S.planets.find(x=>x.owner==='player'&&x.id!==p.id&&x.materials>0);if(!capital)return 0;const amount=Math.min(needed,capital.materials);capital.materials-=amount;p.materials+=amount;if(amount>0)log(`${capital.name}から${p.name}へ建築資材${Math.floor(amount)}を移送しました。`,'info');return amount}
 function startFacility(pid,k){
- const p=S.planets[pid],c=facilityCost(p,k),problems=facilityProblem(p,k);
+ const p=S.planets[pid],c=facilityCost(p,k);if(p.materials<c.materials)transferConstructionMaterials(p,c.materials-p.materials);const problems=facilityProblem(p,k);
  if(problems.length)return result('建築できません',`<b>${FAC[k][0]} Lv${c.lv}</b><br>${problems.map(x=>`・${x}`).join('<br>')}<br><br>現在：資金${Math.floor(S.money)} / ${p.name}資材${Math.floor(p.materials)}<br>必要：資金${c.money} / 資材${c.materials}`,()=>openFacilities(pid));
  S.money-=c.money;p.materials-=c.materials;p.facilityQueue={k,remaining:c.turns,total:c.turns,lv:c.lv};
- result('建築開始',`${FAC[k][0]} Lv${c.lv}<br>資金${c.money}・資材${c.materials}を使用しました。<br>完成まで${c.turns}ターン`,()=>openFacilities(pid));
+ result('建築開始',`${p.name}<br>${FAC[k][0]} Lv${c.lv}<br>資金${c.money}・資材${c.materials}を使用しました。<br>完成まで${c.turns}ターン`,()=>{render();openFacilities(pid)});
 }
 function processFacilities(){S.planets.filter(p=>p.facilityQueue).forEach(p=>{const q=p.facilityQueue;if(--q.remaining>0)return;p.facilities[q.k]=q.lv;if(q.k==='dock')p.dock=q.lv;if(q.k==='habitat')p.cap+=100;if(q.k==='defense')p.defense+=50;p.facilityQueue=null;log(`${p.name}で${FAC[q.k][0]}が完成しました。`,'good')})}
 function openFacilities(pid=sel.kind==='planet'?sel.id:0){
  const p=S.planets[pid];if(!p||p.owner!=='player')return result('建築できません','自国星系を選択してください。',closeModal);
  const cards=Object.keys(FAC).map(k=>{const d=FAC[k],c=facilityCost(p,k),problems=facilityProblem(p,k),typeAllowed=facilityAllowed(p,k),hardDisabled=!typeAllowed||p.facilities[k]>=5||!!p.facilityQueue;return `<div class="facilityCard ${typeAllowed?'':'blocked'}"><div><b>${d[0]} Lv${p.facilities[k]}</b><small>${d[1]==='orbital'?'軌道施設':'地上施設'}</small>${problems.length?`<span class="shortage">${problems.join(' / ')}</span>`:'<span class="available">建築可能</span>'}</div><button data-fac="${k}" ${hardDisabled?'disabled':''}>${p.facilities[k]?'強化':'建築'}<small>資金${c.money}/資材${c.materials}/${c.turns}T</small></button></div>`}).join('');
  modal('施設建築',`<h3>${p.name} / ${TYPES[p.type][0]}</h3><div class="resourceSummary"><div>全体資金<br><b>${Math.floor(S.money)}</b></div><div>${p.name}の資材<br><b>${Math.floor(p.materials)}</b></div><div>建築枠<br><b>${p.facilityQueue?'使用中':'空き'}</b></div></div>${p.type==='gas'?'<div class="routeOk">燃料プラントと軌道施設を建築できます。</div>':''}${p.materials<120?`<div class="routeWarning">${p.name}の資材が不足しています。施設建築には、この星系へ資材を輸送する必要があります。</div>`:''}${p.facilityQueue?`<div class="buildQueue">建築中：${FAC[p.facilityQueue.k][0]} / 残り${p.facilityQueue.remaining}T</div>`:''}<div class="facilityGrid">${cards}</div>`,[['OK',closeModal]]);
- $('modalBody').querySelectorAll('[data-fac]').forEach(b=>b.onclick=()=>startFacility(pid,b.dataset.fac));
+ $('modalBody').querySelectorAll('[data-fac]').forEach(button=>button.addEventListener('click',event=>{event.preventDefault();event.stopPropagation();startFacility(pid,button.dataset.fac)}));
 }
 function processShips(){S.planets.filter(p=>p.buildQueue.length).forEach(p=>{const q=p.buildQueue[0];if(--q.remaining<=0&&p.dockPool.length<p.dock*4){p.dockPool.push(q.ship);p.buildQueue.shift();log(`${SHIPS[q.ship.type].name}が完成しました。`,'good')}})}function build(t){const p=S.planets.find(x=>x.owner==='player'&&x.dock),d=SHIPS[t];if(!p||S.money<d.cost[0]||p.materials<d.cost[1])return log('造船資源不足です。','warn');if(p.dockPool.length+p.buildQueue.length>=p.dock*4)return log('ドック上限です。','warn');S.money-=d.cost[0];p.materials-=d.cost[1];p.buildQueue.push({ship:{id:`s${Date.now()}`,type:t,hp:d.hp,fuel:d.maxFuel,level:1,upgrade:{}},remaining:d.turns,total:d.turns});result('建造開始',`${d.name}<br>完成まで${d.turns}ターン`,()=>render())}
 function render(){stats();draw();fleetList();detail();$('diplomacy').innerHTML=''}function stats(){$('stats').innerHTML=`<span>${S.year}年 ${S.turn}/100</span><span>資金 ${Math.floor(S.money)}</span>`}function gauge(p){return `<div class="fuel"><i style="width:${p}%"></i></div>`}function fleetList(){$('fleets').innerHTML='';S.fleets.filter(f=>f.owner==='player').forEach(f=>{const b=document.createElement('button');b.className=`card ${sel.kind==='fleet'&&sel.id===f.id?'selected':''}`;b.innerHTML=`<b>${f.name}</b><br>${f.order}${gauge(Math.min(...f.ships.map(s=>s.fuel/SHIPS[s.type].maxFuel*100)))}`;b.onclick=()=>{sel={kind:'fleet',id:f.id};route={fid:f.id,pid:f.at};render()};$('fleets').appendChild(b)})}
