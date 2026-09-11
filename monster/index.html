@@ -1,15 +1,29 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>モンスター</title>
-  <link rel="stylesheet" href="./style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>モンスター表示テスト</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="character-module" aria-hidden="true">
-    <canvas id="characterCanvas" width="128" height="128"></canvas>
+  <main class="demo-page">
+    <section class="demo-card">
+      <p class="demo-label">FP9 GITHUB PAGES TEST</p>
+      <h1>モンスター表示テスト</h1>
+      <p>モンスターが画面下部を左右に移動します。</p>
+    </section>
+  </main>
+
+  <div class="monster-module" data-monster-app>
+    <canvas
+      class="monster-canvas"
+      width="128"
+      height="128"
+      aria-label="モンスターのアニメーション"
+    ></canvas>
   </div>
-  <script src="./script.js"></script>
+
+  <script src="script.js"></script>
 </body>
 </html>
