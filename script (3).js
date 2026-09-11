@@ -1,6 +1,6 @@
 (function () {
   "use strict";
-  const SPRITE_URL = "./kanepiyo_sprite_sheet_v2.png";
+  const SPRITE_URL = "./kokeshin_sprite_sheet_v4_no_arms.png";
   const FRAME_SIZE = 128;
   const COLS = 8;
   const ROW_IDLE = 0;
