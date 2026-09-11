@@ -1,22 +1,15 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>コケシン表示テスト</title>
-  <link rel="stylesheet" href="style.css">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>こけしん</title>
+  <link rel="stylesheet" href="./style.css">
 </head>
 <body>
-  <main class="demo-page">
-    <section class="demo-card">
-      <p class="demo-label">FP9 GITHUB PAGES TEST</p>
-      <h1>コケシン表示テスト</h1>
-      <p>コケシンが画面下部を左右に移動します。</p>
-    </section>
-  </main>
-  <div class="character-module" data-character-app data-character-name="コケシン">
-    <canvas class="character-canvas" width="128" height="128" aria-label="コケシンのアニメーション"></canvas>
+  <div class="character-module" aria-hidden="true">
+    <canvas id="characterCanvas" width="128" height="128"></canvas>
   </div>
-  <script src="script.js"></script>
+  <script src="./script.js"></script>
 </body>
 </html>
