@@ -1,15 +1,19 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>カネぴよ</title>
-  <link rel="stylesheet" href="./style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GitHub Pages 動作確認</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="character-module" aria-hidden="true">
-    <canvas id="characterCanvas" width="128" height="128"></canvas>
-  </div>
-  <script src="./script.js"></script>
+  <main class="card">
+    <p class="label">GitHub Pages TEST</p>
+    <h1>公開できました</h1>
+    <p>このページが表示されれば、リポジトリとGitHub Pagesの設定は正常です。</p>
+    <button id="checkButton" type="button">動作確認</button>
+    <p id="result" class="result" aria-live="polite"></p>
+  </main>
+  <script src="script.js"></script>
 </body>
 </html>

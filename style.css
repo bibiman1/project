@@ -1,18 +1,69 @@
-.character-module {
-  position: fixed;
-  right: 24px;
-  bottom: 24px;
-  width: 128px;
-  height: 128px;
-  z-index: 9990;
-  pointer-events: none;
+* {
+  box-sizing: border-box;
 }
-#characterCanvas {
-  display: block;
-  width: 128px;
-  height: 128px;
-  image-rendering: auto;
+
+body {
+  min-height: 100vh;
+  margin: 0;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: #f3f6f9;
+  color: #1f2937;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
-@media (max-width: 480px) {
-  .character-module { right: 12px; bottom: 12px; }
+
+.card {
+  width: min(100%, 640px);
+  padding: 40px;
+  border: 1px solid #d8dee4;
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow: 0 12px 30px rgba(31, 41, 55, 0.08);
+  text-align: center;
+}
+
+.label {
+  margin: 0 0 12px;
+  color: #57606a;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+}
+
+h1 {
+  margin: 0 0 16px;
+  font-size: clamp(30px, 7vw, 48px);
+}
+
+p {
+  line-height: 1.8;
+}
+
+button {
+  margin-top: 16px;
+  padding: 12px 24px;
+  border: 0;
+  border-radius: 8px;
+  background: #0969da;
+  color: #ffffff;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #0757b9;
+}
+
+button:focus-visible {
+  outline: 3px solid #8cbeff;
+  outline-offset: 3px;
+}
+
+.result {
+  min-height: 29px;
+  margin-bottom: 0;
+  color: #1a7f37;
+  font-weight: 700;
 }
