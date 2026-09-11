@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const SPRITE_URL = "./assets/negiduck_sprite_sheet_v4_back_negi.png";
+  const SPRITE_URL = "./assets/moneymask_luchador_sprite_sheet.png";
   const FRAME_SIZE = 128;
   const COLS = 8;
   const ROW_IDLE = 0;
