@@ -1,0 +1,26 @@
+.negiduck-module {
+  position: fixed;
+  right: 24px;
+  top: min(460px, calc(100vh - 152px));
+  width: 128px;
+  height: 128px;
+  z-index: 9992;
+  pointer-events: none;
+  display: block;
+  visibility: visible;
+}
+
+#negiduckCanvas {
+  width: 128px;
+  height: 128px;
+  display: block;
+  image-rendering: auto;
+}
+
+@media (max-width: 480px) {
+  .negiduck-module {
+    right: 12px;
+    top: auto;
+    bottom: 12px;
+  }
+}
