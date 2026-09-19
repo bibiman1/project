@@ -17,6 +17,7 @@
   <main class="town-wrap">
     <div class="game-frame">
       <canvas id="gameCanvas" width="1000" height="620" aria-label="町のマップ"></canvas>
+      <div id="transitionFlash" class="transition-flash" aria-hidden="true"></div>
 
       <div id="talkHint" class="talk-hint" hidden>Enter / Space / Z で話す</div>
 
@@ -24,6 +25,12 @@
         <p id="dialogName" class="dialog-name"></p>
         <p id="dialogText" class="dialog-text"></p>
         <p id="dialogNext" class="dialog-next">▼</p>
+      </div>
+
+      <div id="battleMenu" class="battle-menu" hidden>
+        <button type="button" class="battle-cmd" data-cmd="0">⚔️ たたかう</button>
+        <button type="button" class="battle-cmd" data-cmd="1">🛡️ ぼうぎょ</button>
+        <button type="button" class="battle-cmd" data-cmd="2">🏃 にげる</button>
       </div>
     </div>
 

@@ -132,6 +132,57 @@ body {
   50% { transform: translateY(3px); }
 }
 
+.transition-flash {
+  position: absolute;
+  inset: 0;
+  background: #fff;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 160ms ease;
+  z-index: 5;
+}
+
+.transition-flash.active {
+  opacity: 1;
+  transition: opacity 0ms;
+}
+
+.battle-menu {
+  position: absolute;
+  right: 16px;
+  bottom: 16px;
+  display: grid;
+  gap: 8px;
+  width: 200px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--paper);
+  box-shadow: var(--shadow);
+}
+
+.battle-menu[hidden] {
+  display: none;
+}
+
+.battle-cmd {
+  padding: 10px 14px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+}
+
+.battle-cmd.selected {
+  border-color: var(--accent);
+  background: rgba(183, 68, 42, 0.1);
+  color: var(--accent);
+}
+
 .town-status {
   width: min(1000px, 100%);
   text-align: right;
@@ -206,6 +257,10 @@ body {
   .touch-controls {
     display: flex;
   }
+}
+
+body.battle-active .touch-controls {
+  display: none;
 }
 
 @media (max-width: 700px) {

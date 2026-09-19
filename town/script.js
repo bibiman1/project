@@ -82,6 +82,7 @@
       y: 460,
       roof: "#6b7a4f",
       wall: "#e9e8d6",
+      battle: true,
       lines: ["驚かせてごめんね、実はやさしいんだ。", "友達になってくれる?"],
     },
     {
@@ -147,6 +148,9 @@
   const progressText = document.getElementById("progressText");
   const talkButton = document.getElementById("talkButton");
   const dpadButtons = document.querySelectorAll(".dpad-btn");
+  const transitionFlash = document.getElementById("transitionFlash");
+  const battleMenu = document.getElementById("battleMenu");
+  const battleCmdButtons = document.querySelectorAll(".battle-cmd");
 
   const player = {
     x: WORLD_W / 2,
@@ -164,6 +168,9 @@
   let dialogNpc = null;
   let dialogLineIndex = 0;
 
+  let scene = "town";
+  let battle = null;
+
   const pressed = { up: false, down: false, left: false, right: false };
   let talkKeyEdge = false;
 
@@ -178,6 +185,15 @@
 
   function clamp(value, min, max) {
     return Math.max(min, Math.min(max, value));
+  }
+
+  function randInt(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+  }
+
+  function flashTransition() {
+    transitionFlash.classList.add("active");
+    window.setTimeout(() => transitionFlash.classList.remove("active"), 90);
   }
 
   function distance(ax, ay, bx, by) {
@@ -282,15 +298,168 @@
   }
 
   function handleTalkPress() {
+    if (scene === "battle") {
+      handleBattleConfirm();
+      return;
+    }
     if (dialogOpen) {
       advanceDialog();
     } else if (activeNpc) {
-      openDialog(activeNpc);
+      if (activeNpc.battle) {
+        startBattle(activeNpc);
+      } else {
+        openDialog(activeNpc);
+      }
     }
   }
 
   function updateProgress() {
     progressText.textContent = `話した人数: ${visited.size} / ${NPCS.length}`;
+  }
+
+  function startBattle(npc) {
+    scene = "battle";
+    document.body.classList.add("battle-active");
+    flashTransition();
+    dialogOpen = false;
+    talkHint.hidden = true;
+    battle = {
+      npc,
+      playerHp: 30,
+      playerMaxHp: 30,
+      enemyHp: 24,
+      enemyMaxHp: 24,
+      turn: "message",
+      selection: 0,
+      defending: false,
+      queue: [],
+      onQueueDone: null,
+      shakeEnemy: 0,
+      shakePlayer: 0,
+    };
+    pushBattleMessages([`${npc.name}が あらわれた!`], () => {
+      battle.turn = "select";
+      showBattleMenu();
+    });
+  }
+
+  function pushBattleMessages(lines, onDone) {
+    battle.queue = lines.slice();
+    battle.onQueueDone = onDone || null;
+    battle.turn = "message";
+    battleMenu.hidden = true;
+    advanceBattleMessage();
+  }
+
+  function advanceBattleMessage() {
+    if (battle.queue.length === 0) {
+      dialogBox.hidden = true;
+      const cb = battle.onQueueDone;
+      battle.onQueueDone = null;
+      if (cb) cb();
+      return;
+    }
+    const line = battle.queue.shift();
+    dialogName.textContent = "⚔ バトル";
+    dialogText.textContent = line;
+    dialogBox.hidden = false;
+  }
+
+  function showBattleMenu() {
+    dialogBox.hidden = true;
+    battleMenu.hidden = false;
+    renderBattleMenu();
+  }
+
+  function renderBattleMenu() {
+    battleCmdButtons.forEach((btn, i) => {
+      btn.classList.toggle("selected", i === battle.selection);
+    });
+  }
+
+  function handleBattleConfirm() {
+    if (!battle) return;
+    if (battle.turn === "message") {
+      advanceBattleMessage();
+    } else if (battle.turn === "select") {
+      chooseCommand(battle.selection);
+    }
+  }
+
+  function chooseCommand(index) {
+    if (!battle || battle.turn !== "select") return;
+    battle.selection = index;
+    battle.turn = "resolving";
+    battleMenu.hidden = true;
+
+    if (index === 0) {
+      const dmg = randInt(6, 11);
+      battle.enemyHp = Math.max(0, battle.enemyHp - dmg);
+      battle.shakeEnemy = 10;
+      pushBattleMessages(
+        ["勇者の こうげき!", `${battle.npc.name}に ${dmg} の ダメージ!`],
+        () => afterPlayerAction()
+      );
+    } else if (index === 1) {
+      battle.defending = true;
+      pushBattleMessages(["勇者は みを まもっている。"], () => afterPlayerAction(true));
+    } else {
+      if (Math.random() < 0.6) {
+        pushBattleMessages(["うまく にげきれた!"], () => endBattle("flee"));
+      } else {
+        pushBattleMessages(["にげられなかった!"], () => afterPlayerAction(true));
+      }
+    }
+  }
+
+  function afterPlayerAction(skipWinCheck) {
+    if (!skipWinCheck && battle.enemyHp <= 0) {
+      pushBattleMessages([`${battle.npc.name}を たおした!`], () => endBattle("win"));
+      return;
+    }
+
+    const dmg = randInt(4, 9);
+    const finalDmg = battle.defending ? Math.max(1, Math.ceil(dmg / 2)) : dmg;
+    battle.defending = false;
+    battle.playerHp = Math.max(0, battle.playerHp - finalDmg);
+    battle.shakePlayer = 10;
+
+    pushBattleMessages(
+      [`${battle.npc.name}の こうげき!`, `勇者は ${finalDmg} の ダメージを うけた!`],
+      () => {
+        if (battle.playerHp <= 0) {
+          pushBattleMessages(["勇者は たおれてしまった…"], () => endBattle("lose"));
+        } else {
+          battle.turn = "select";
+          showBattleMenu();
+        }
+      }
+    );
+  }
+
+  function endBattle(result) {
+    const npc = battle.npc;
+    scene = "town";
+    document.body.classList.remove("battle-active");
+    flashTransition();
+    dialogBox.hidden = true;
+    battleMenu.hidden = true;
+    talkHint.hidden = true;
+
+    const angle = Math.atan2(player.y - npc.y, player.x - npc.x) || -Math.PI / 2;
+    const pushDist = SOLID_RADIUS + TALK_RADIUS + 20;
+    player.x = clamp(npc.x + Math.cos(angle) * pushDist, 60, WORLD_W - 60);
+    player.y = clamp(npc.y + Math.sin(angle) * pushDist, 150, WORLD_H - 40);
+
+    if (result === "win") {
+      visited.add(npc.id);
+      updateProgress();
+    } else if (result === "lose") {
+      player.x = PLAZA_X;
+      player.y = PLAZA_Y + 40;
+    }
+
+    battle = null;
   }
 
   function updateAnimationFrame(timestamp) {
@@ -495,7 +664,7 @@
 
   let pattern = null;
 
-  function draw() {
+  function drawTown() {
     if (!pattern) pattern = groundPattern();
     ctx.clearRect(0, 0, WORLD_W, WORLD_H);
 
@@ -542,12 +711,133 @@
     }
   }
 
+  function drawBigSprite(img, frame, row, cx, cy, size) {
+    if (!img || !img.complete || img.naturalWidth === 0) return;
+    ctx.drawImage(
+      img,
+      frame * FRAME_SIZE,
+      row * FRAME_SIZE,
+      FRAME_SIZE,
+      FRAME_SIZE,
+      cx - size / 2,
+      cy - size / 2,
+      size,
+      size
+    );
+  }
+
+  function drawHpBar(x, y, w, label, hp, maxHp, color) {
+    const h = 40;
+    ctx.fillStyle = "rgba(255, 253, 248, 0.94)";
+    roundRect(x, y, w, h, 10);
+    ctx.fill();
+    ctx.strokeStyle = "rgba(32,32,32,0.2)";
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    ctx.fillStyle = "#202020";
+    ctx.font = "bold 13px sans-serif";
+    ctx.textAlign = "left";
+    ctx.textBaseline = "top";
+    ctx.fillText(label, x + 12, y + 6);
+
+    const barX = x + 12;
+    const barY = y + 24;
+    const barW = w - 24;
+    const barH = 8;
+    ctx.fillStyle = "#e4ded0";
+    roundRect(barX, barY, barW, barH, 4);
+    ctx.fill();
+
+    const ratio = Math.max(0, hp) / maxHp;
+    if (ratio > 0) {
+      ctx.fillStyle = color;
+      roundRect(barX, barY, Math.max(2, barW * ratio), barH, 4);
+      ctx.fill();
+    }
+
+    ctx.fillStyle = "#66645f";
+    ctx.font = "10px sans-serif";
+    ctx.textAlign = "right";
+    ctx.textBaseline = "top";
+    ctx.fillText(`${Math.max(0, hp)}/${maxHp}`, x + w - 12, y + 6);
+  }
+
+  function drawBattle() {
+    ctx.clearRect(0, 0, WORLD_W, WORLD_H);
+
+    const grad = ctx.createRadialGradient(
+      WORLD_W * 0.5,
+      WORLD_H * 0.42,
+      60,
+      WORLD_W * 0.5,
+      WORLD_H * 0.42,
+      WORLD_W * 0.8
+    );
+    grad.addColorStop(0, "#4a3530");
+    grad.addColorStop(1, "#1e1512");
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, WORLD_W, WORLD_H);
+
+    ctx.fillStyle = "rgba(0,0,0,0.28)";
+    ctx.beginPath();
+    ctx.ellipse(WORLD_W * 0.28, WORLD_H * 0.82, 150, 30, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.ellipse(WORLD_W * 0.72, WORLD_H * 0.4, 160, 32, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    if (!battle) return;
+
+    const shakeE = battle.shakeEnemy > 0 ? (Math.random() - 0.5) * battle.shakeEnemy : 0;
+    const shakeP = battle.shakePlayer > 0 ? (Math.random() - 0.5) * battle.shakePlayer : 0;
+    if (battle.shakeEnemy > 0) battle.shakeEnemy -= 1;
+    if (battle.shakePlayer > 0) battle.shakePlayer -= 1;
+
+    drawBigSprite(
+      battle.npc.img,
+      player.frame,
+      ROW_IDLE,
+      WORLD_W * 0.72 + shakeE,
+      WORLD_H * 0.42,
+      DRAW_SIZE * 1.7
+    );
+    drawBigSprite(
+      player.img,
+      player.frame,
+      ROW_RIGHT,
+      WORLD_W * 0.28 + shakeP,
+      WORLD_H * 0.82,
+      DRAW_SIZE * 1.35
+    );
+
+    drawHpBar(WORLD_W * 0.05, 24, 230, "勇者", battle.playerHp, battle.playerMaxHp, "#5a9463");
+    drawHpBar(WORLD_W * 0.95 - 230, 24, 230, battle.npc.name, battle.enemyHp, battle.enemyMaxHp, "#b7442a");
+  }
+
+  function draw() {
+    if (scene === "battle") {
+      drawBattle();
+    } else {
+      drawTown();
+    }
+  }
+
   function loop(timestamp) {
     updateAnimationFrame(timestamp);
-    updatePlayer();
 
-    activeNpc = dialogOpen ? null : findActiveNpc();
-    talkHint.hidden = !activeNpc || dialogOpen;
+    if (scene === "town") {
+      updatePlayer();
+      activeNpc = dialogOpen ? null : findActiveNpc();
+      talkHint.hidden = !activeNpc || dialogOpen;
+      if (activeNpc) {
+        talkHint.textContent = activeNpc.battle
+          ? "Enter / Space / Z で たたかう"
+          : "Enter / Space / Z で話す";
+      }
+    } else {
+      activeNpc = null;
+    }
 
     if (talkKeyEdge) {
       handleTalkPress();
@@ -574,8 +864,34 @@
   };
 
   const TALK_KEYS = new Set(["Enter", " ", "z", "Z"]);
+  const UP_KEYS = new Set(["ArrowUp", "w", "W"]);
+  const DOWN_KEYS = new Set(["ArrowDown", "s", "S"]);
 
   window.addEventListener("keydown", (event) => {
+    if (scene === "battle") {
+      if (battle && battle.turn === "select") {
+        if (UP_KEYS.has(event.key)) {
+          battle.selection = (battle.selection + 2) % 3;
+          renderBattleMenu();
+          event.preventDefault();
+          return;
+        }
+        if (DOWN_KEYS.has(event.key)) {
+          battle.selection = (battle.selection + 1) % 3;
+          renderBattleMenu();
+          event.preventDefault();
+          return;
+        }
+      }
+      if (TALK_KEYS.has(event.key)) {
+        if (!event.repeat) talkKeyEdge = true;
+        event.preventDefault();
+        return;
+      }
+      if (KEY_MAP[event.key]) event.preventDefault();
+      return;
+    }
+
     const dir = KEY_MAP[event.key];
     if (dir) {
       pressed[dir] = true;
@@ -617,6 +933,14 @@
 
   dialogBox.addEventListener("click", () => {
     talkKeyEdge = true;
+  });
+
+  battleCmdButtons.forEach((btn, i) => {
+    btn.addEventListener("click", () => {
+      if (scene === "battle" && battle && battle.turn === "select") {
+        chooseCommand(i);
+      }
+    });
   });
 
   async function init() {
