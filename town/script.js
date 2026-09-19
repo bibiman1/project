@@ -36,6 +36,12 @@
       atkMin: 3,
       atkMax: 6,
       defeated: false,
+      isAlly: false,
+      magic: "water",
+      preLine: "貯金は だれにも わたさない!",
+      lowHpLine: "ま、まって!貯金箱は こわさないで……!",
+      deathLine: "うわぁぁ、貯金が……!",
+      dropItem: { name: "コツコツ貯金箱", hpBonus: 4, atkBonus: 0 },
       lines: ["コツコツ貯金するのが趣味なんだ。", "いつか大きな貯金箱になるのが夢さ!"],
       accusingLines: ["……どうして あんな ことを したんだ。", "しばらく 貯金箱に かくれて いるよ。"],
     },
@@ -51,6 +57,12 @@
       atkMin: 4,
       atkMax: 8,
       defeated: false,
+      isAlly: false,
+      magic: "lightning",
+      preLine: "夜は これからだよ。",
+      lowHpLine: "ま、まって……お願い、見逃して……!",
+      deathLine: "夜が……あけて……いく……",
+      dropItem: { name: "夜目のお守り", hpBonus: 6, atkBonus: 0 },
       lines: ["夜になると目が冴えちゃうんだよね。", "静かな町がお気に入りなんだ。"],
       accusingLines: ["町が 赤く 染まってる…… こわいよ。", "しばらく そっとしておいて ほしい。"],
     },
@@ -66,6 +78,12 @@
       atkMin: 3,
       atkMax: 6,
       defeated: false,
+      isAlly: false,
+      magic: "lightning",
+      preLine: "ピヨピヨ!かかってこい!",
+      lowHpLine: "ピヨ……お願い、命だけは……!",
+      deathLine: "ピ、ピヨォ……",
+      dropItem: { name: "こがねの羽根", hpBonus: 0, atkBonus: 2 },
       lines: ["ピヨ!今日の運勢は絶好調だよ!", "見つけてくれてうれしいピヨ。"],
       accusingLines: ["ピヨ……もう いっしょに あそべないよ。", "モンスターは わるい 子じゃ なかったのに。"],
     },
@@ -81,6 +99,12 @@
       atkMin: 4,
       atkMax: 7,
       defeated: false,
+      isAlly: false,
+      magic: "water",
+      preLine: "……(だまって しずかに かまえた)",
+      lowHpLine: "……た、たすけて……",
+      deathLine: "……。",
+      dropItem: { name: "こけしの魂", hpBonus: 5, atkBonus: 0 },
       lines: ["じっとしているのが得意なんだ。", "たまには町を見て回るのもいいね。"],
       accusingLines: ["……。", "(だまって そっと 目を そらした)"],
     },
@@ -96,6 +120,12 @@
       atkMin: 6,
       atkMax: 11,
       defeated: false,
+      isAlly: false,
+      magic: "lightning",
+      preLine: "王者の ちからを みせてやる!",
+      lowHpLine: "ば、ばかな……この 俺が……ま、まて、たのむ……!",
+      deathLine: "王者の ほこりが……くずれ……る……",
+      dropItem: { name: "王者のベルト", hpBonus: 6, atkBonus: 4 },
       lines: ["ファイトマネーは全部貯金してるぜ!", "強さもお金も磨き続けるのさ。"],
       accusingLines: ["力を 見せつける ためだけに 命を うばうなんて。", "強さの いみを はきちがえてるんじゃないか?"],
     },
@@ -111,6 +141,12 @@
       atkMin: 4,
       atkMax: 9,
       defeated: false,
+      isAlly: false,
+      magic: "explosion",
+      preLine: "ガオー!……あ、いや、こわくないよ?でも たたかうよ!",
+      lowHpLine: "ま、待って!ぼく やさしいモンスターなんだ……お願い!",
+      deathLine: "こんな はずじゃ……",
+      dropItem: { name: "モンスターの爪", hpBonus: 3, atkBonus: 3 },
       lines: ["驚かせてごめんね、実はやさしいんだ。", "友達になってくれる?"],
       graveLines: ["……。", "ここに しずかに ねむっている。"],
     },
@@ -126,6 +162,12 @@
       atkMin: 3,
       atkMax: 7,
       defeated: false,
+      isAlly: false,
+      magic: "explosion",
+      preLine: "ねぎを なめるなよ!",
+      lowHpLine: "ま、まって!ねぎなら いくらでも あげるから!",
+      deathLine: "グワァ……ねぎが……",
+      dropItem: { name: "ねぎの剣", hpBonus: 0, atkBonus: 3 },
       lines: ["ねぎ、持っていく?", "新鮮なねぎ、自慢なんだ。"],
       accusingLines: ["今は ねぎを わたす 気分じゃ ないよ。", "……少し ひとりに させて。"],
     },
@@ -141,6 +183,12 @@
       atkMin: 4,
       atkMax: 7,
       defeated: false,
+      isAlly: false,
+      magic: "explosion",
+      preLine: "あたたかく もてなして やろう……いや、やっつけてやる!",
+      lowHpLine: "ま、まって!火鉢の火が きえちゃう……お願い!",
+      deathLine: "あぁ、火が……",
+      dropItem: { name: "火鉢の残り火", hpBonus: 0, atkBonus: 3 },
       lines: ["火鉢であったまっていってね。", "寒い日はここに集まるんだ。"],
       accusingLines: ["火鉢の 火も、なんだか 冷たく 感じるよ。", "みんな おびえて しまった。"],
     },
@@ -156,24 +204,32 @@
       atkMin: 5,
       atkMax: 9,
       defeated: false,
+      isAlly: false,
+      magic: "lightning",
+      preLine: "せんとう モード、きどう。",
+      lowHpLine: "け、けいこく……バッテリーが……たすけて……ください……",
+      deathLine: "き……のう……ていし……",
+      dropItem: { name: "レトロ回路", hpBonus: 0, atkBonus: 3 },
       lines: ["ピポパポ…なつかしい音がするでしょ?", "町の見回りが仕事なんだ。"],
       accusingLines: ["けいこく:勇者の せっきんを けんち。", "みまもりを きょうかします……。"],
     },
   ];
 
-  const DEFEAT_ORDER = [
-    "butamin",
-    "kanepiyo",
-    "negiduck",
-    "kokeshin",
-    "okame-hibachi",
-    "fukurin",
-    "retrobo",
-    "monster",
-    "moneymask",
+  const GRAVE_LINES = ["……。", "ここで しずかに ねむっている。"];
+
+  const ALLY_BONUS = { hpBonus: 3, atkBonus: 1 };
+
+  const RIVAL_TAUNTS = [
+    (name) => `${name}は 四天王最弱。 われらの 面汚しよ。`,
+    (name) => `${name}などに てこずるとは、なさけない。`,
+    (name) => `${name}の ぶんまで、たおしてくれる!`,
   ];
 
-  const GRAVE_LINES = ["……。", "ここで しずかに ねむっている。"];
+  const MAGIC_INFO = {
+    explosion: { verb: "ばくえんじゅつ", flash: "rgba(255, 140, 40, 0.45)" },
+    water: { verb: "すいりゅうじゅつ", flash: "rgba(60, 140, 220, 0.4)" },
+    lightning: { verb: "らいめいじゅつ", flash: "rgba(255, 240, 120, 0.5)" },
+  };
 
   const SQUAT_TARGET = 20;
   const SQUAT_DURATION = 6000;
@@ -234,6 +290,7 @@
   const dialogName = document.getElementById("dialogName");
   const dialogText = document.getElementById("dialogText");
   const progressText = document.getElementById("progressText");
+  const statsText = document.getElementById("statsText");
   const talkButton = document.getElementById("talkButton");
   const dpadButtons = document.querySelectorAll(".dpad-btn");
   const transitionFlash = document.getElementById("transitionFlash");
@@ -263,18 +320,14 @@
   let battle = null;
   let squat = null;
   let ending = null;
+  let lastDefeatedName = null;
+
+  const BASE_PLAYER_STATS = { maxHp: 30, atkMin: 6, atkMax: 11 };
+  const playerStats = { ...BASE_PLAYER_STATS };
 
   function isMonsterDefeated() {
     const monster = NPCS.find((npc) => npc.id === "monster");
     return !!(monster && monster.defeated);
-  }
-
-  function getNextRequiredNpc() {
-    for (const id of DEFEAT_ORDER) {
-      const npc = NPCS.find((n) => n.id === id);
-      if (npc && !npc.defeated) return npc;
-    }
-    return null;
   }
 
   const BLOOD_SPLATS = [
@@ -391,7 +444,7 @@
     dialogOpen = true;
     dialogNpc = npc;
     dialogLineIndex = 0;
-    activeDialogLines = npc.graveLines || GRAVE_LINES;
+    activeDialogLines = npc.isAlly ? npc.lines : npc.graveLines || GRAVE_LINES;
     showDialogLine();
     dialogBox.hidden = false;
     talkHint.hidden = true;
@@ -438,7 +491,7 @@
     if (dialogOpen) {
       advanceDialog();
     } else if (activeNpc) {
-      if (activeNpc.defeated) {
+      if (activeNpc.defeated || activeNpc.isAlly) {
         openDialog(activeNpc);
       } else {
         startBattle(activeNpc);
@@ -450,6 +503,12 @@
     progressText.textContent = `話した人数: ${visited.size} / ${NPCS.length}`;
   }
 
+  function updateStatsDisplay() {
+    if (statsText) {
+      statsText.textContent = `ちから: ${playerStats.atkMin}-${playerStats.atkMax} / さいだいHP: ${playerStats.maxHp}`;
+    }
+  }
+
   function startBattle(npc) {
     scene = "battle";
     document.body.classList.add("battle-active");
@@ -457,38 +516,35 @@
     dialogOpen = false;
     talkHint.hidden = true;
 
-    const requiredNpc = getNextRequiredNpc();
-    const wrongOrder = !!(requiredNpc && requiredNpc.id !== npc.id);
-
     battle = {
       npc,
-      playerHp: 30,
-      playerMaxHp: 30,
+      playerHp: playerStats.maxHp,
+      playerMaxHp: playerStats.maxHp,
       enemyHp: npc.hp,
       enemyMaxHp: npc.hp,
+      lowHpTriggered: false,
+      flashColor: null,
+      flashUntil: 0,
       turn: "message",
       selection: 0,
       defending: false,
-      wrongOrder,
       queue: [],
       onQueueDone: null,
       shakeEnemy: 0,
       shakePlayer: 0,
     };
-    if (wrongOrder) {
-      pushBattleMessages(
-        [`${npc.name}が あらわれた!`, "順番を まちがえた……!", `${npc.name}の ものすごい こうげき!`],
-        () => {
-          battle.playerHp = 0;
-          pushBattleMessages(["勇者は なすすべなく たおれてしまった……"], () => endBattle("lose"));
-        }
-      );
-    } else {
-      pushBattleMessages([`${npc.name}が あらわれた!`], () => {
-        battle.turn = "select";
-        showBattleMenu();
-      });
+
+    const introLines = [`${npc.name}が あらわれた!`];
+    if (npc.preLine) introLines.push(npc.preLine);
+    if (lastDefeatedName) {
+      const taunt = RIVAL_TAUNTS[Math.floor(Math.random() * RIVAL_TAUNTS.length)](lastDefeatedName);
+      introLines.push(taunt);
     }
+
+    pushBattleMessages(introLines, () => {
+      battle.turn = "select";
+      showBattleMenu();
+    });
   }
 
   function pushBattleMessages(lines, onDone) {
@@ -541,13 +597,20 @@
     battleMenu.hidden = true;
 
     if (index === 0) {
-      const dmg = randInt(6, 11);
+      const dmg = randInt(playerStats.atkMin, playerStats.atkMax);
       battle.enemyHp = Math.max(0, battle.enemyHp - dmg);
       battle.shakeEnemy = 10;
-      pushBattleMessages(
-        ["勇者の こうげき!", `${battle.npc.name}に ${dmg} の ダメージ!`],
-        () => afterPlayerAction()
-      );
+      const lines = ["勇者の こうげき!", `${battle.npc.name}に ${dmg} の ダメージ!`];
+      if (
+        !battle.lowHpTriggered &&
+        battle.enemyHp > 0 &&
+        battle.enemyHp <= battle.enemyMaxHp * 0.3 &&
+        battle.npc.lowHpLine
+      ) {
+        battle.lowHpTriggered = true;
+        lines.push(battle.npc.lowHpLine);
+      }
+      pushBattleMessages(lines, () => afterPlayerAction());
     } else if (index === 1) {
       battle.defending = true;
       pushBattleMessages(["勇者は みを まもっている。"], () => afterPlayerAction(true));
@@ -562,18 +625,43 @@
 
   function afterPlayerAction(skipWinCheck) {
     if (!skipWinCheck && battle.enemyHp <= 0) {
-      pushBattleMessages([`${battle.npc.name}を たおした!`], () => endBattle("win"));
+      const npc = battle.npc;
+      const lines = [];
+      if (npc.deathLine) lines.push(npc.deathLine);
+      lines.push(`${npc.name}を たおした!`);
+      const item = npc.dropItem;
+      if (item) {
+        lines.push(`${item.name}を てにいれた!`);
+        if (item.hpBonus) lines.push(`さいだいHPが ${item.hpBonus} あがった!`);
+        if (item.atkBonus) lines.push(`こうげきりょくが ${item.atkBonus} あがった!`);
+      }
+      pushBattleMessages(lines, () => endBattle("win"));
       return;
     }
 
-    const dmg = randInt(battle.npc.atkMin, battle.npc.atkMax);
+    const npc = battle.npc;
+    const useMagic = !!npc.magic && Math.random() < 0.4;
+    let dmg;
+    let attackLine;
+
+    if (useMagic) {
+      const info = MAGIC_INFO[npc.magic];
+      dmg = randInt(npc.atkMin + 2, npc.atkMax + 4);
+      attackLine = `${npc.name}の ${info.verb}!`;
+      battle.flashColor = info.flash;
+      battle.flashUntil = performance.now() + 260;
+    } else {
+      dmg = randInt(npc.atkMin, npc.atkMax);
+      attackLine = `${npc.name}の こうげき!`;
+    }
+
     const finalDmg = battle.defending ? Math.max(1, Math.ceil(dmg / 2)) : dmg;
     battle.defending = false;
     battle.playerHp = Math.max(0, battle.playerHp - finalDmg);
     battle.shakePlayer = 10;
 
     pushBattleMessages(
-      [`${battle.npc.name}の こうげき!`, `勇者は ${finalDmg} の ダメージを うけた!`],
+      [attackLine, `勇者は ${finalDmg} の ダメージを うけた!`],
       () => {
         if (battle.playerHp <= 0) {
           pushBattleMessages(["勇者は たおれてしまった…"], () => endBattle("lose"));
@@ -601,6 +689,14 @@
       visited.add(npc.id);
       updateProgress();
       npc.defeated = true;
+      lastDefeatedName = npc.name;
+      const item = npc.dropItem;
+      if (item) {
+        playerStats.maxHp += item.hpBonus || 0;
+        playerStats.atkMin += item.atkBonus || 0;
+        playerStats.atkMax += item.atkBonus || 0;
+        updateStatsDisplay();
+      }
       allDefeated = NPCS.every((n) => n.defeated);
     } else if (result === "lose") {
       player.x = PLAZA_X;
@@ -639,6 +735,11 @@
 
     if (success) {
       npc.defeated = false;
+      npc.isAlly = true;
+      playerStats.maxHp += ALLY_BONUS.hpBonus;
+      playerStats.atkMin += ALLY_BONUS.atkBonus;
+      playerStats.atkMax += ALLY_BONUS.atkBonus;
+      updateStatsDisplay();
     }
 
     scene = "town";
@@ -647,7 +748,7 @@
 
     dialogName.textContent = npc.name;
     dialogText.textContent = success
-      ? `${npc.name}が よみがえった!`
+      ? `${npc.name}が よみがえり、なかまに なった!`
       : "贖罪が たりなかった……。";
     dialogBox.hidden = false;
     squatResultActive = true;
@@ -687,9 +788,15 @@
   function resetGame() {
     NPCS.forEach((npc) => {
       npc.defeated = false;
+      npc.isAlly = false;
     });
     visited.clear();
     updateProgress();
+    playerStats.maxHp = BASE_PLAYER_STATS.maxHp;
+    playerStats.atkMin = BASE_PLAYER_STATS.atkMin;
+    playerStats.atkMax = BASE_PLAYER_STATS.atkMax;
+    updateStatsDisplay();
+    lastDefeatedName = null;
     ending = null;
     restartButton.hidden = true;
     player.x = WORLD_W / 2;
@@ -999,6 +1106,8 @@
     for (const npc of NPCS) {
       if (npc.defeated) {
         drawSign({ ...npc, name: "🪦 おはか" });
+      } else if (npc.isAlly) {
+        drawSign({ ...npc, name: `💚 ${npc.name}` });
       } else {
         drawSign(npc);
       }
@@ -1127,6 +1236,25 @@
 
     drawHpBar(WORLD_W * 0.05, 24, 230, "勇者", battle.playerHp, battle.playerMaxHp, "#5a9463");
     drawHpBar(WORLD_W * 0.95 - 230, 24, 230, battle.npc.name, battle.enemyHp, battle.enemyMaxHp, "#b7442a");
+
+    if (battle.flashColor && performance.now() < battle.flashUntil) {
+      ctx.fillStyle = battle.flashColor;
+      ctx.fillRect(0, 0, WORLD_W, WORLD_H);
+
+      if (battle.npc.magic === "lightning") {
+        ctx.strokeStyle = "rgba(255,255,255,0.9)";
+        ctx.lineWidth = 3;
+        for (let i = 0; i < 3; i++) {
+          const bx = WORLD_W * 0.2 + i * 80;
+          ctx.beginPath();
+          ctx.moveTo(bx, 0);
+          ctx.lineTo(bx - 20, 90);
+          ctx.lineTo(bx + 15, 130);
+          ctx.lineTo(bx - 10, WORLD_H * 0.5);
+          ctx.stroke();
+        }
+      }
+    }
   }
 
   function drawSquat() {
@@ -1270,7 +1398,7 @@
       activeNpc = blocked ? null : findActiveNpc();
       talkHint.hidden = !activeNpc || blocked;
       if (activeNpc) {
-        talkHint.textContent = activeNpc.defeated
+        talkHint.textContent = activeNpc.defeated || activeNpc.isAlly
           ? "Enter / Space / Z で話す"
           : "Enter / Space / Z で たたかう";
       }
@@ -1410,6 +1538,7 @@
 
   async function init() {
     updateProgress();
+    updateStatsDisplay();
     player.img = await loadImage(PLAYER.sprite);
     await Promise.all(
       NPCS.map(async (npc) => {
