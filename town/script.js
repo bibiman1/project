@@ -32,6 +32,10 @@
       y: 190,
       roof: "#c96a4c",
       wall: "#f6ead9",
+      hp: 14,
+      atkMin: 3,
+      atkMax: 6,
+      defeated: false,
       lines: ["コツコツ貯金するのが趣味なんだ。", "いつか大きな貯金箱になるのが夢さ!"],
       accusingLines: ["……どうして あんな ことを したんだ。", "しばらく 貯金箱に かくれて いるよ。"],
     },
@@ -43,6 +47,10 @@
       y: 175,
       roof: "#4f7f77",
       wall: "#eee3c8",
+      hp: 20,
+      atkMin: 4,
+      atkMax: 8,
+      defeated: false,
       lines: ["夜になると目が冴えちゃうんだよね。", "静かな町がお気に入りなんだ。"],
       accusingLines: ["町が 赤く 染まってる…… こわいよ。", "しばらく そっとしておいて ほしい。"],
     },
@@ -54,6 +62,10 @@
       y: 170,
       roof: "#d9a441",
       wall: "#f6efdb",
+      hp: 16,
+      atkMin: 3,
+      atkMax: 6,
+      defeated: false,
       lines: ["ピヨ!今日の運勢は絶好調だよ!", "見つけてくれてうれしいピヨ。"],
       accusingLines: ["ピヨ……もう いっしょに あそべないよ。", "モンスターは わるい 子じゃ なかったのに。"],
     },
@@ -65,6 +77,10 @@
       y: 150,
       roof: "#a8524a",
       wall: "#f2e4d3",
+      hp: 18,
+      atkMin: 4,
+      atkMax: 7,
+      defeated: false,
       lines: ["じっとしているのが得意なんだ。", "たまには町を見て回るのもいいね。"],
       accusingLines: ["……。", "(だまって そっと 目を そらした)"],
     },
@@ -76,6 +92,10 @@
       y: 260,
       roof: "#4c6fa5",
       wall: "#eee6d3",
+      hp: 32,
+      atkMin: 6,
+      atkMax: 11,
+      defeated: false,
       lines: ["ファイトマネーは全部貯金してるぜ!", "強さもお金も磨き続けるのさ。"],
       accusingLines: ["力を 見せつける ためだけに 命を うばうなんて。", "強さの いみを はきちがえてるんじゃないか?"],
     },
@@ -87,7 +107,10 @@
       y: 460,
       roof: "#6b7a4f",
       wall: "#e9e8d6",
-      battle: true,
+      hp: 24,
+      atkMin: 4,
+      atkMax: 9,
+      defeated: false,
       lines: ["驚かせてごめんね、実はやさしいんだ。", "友達になってくれる?"],
       graveLines: ["……。", "ここに しずかに ねむっている。"],
     },
@@ -99,6 +122,10 @@
       y: 510,
       roof: "#5a9463",
       wall: "#eee6d3",
+      hp: 16,
+      atkMin: 3,
+      atkMax: 7,
+      defeated: false,
       lines: ["ねぎ、持っていく?", "新鮮なねぎ、自慢なんだ。"],
       accusingLines: ["今は ねぎを わたす 気分じゃ ないよ。", "……少し ひとりに させて。"],
     },
@@ -110,6 +137,10 @@
       y: 500,
       roof: "#b0563f",
       wall: "#f0e2cf",
+      hp: 18,
+      atkMin: 4,
+      atkMax: 7,
+      defeated: false,
       lines: ["火鉢であったまっていってね。", "寒い日はここに集まるんだ。"],
       accusingLines: ["火鉢の 火も、なんだか 冷たく 感じるよ。", "みんな おびえて しまった。"],
     },
@@ -121,9 +152,57 @@
       y: 420,
       roof: "#6f6f78",
       wall: "#e7e4da",
+      hp: 22,
+      atkMin: 5,
+      atkMax: 9,
+      defeated: false,
       lines: ["ピポパポ…なつかしい音がするでしょ?", "町の見回りが仕事なんだ。"],
       accusingLines: ["けいこく:勇者の せっきんを けんち。", "みまもりを きょうかします……。"],
     },
+  ];
+
+  const DEFEAT_ORDER = [
+    "butamin",
+    "kanepiyo",
+    "negiduck",
+    "kokeshin",
+    "okame-hibachi",
+    "fukurin",
+    "retrobo",
+    "monster",
+    "moneymask",
+  ];
+
+  const GRAVE_LINES = ["……。", "ここで しずかに ねむっている。"];
+
+  const SQUAT_TARGET = 20;
+  const SQUAT_DURATION = 6000;
+
+  const CREDITS = [
+    "勇者の町",
+    "",
+    "─ おわり ─",
+    "",
+    "企画・演出",
+    "勇者",
+    "",
+    "キャラクターデザイン",
+    "ブタミン / フクリン / カネピヨ",
+    "コケシン / マネーマスク / モンスター",
+    "ネギダック / オカメ火鉢 / レトロボ",
+    "",
+    "特別出演",
+    "町のみんな",
+    "",
+    "音楽",
+    "静寂",
+    "",
+    "そして",
+    "だれも いない 町で",
+    "",
+    "Thank you for playing",
+    "",
+    "THE END",
   ];
 
   const PLAZA_X = WORLD_W / 2;
@@ -160,6 +239,7 @@
   const transitionFlash = document.getElementById("transitionFlash");
   const battleMenu = document.getElementById("battleMenu");
   const battleCmdButtons = document.querySelectorAll(".battle-cmd");
+  const restartButton = document.getElementById("restartButton");
 
   const player = {
     x: WORLD_W / 2,
@@ -177,10 +257,25 @@
   let dialogNpc = null;
   let dialogLineIndex = 0;
   let activeDialogLines = [];
+  let squatResultActive = false;
 
   let scene = "town";
   let battle = null;
-  let monsterDefeated = false;
+  let squat = null;
+  let ending = null;
+
+  function isMonsterDefeated() {
+    const monster = NPCS.find((npc) => npc.id === "monster");
+    return !!(monster && monster.defeated);
+  }
+
+  function getNextRequiredNpc() {
+    for (const id of DEFEAT_ORDER) {
+      const npc = NPCS.find((n) => n.id === id);
+      if (npc && !npc.defeated) return npc;
+    }
+    return null;
+  }
 
   const BLOOD_SPLATS = [
     { x: 860, y: 460, r: 46 },
@@ -241,7 +336,7 @@
   }
 
   function updatePlayer() {
-    if (dialogOpen) {
+    if (dialogOpen || squatResultActive) {
       player.row = ROW_IDLE;
       return;
     }
@@ -292,23 +387,11 @@
     return nearest;
   }
 
-  function getDialogLines(npc) {
-    if (npc.id === "monster") {
-      return npc.graveLines;
-    }
-    if (monsterDefeated && npc.accusingLines) {
-      return npc.accusingLines;
-    }
-    return npc.lines;
-  }
-
   function openDialog(npc) {
     dialogOpen = true;
     dialogNpc = npc;
     dialogLineIndex = 0;
-    activeDialogLines = getDialogLines(npc);
-    visited.add(npc.id);
-    updateProgress();
+    activeDialogLines = npc.graveLines || GRAVE_LINES;
     showDialogLine();
     dialogBox.hidden = false;
     talkHint.hidden = true;
@@ -330,8 +413,12 @@
 
   function closeDialog() {
     dialogOpen = false;
+    const npc = dialogNpc;
     dialogNpc = null;
     dialogBox.hidden = true;
+    if (npc && npc.defeated) {
+      startSquat(npc);
+    }
   }
 
   function handleTalkPress() {
@@ -339,13 +426,22 @@
       handleBattleConfirm();
       return;
     }
+    if (scene === "squat") {
+      if (squat && !squat.resolved) squat.count += 1;
+      return;
+    }
+    if (squatResultActive) {
+      squatResultActive = false;
+      dialogBox.hidden = true;
+      return;
+    }
     if (dialogOpen) {
       advanceDialog();
     } else if (activeNpc) {
-      if (activeNpc.battle && !monsterDefeated) {
-        startBattle(activeNpc);
-      } else {
+      if (activeNpc.defeated) {
         openDialog(activeNpc);
+      } else {
+        startBattle(activeNpc);
       }
     }
   }
@@ -360,24 +456,39 @@
     flashTransition();
     dialogOpen = false;
     talkHint.hidden = true;
+
+    const requiredNpc = getNextRequiredNpc();
+    const wrongOrder = !!(requiredNpc && requiredNpc.id !== npc.id);
+
     battle = {
       npc,
       playerHp: 30,
       playerMaxHp: 30,
-      enemyHp: 24,
-      enemyMaxHp: 24,
+      enemyHp: npc.hp,
+      enemyMaxHp: npc.hp,
       turn: "message",
       selection: 0,
       defending: false,
+      wrongOrder,
       queue: [],
       onQueueDone: null,
       shakeEnemy: 0,
       shakePlayer: 0,
     };
-    pushBattleMessages([`${npc.name}が あらわれた!`], () => {
-      battle.turn = "select";
-      showBattleMenu();
-    });
+    if (wrongOrder) {
+      pushBattleMessages(
+        [`${npc.name}が あらわれた!`, "順番を まちがえた……!", `${npc.name}の ものすごい こうげき!`],
+        () => {
+          battle.playerHp = 0;
+          pushBattleMessages(["勇者は なすすべなく たおれてしまった……"], () => endBattle("lose"));
+        }
+      );
+    } else {
+      pushBattleMessages([`${npc.name}が あらわれた!`], () => {
+        battle.turn = "select";
+        showBattleMenu();
+      });
+    }
   }
 
   function pushBattleMessages(lines, onDone) {
@@ -455,7 +566,7 @@
       return;
     }
 
-    const dmg = randInt(4, 9);
+    const dmg = randInt(battle.npc.atkMin, battle.npc.atkMax);
     const finalDmg = battle.defending ? Math.max(1, Math.ceil(dmg / 2)) : dmg;
     battle.defending = false;
     battle.playerHp = Math.max(0, battle.playerHp - finalDmg);
@@ -476,9 +587,6 @@
 
   function endBattle(result) {
     const npc = battle.npc;
-    scene = "town";
-    document.body.classList.remove("battle-active");
-    flashTransition();
     dialogBox.hidden = true;
     battleMenu.hidden = true;
     talkHint.hidden = true;
@@ -488,16 +596,106 @@
     player.x = clamp(npc.x + Math.cos(angle) * pushDist, 60, WORLD_W - 60);
     player.y = clamp(npc.y + Math.sin(angle) * pushDist, 150, WORLD_H - 40);
 
+    let allDefeated = false;
     if (result === "win") {
       visited.add(npc.id);
       updateProgress();
-      monsterDefeated = true;
+      npc.defeated = true;
+      allDefeated = NPCS.every((n) => n.defeated);
     } else if (result === "lose") {
       player.x = PLAZA_X;
       player.y = PLAZA_Y + 40;
     }
 
     battle = null;
+
+    if (allDefeated) {
+      startEnding();
+      return;
+    }
+
+    scene = "town";
+    document.body.classList.remove("battle-active");
+    flashTransition();
+  }
+
+  function startSquat(npc) {
+    scene = "squat";
+    flashTransition();
+    squat = {
+      npc,
+      count: 0,
+      target: SQUAT_TARGET,
+      startedAt: performance.now(),
+      duration: SQUAT_DURATION,
+      resolved: false,
+    };
+  }
+
+  function finishSquat(success) {
+    if (!squat || squat.resolved) return;
+    squat.resolved = true;
+    const npc = squat.npc;
+
+    if (success) {
+      npc.defeated = false;
+    }
+
+    scene = "town";
+    flashTransition();
+    squat = null;
+
+    dialogName.textContent = npc.name;
+    dialogText.textContent = success
+      ? `${npc.name}が よみがえった!`
+      : "贖罪が たりなかった……。";
+    dialogBox.hidden = false;
+    squatResultActive = true;
+  }
+
+  function startEnding() {
+    scene = "ending";
+    document.body.classList.remove("battle-active");
+    flashTransition();
+    ending = {
+      phase: "vanish",
+      phaseStart: performance.now(),
+      doneShown: false,
+    };
+  }
+
+  function updateEnding(timestamp) {
+    if (!ending) return;
+    const elapsed = timestamp - ending.phaseStart;
+
+    if (ending.phase === "vanish" && elapsed > 2200) {
+      ending.phase = "void";
+      ending.phaseStart = timestamp;
+    } else if (ending.phase === "void" && elapsed > 4200) {
+      ending.phase = "credits";
+      ending.phaseStart = timestamp;
+    } else if (ending.phase === "credits" && !ending.doneShown) {
+      const totalHeight = CREDITS.length * 34 + WORLD_H;
+      const scrolled = (elapsed / 1000) * 40;
+      if (scrolled > totalHeight) {
+        ending.doneShown = true;
+        restartButton.hidden = false;
+      }
+    }
+  }
+
+  function resetGame() {
+    NPCS.forEach((npc) => {
+      npc.defeated = false;
+    });
+    visited.clear();
+    updateProgress();
+    ending = null;
+    restartButton.hidden = true;
+    player.x = WORLD_W / 2;
+    player.y = WORLD_H / 2 + 60;
+    scene = "town";
+    flashTransition();
   }
 
   function updateAnimationFrame(timestamp) {
@@ -595,9 +793,9 @@
       ctx.stroke();
     }
 
-    const waterColor = monsterDefeated ? "#8a2620" : "#9cc4d1";
-    const waterEdge = monsterDefeated ? "#651c17" : "#7ea9b6";
-    const waterHighlight = monsterDefeated ? "#a8433c" : "#c7e0e8";
+    const waterColor = isMonsterDefeated() ? "#8a2620" : "#9cc4d1";
+    const waterEdge = isMonsterDefeated() ? "#651c17" : "#7ea9b6";
+    const waterHighlight = isMonsterDefeated() ? "#a8433c" : "#c7e0e8";
 
     ctx.fillStyle = waterColor;
     ctx.beginPath();
@@ -612,7 +810,7 @@
     ctx.arc(PLAZA_X, PLAZA_Y, 9, 0, Math.PI * 2);
     ctx.fill();
 
-    if (!monsterDefeated) {
+    if (!isMonsterDefeated()) {
       ctx.fillStyle = "rgba(255,255,255,0.55)";
       ctx.beginPath();
       ctx.moveTo(PLAZA_X, PLAZA_Y - 26);
@@ -776,7 +974,7 @@
       drawBush(bush.x, bush.y, bush.r);
     }
 
-    if (monsterDefeated) {
+    if (isMonsterDefeated()) {
       for (const splat of BLOOD_SPLATS) {
         drawBloodSplat(splat.x, splat.y, splat.r);
       }
@@ -792,14 +990,14 @@
     ctx.fillStyle = "rgba(255, 253, 248, 0.85)";
     roundRect(10, 10, 96, 24, 8);
     ctx.fill();
-    ctx.fillStyle = monsterDefeated ? "#8a2620" : "#66645f";
+    ctx.fillStyle = isMonsterDefeated() ? "#8a2620" : "#66645f";
     ctx.font = "bold 12px sans-serif";
     ctx.textAlign = "left";
     ctx.textBaseline = "middle";
-    ctx.fillText(monsterDefeated ? "荒れた町" : "勇者の町", 20, 23);
+    ctx.fillText(isMonsterDefeated() ? "荒れた町" : "勇者の町", 20, 23);
 
     for (const npc of NPCS) {
-      if (npc.id === "monster" && monsterDefeated) {
+      if (npc.defeated) {
         drawSign({ ...npc, name: "🪦 おはか" });
       } else {
         drawSign(npc);
@@ -810,7 +1008,7 @@
     for (const entity of entities) {
       if (entity === player) {
         drawSprite(player.img, player.frame, player.row, player.x, player.y);
-      } else if (entity.id === "monster" && monsterDefeated) {
+      } else if (entity.defeated) {
         drawGrave(entity);
       } else {
         drawSprite(entity.img, entity.frame || 0, ROW_IDLE, entity.x, entity.y);
@@ -821,7 +1019,7 @@
       drawTalkBubble(activeNpc);
     }
 
-    if (monsterDefeated) {
+    if (isMonsterDefeated()) {
       ctx.fillStyle = "rgba(120, 20, 20, 0.1)";
       ctx.fillRect(0, 0, WORLD_W, WORLD_H);
     }
@@ -931,9 +1129,133 @@
     drawHpBar(WORLD_W * 0.95 - 230, 24, 230, battle.npc.name, battle.enemyHp, battle.enemyMaxHp, "#b7442a");
   }
 
+  function drawSquat() {
+    ctx.clearRect(0, 0, WORLD_W, WORLD_H);
+    const grad = ctx.createLinearGradient(0, 0, 0, WORLD_H);
+    grad.addColorStop(0, "#2c2620");
+    grad.addColorStop(1, "#141210");
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, WORLD_W, WORLD_H);
+
+    if (!squat) return;
+
+    const elapsed = performance.now() - squat.startedAt;
+    const remaining = Math.max(0, squat.duration - elapsed);
+    const timeRatio = remaining / squat.duration;
+
+    ctx.textAlign = "center";
+    ctx.textBaseline = "top";
+
+    ctx.fillStyle = "#fdf6e6";
+    ctx.font = "bold 24px sans-serif";
+    ctx.fillText("贖罪の ヒンズースクワット", WORLD_W / 2, 56);
+
+    ctx.font = "14px sans-serif";
+    ctx.fillStyle = "#cfc6b8";
+    ctx.fillText("スペースキーを 連打せよ!", WORLD_W / 2, 92);
+
+    ctx.font = "bold 96px sans-serif";
+    ctx.fillStyle = squat.count >= squat.target ? "#7fbf6a" : "#f2c14e";
+    ctx.fillText(`${squat.count}`, WORLD_W / 2, 150);
+
+    ctx.font = "20px sans-serif";
+    ctx.fillStyle = "#cfc6b8";
+    ctx.fillText(`/ ${squat.target}`, WORLD_W / 2, 270);
+
+    const barW = 400;
+    const barX = WORLD_W / 2 - barW / 2;
+    const barY = 320;
+    ctx.fillStyle = "rgba(255,255,255,0.15)";
+    roundRect(barX, barY, barW, 14, 7);
+    ctx.fill();
+    ctx.fillStyle = timeRatio > 0.3 ? "#f2c14e" : "#c0453a";
+    roundRect(barX, barY, Math.max(2, barW * timeRatio), 14, 7);
+    ctx.fill();
+
+    const bobRow = squat.count % 2 === 0 ? ROW_IDLE : ROW_RIGHT;
+    drawBigSprite(player.img, player.frame, bobRow, WORLD_W / 2, WORLD_H - 90, DRAW_SIZE * 1.2);
+  }
+
+  function drawEnding() {
+    ctx.clearRect(0, 0, WORLD_W, WORLD_H);
+    if (!ending) return;
+
+    const elapsed = performance.now() - ending.phaseStart;
+
+    if (ending.phase === "vanish") {
+      drawEndingVanish(elapsed);
+    } else if (ending.phase === "void") {
+      drawEndingVoid(elapsed);
+    } else {
+      drawEndingCredits(elapsed);
+    }
+  }
+
+  function drawEndingVanish(elapsed) {
+    drawTown();
+    const t = Math.min(1, elapsed / 2200);
+    ctx.fillStyle = `rgba(10, 8, 8, ${t * 0.95})`;
+    ctx.fillRect(0, 0, WORLD_W, WORLD_H);
+
+    for (let i = 0; i < 10; i++) {
+      const seedX = (i * 137) % WORLD_W;
+      const puffT = (elapsed / 1800 + i * 0.13) % 1;
+      const y = WORLD_H - puffT * (WORLD_H + 100);
+      const alpha = (1 - puffT) * 0.4;
+      ctx.fillStyle = `rgba(200,200,200,${alpha})`;
+      ctx.beginPath();
+      ctx.arc(seedX, y, 30 + i * 3, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  function drawEndingVoid(elapsed) {
+    ctx.fillStyle = "#000";
+    ctx.fillRect(0, 0, WORLD_W, WORLD_H);
+
+    ctx.globalAlpha = 0.8;
+    drawBigSprite(player.img, 0, ROW_IDLE, WORLD_W / 2, WORLD_H / 2 + 60, DRAW_SIZE * 0.6);
+    ctx.globalAlpha = 1;
+
+    const lines = ["……。", "だれも いない。", "勇者は 永遠に、ひとり。"];
+    const perLine = 1300;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    lines.forEach((line, i) => {
+      const lineStart = i * perLine;
+      if (elapsed < lineStart) return;
+      const localT = Math.min(1, (elapsed - lineStart) / 500);
+      ctx.fillStyle = `rgba(220,220,220,${localT * 0.9})`;
+      ctx.font = "18px sans-serif";
+      ctx.fillText(line, WORLD_W / 2, WORLD_H / 2 - 60 + i * 30);
+    });
+  }
+
+  function drawEndingCredits(elapsed) {
+    ctx.fillStyle = "#000";
+    ctx.fillRect(0, 0, WORLD_W, WORLD_H);
+
+    const lineHeight = 34;
+    const scrollY = (elapsed / 1000) * 40;
+    ctx.textAlign = "center";
+    CREDITS.forEach((line, i) => {
+      const y = WORLD_H + i * lineHeight - scrollY;
+      if (y < -20 || y > WORLD_H + 20) return;
+      const isEnd = line === "THE END";
+      const isHeading = i === 0 || line.startsWith("─");
+      ctx.fillStyle = isEnd || isHeading ? "#f2c14e" : "#e8e4da";
+      ctx.font = isEnd ? "bold 28px sans-serif" : isHeading ? "bold 22px sans-serif" : "16px sans-serif";
+      ctx.fillText(line, WORLD_W / 2, y);
+    });
+  }
+
   function draw() {
     if (scene === "battle") {
       drawBattle();
+    } else if (scene === "squat") {
+      drawSquat();
+    } else if (scene === "ending") {
+      drawEnding();
     } else {
       drawTown();
     }
@@ -944,13 +1266,26 @@
 
     if (scene === "town") {
       updatePlayer();
-      activeNpc = dialogOpen ? null : findActiveNpc();
-      talkHint.hidden = !activeNpc || dialogOpen;
+      const blocked = dialogOpen || squatResultActive;
+      activeNpc = blocked ? null : findActiveNpc();
+      talkHint.hidden = !activeNpc || blocked;
       if (activeNpc) {
-        talkHint.textContent = activeNpc.battle && !monsterDefeated
-          ? "Enter / Space / Z で たたかう"
-          : "Enter / Space / Z で話す";
+        talkHint.textContent = activeNpc.defeated
+          ? "Enter / Space / Z で話す"
+          : "Enter / Space / Z で たたかう";
       }
+    } else if (scene === "squat") {
+      if (squat && !squat.resolved) {
+        if (squat.count >= squat.target) {
+          finishSquat(true);
+        } else if (performance.now() - squat.startedAt >= squat.duration) {
+          finishSquat(false);
+        }
+      }
+      activeNpc = null;
+    } else if (scene === "ending") {
+      updateEnding(timestamp);
+      activeNpc = null;
     } else {
       activeNpc = null;
     }
@@ -999,6 +1334,16 @@
           return;
         }
       }
+      if (TALK_KEYS.has(event.key)) {
+        if (!event.repeat) talkKeyEdge = true;
+        event.preventDefault();
+        return;
+      }
+      if (KEY_MAP[event.key]) event.preventDefault();
+      return;
+    }
+
+    if (scene === "squat" || scene === "ending") {
       if (TALK_KEYS.has(event.key)) {
         if (!event.repeat) talkKeyEdge = true;
         event.preventDefault();
@@ -1057,6 +1402,10 @@
         chooseCommand(i);
       }
     });
+  });
+
+  restartButton.addEventListener("click", () => {
+    resetGame();
   });
 
   async function init() {

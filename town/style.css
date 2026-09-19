@@ -183,6 +183,26 @@ body {
   color: var(--accent);
 }
 
+.restart-btn {
+  position: absolute;
+  left: 50%;
+  bottom: 40px;
+  transform: translateX(-50%);
+  padding: 14px 28px;
+  border: none;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 800;
+  box-shadow: var(--shadow);
+  cursor: pointer;
+}
+
+.restart-btn[hidden] {
+  display: none;
+}
+
 .town-status {
   width: min(1000px, 100%);
   text-align: right;
