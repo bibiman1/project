@@ -82,6 +82,11 @@ h1 {
   filter: brightness(0.95);
 }
 
+.field-cta {
+  margin-left: 10px;
+  background: #6b7a72;
+}
+
 main {
   padding: 48px 24px 72px;
 }

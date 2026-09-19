@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="何もない野を歩きまわり、ぼぎだぢの世界の断片を見つけていく">
+  <title>ぼぎだぢ - 荒野の断片</title>
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+  <header class="field-header">
+    <a class="back-link" href="../index.html">← キャラクター一覧に戻る</a>
+    <h1>ぼぎだぢ - 荒野の断片</h1>
+    <p class="lead">矢印キー / WASDで歩きまわろう。近づくと、何もなかった場所に何かが見えてくる。</p>
+  </header>
+
+  <main class="field-wrap">
+    <div class="game-frame">
+      <canvas id="fieldCanvas" width="960" height="600" aria-label="何もない野"></canvas>
+
+      <div id="introHint" class="intro-hint">……ここには、まだ何もない。</div>
+
+      <div id="fragmentBox" class="fragment-box" hidden>
+        <p id="fragmentTitle" class="fragment-title"></p>
+        <p id="fragmentText" class="fragment-text"></p>
+      </div>
+
+      <div id="completeToast" class="complete-toast" hidden>断片が出そろった。まだ、この先がある。</div>
+    </div>
+
+    <div class="field-status">
+      <p id="progressText" class="progress-text">見つけた断片: 0 / 5</p>
+    </div>
+
+    <div class="touch-controls" aria-hidden="true">
+      <div class="dpad">
+        <button type="button" class="dpad-btn dpad-up" data-dir="up" aria-label="上へ移動">▲</button>
+        <button type="button" class="dpad-btn dpad-left" data-dir="left" aria-label="左へ移動">◀</button>
+        <button type="button" class="dpad-btn dpad-right" data-dir="right" aria-label="右へ移動">▶</button>
+        <button type="button" class="dpad-btn dpad-down" data-dir="down" aria-label="下へ移動">▼</button>
+      </div>
+    </div>
+  </main>
+
+  <footer class="field-footer">
+    <small>© Character Project</small>
+  </footer>
+
+  <script src="./script.js"></script>
+</body>
+</html>
