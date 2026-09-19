@@ -134,15 +134,16 @@
   const KI_FRAME = 128;
   const KI_COLS = 8;
 
-  const bogiSprite = new Image();
-  let bogiLoaded = false;
-  bogiSprite.onload = () => {
-    bogiLoaded = true;
+  const manateeSprite = new Image();
+  let manateeLoaded = false;
+  manateeSprite.onload = () => {
+    manateeLoaded = true;
   };
-  bogiSprite.src = "./assets/bogi_walk_sheet.png";
-  const BOGI_CELL = 48;
-  const BOGI_FRAMES = 2;
-  const BOGI_DIR_ROW = {
+  manateeSprite.src = "./assets/manatee_walk_sheet.png";
+  const MANATEE_W = 64;
+  const MANATEE_H = 48;
+  const MANATEE_FRAMES = 8;
+  const MANATEE_DIR_ROW = {
     south: 0,
     "south-east": 1,
     east: 2,
@@ -152,7 +153,7 @@
     west: 6,
     "south-west": 7,
   };
-  const BOGI_ANGLE_DIRS = [
+  const MANATEE_ANGLE_DIRS = [
     "east",
     "south-east",
     "south",
@@ -187,7 +188,7 @@
   function dirFromDelta(dx, dy) {
     const angleDeg = (Math.atan2(dy, dx) * 180) / Math.PI;
     const idx = Math.round(((angleDeg + 360) % 360) / 45) % 8;
-    return BOGI_ANGLE_DIRS[idx];
+    return MANATEE_ANGLE_DIRS[idx];
   }
 
   function updateWanderer(dt, t) {
@@ -375,25 +376,8 @@
     }
   }
 
-  const PLAYER_SIZE = 84;
-
-  function drawBogiSprite(dir, moving, size, cx, cy, t) {
-    if (!bogiLoaded) return;
-    const row = BOGI_DIR_ROW[dir];
-    const frame = moving ? Math.floor(t * 6) % BOGI_FRAMES : 0;
-
-    ctx.drawImage(
-      bogiSprite,
-      frame * BOGI_CELL,
-      row * BOGI_CELL,
-      BOGI_CELL,
-      BOGI_CELL,
-      cx - size / 2,
-      cy - size / 2,
-      size,
-      size
-    );
-  }
+  const PLAYER_W = 96;
+  const PLAYER_H = 72;
 
   function drawPlayer(t) {
     const bob = Math.sin(t * 6) * (player.moving ? 3 : 1.2);
@@ -402,10 +386,25 @@
 
     ctx.fillStyle = "rgba(60, 60, 50, 0.18)";
     ctx.beginPath();
-    ctx.ellipse(cx, VH / 2 + 34, 22, 7, 0, 0, Math.PI * 2);
+    ctx.ellipse(cx, VH / 2 + 34, 26, 8, 0, 0, Math.PI * 2);
     ctx.fill();
 
-    drawBogiSprite(player.dir, player.moving, PLAYER_SIZE, cx, cy, t);
+    if (!manateeLoaded) return;
+
+    const row = MANATEE_DIR_ROW[player.dir];
+    const frame = player.moving ? Math.floor(t * 10) % MANATEE_FRAMES : 0;
+
+    ctx.drawImage(
+      manateeSprite,
+      frame * MANATEE_W,
+      row * MANATEE_H,
+      MANATEE_W,
+      MANATEE_H,
+      cx - PLAYER_W / 2,
+      cy - PLAYER_H / 2,
+      PLAYER_W,
+      PLAYER_H
+    );
   }
 
   const WANDERER_SIZE = 76;
