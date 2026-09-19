@@ -153,7 +153,7 @@
     west: 6,
     "south-west": 7,
   };
-  const MANATEE_ANGLE_DIRS = [
+  const ANGLE_DIRS = [
     "east",
     "south-east",
     "south",
@@ -164,9 +164,38 @@
     "north-east",
   ];
 
+  const bogiSprite = new Image();
+  let bogiLoaded = false;
+  bogiSprite.onload = () => {
+    bogiLoaded = true;
+  };
+  bogiSprite.src = "./assets/bogi_walk_sheet.png";
+  const BOGI_CELL = 48;
+  const BOGI_FRAMES = 2;
+  const BOGI_DIR_ROW = {
+    south: 0,
+    "south-east": 1,
+    east: 2,
+    "north-east": 3,
+    north: 4,
+    "north-west": 5,
+    west: 6,
+    "south-west": 7,
+  };
+
   const wanderer = {
     x: 1800,
     y: 1400,
+    vx: 0,
+    vy: 0,
+    dir: "south",
+    moving: false,
+    changeAt: 0,
+  };
+
+  const manateeWanderer = {
+    x: 2300,
+    y: 1900,
     vx: 0,
     vy: 0,
     dir: "south",
@@ -188,27 +217,27 @@
   function dirFromDelta(dx, dy) {
     const angleDeg = (Math.atan2(dy, dx) * 180) / Math.PI;
     const idx = Math.round(((angleDeg + 360) % 360) / 45) % 8;
-    return MANATEE_ANGLE_DIRS[idx];
+    return ANGLE_DIRS[idx];
   }
 
-  function updateWanderer(dt, t) {
-    if (t > wanderer.changeAt) {
+  function updateWanderer(w, dt, t) {
+    if (t > w.changeAt) {
       if (Math.random() < 0.3) {
-        wanderer.vx = 0;
-        wanderer.vy = 0;
-        wanderer.moving = false;
+        w.vx = 0;
+        w.vy = 0;
+        w.moving = false;
       } else {
         const angle = Math.random() * Math.PI * 2;
         const speed = 35 + Math.random() * 35;
-        wanderer.vx = Math.cos(angle) * speed;
-        wanderer.vy = Math.sin(angle) * speed;
-        wanderer.moving = true;
-        wanderer.dir = dirFromDelta(wanderer.vx, wanderer.vy);
+        w.vx = Math.cos(angle) * speed;
+        w.vy = Math.sin(angle) * speed;
+        w.moving = true;
+        w.dir = dirFromDelta(w.vx, w.vy);
       }
-      wanderer.changeAt = t + 1.5 + Math.random() * 3.5;
+      w.changeAt = t + 1.5 + Math.random() * 3.5;
     }
-    wanderer.x = clamp(wanderer.x + wanderer.vx * dt, 40, WORLD_W - 40);
-    wanderer.y = clamp(wanderer.y + wanderer.vy * dt, 40, WORLD_H - 40);
+    w.x = clamp(w.x + w.vx * dt, 40, WORLD_W - 40);
+    w.y = clamp(w.y + w.vy * dt, 40, WORLD_H - 40);
   }
 
   function update(dt, t) {
@@ -231,7 +260,8 @@
       player.y = clamp(player.y + dy * SPEED * dt, 40, WORLD_H - 40);
     }
 
-    updateWanderer(dt, t);
+    updateWanderer(wanderer, dt, t);
+    updateWanderer(manateeWanderer, dt, t);
 
     let near = null;
     for (const frag of FRAGMENTS) {
@@ -376,8 +406,7 @@
     }
   }
 
-  const PLAYER_W = 96;
-  const PLAYER_H = 72;
+  const PLAYER_SIZE = 84;
 
   function drawPlayer(t) {
     const bob = Math.sin(t * 6) * (player.moving ? 3 : 1.2);
@@ -386,24 +415,24 @@
 
     ctx.fillStyle = "rgba(60, 60, 50, 0.18)";
     ctx.beginPath();
-    ctx.ellipse(cx, VH / 2 + 34, 26, 8, 0, 0, Math.PI * 2);
+    ctx.ellipse(cx, VH / 2 + 34, 22, 7, 0, 0, Math.PI * 2);
     ctx.fill();
 
-    if (!manateeLoaded) return;
+    if (!bogiLoaded) return;
 
-    const row = MANATEE_DIR_ROW[player.dir];
-    const frame = player.moving ? Math.floor(t * 10) % MANATEE_FRAMES : 0;
+    const row = BOGI_DIR_ROW[player.dir];
+    const frame = player.moving ? Math.floor(t * 6) % BOGI_FRAMES : 0;
 
     ctx.drawImage(
-      manateeSprite,
-      frame * MANATEE_W,
-      row * MANATEE_H,
-      MANATEE_W,
-      MANATEE_H,
-      cx - PLAYER_W / 2,
-      cy - PLAYER_H / 2,
-      PLAYER_W,
-      PLAYER_H
+      bogiSprite,
+      frame * BOGI_CELL,
+      row * BOGI_CELL,
+      BOGI_CELL,
+      BOGI_CELL,
+      cx - PLAYER_SIZE / 2,
+      cy - PLAYER_SIZE / 2,
+      PLAYER_SIZE,
+      PLAYER_SIZE
     );
   }
 
@@ -439,6 +468,36 @@
     ctx.restore();
   }
 
+  const MANATEE_WANDERER_W = 88;
+  const MANATEE_WANDERER_H = 66;
+
+  function drawManateeWanderer(camX, camY, t) {
+    if (!manateeLoaded) return;
+    const { sx, sy } = worldToScreen(camX, camY, manateeWanderer.x, manateeWanderer.y);
+    if (sx < -70 || sx > VW + 70 || sy < -70 || sy > VH + 70) return;
+
+    const bob = Math.sin(t * 6 + 0.6) * (manateeWanderer.moving ? 2.8 : 1.1);
+    ctx.fillStyle = "rgba(60, 60, 50, 0.16)";
+    ctx.beginPath();
+    ctx.ellipse(sx, sy + 30, 22, 7, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    const row = MANATEE_DIR_ROW[manateeWanderer.dir];
+    const frame = manateeWanderer.moving ? Math.floor(t * 8) % MANATEE_FRAMES : 0;
+
+    ctx.drawImage(
+      manateeSprite,
+      frame * MANATEE_W,
+      row * MANATEE_H,
+      MANATEE_W,
+      MANATEE_H,
+      sx - MANATEE_WANDERER_W / 2,
+      sy + bob - MANATEE_WANDERER_H / 2,
+      MANATEE_WANDERER_W,
+      MANATEE_WANDERER_H
+    );
+  }
+
   let lastTime = 0;
   function loop(timestamp) {
     if (!lastTime) lastTime = timestamp;
@@ -453,6 +512,7 @@
     drawVoid(camX, camY);
     for (const frag of FRAGMENTS) drawFragment(frag, camX, camY, t);
     drawWanderer(camX, camY, t);
+    drawManateeWanderer(camX, camY, t);
     drawPlayer(t);
 
     requestAnimationFrame(loop);
