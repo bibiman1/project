@@ -261,6 +261,31 @@
     "THE END",
   ];
 
+  const FRIENDSHIP_CREDITS = [
+    "勇者の町",
+    "",
+    "─ なかまエンディング ─",
+    "",
+    "勇者は",
+    "町の みんなと",
+    "なかまに なった",
+    "",
+    "出演",
+    "ブタミン / フクリン / カネピヨ",
+    "コケシン / マネーマスク / モンスター",
+    "ネギダック / オカメ火鉢 / レトロボ",
+    "",
+    "特別出演",
+    "マネーマスク(四天王最強)",
+    "",
+    "これからも みんなで",
+    "たびを つづける……",
+    "",
+    "Thank you for playing",
+    "",
+    "THE END",
+  ];
+
   const PLAZA_X = WORLD_W / 2;
   const PLAZA_Y = 330;
   const PLAZA_RADIUS = 78;
@@ -321,9 +346,33 @@
   let squat = null;
   let ending = null;
   let lastDefeatedName = null;
+  let pendingFriendshipEnding = false;
 
   const BASE_PLAYER_STATS = { maxHp: 30, atkMin: 6, atkMax: 11 };
   const playerStats = { ...BASE_PLAYER_STATS };
+
+  const PARTY_TRAIL_SPACING = 26;
+  const PARTY_TRAIL_MAX = 300;
+  let partyOrder = [];
+  let partyTrail = [];
+
+  function recordPartyTrail() {
+    partyTrail.unshift({ x: player.x, y: player.y, row: player.row, frame: player.frame });
+    if (partyTrail.length > PARTY_TRAIL_MAX) partyTrail.length = PARTY_TRAIL_MAX;
+  }
+
+  function updatePartyPositions() {
+    partyOrder.forEach((id, index) => {
+      const npc = NPCS.find((n) => n.id === id);
+      if (!npc || !npc.isAlly) return;
+      const trailIndex = Math.min(partyTrail.length - 1, (index + 1) * PARTY_TRAIL_SPACING);
+      const pos = partyTrail[trailIndex] || { x: player.x, y: player.y, row: ROW_IDLE, frame: 0 };
+      npc.x = pos.x;
+      npc.y = pos.y;
+      npc.allyRow = pos.row;
+      npc.allyFrame = pos.frame;
+    });
+  }
 
   function isMonsterDefeated() {
     const monster = NPCS.find((npc) => npc.id === "monster");
@@ -422,6 +471,7 @@
 
   function collides(x, y) {
     for (const npc of NPCS) {
+      if (npc.isAlly) continue;
       if (distance(x, y, npc.x, npc.y) < SOLID_RADIUS) return true;
     }
     return false;
@@ -486,6 +536,10 @@
     if (squatResultActive) {
       squatResultActive = false;
       dialogBox.hidden = true;
+      if (pendingFriendshipEnding) {
+        pendingFriendshipEnding = false;
+        startFriendshipEnding();
+      }
       return;
     }
     if (dialogOpen) {
@@ -736,10 +790,14 @@
     if (success) {
       npc.defeated = false;
       npc.isAlly = true;
+      partyOrder.push(npc.id);
       playerStats.maxHp += ALLY_BONUS.hpBonus;
       playerStats.atkMin += ALLY_BONUS.atkBonus;
       playerStats.atkMax += ALLY_BONUS.atkBonus;
       updateStatsDisplay();
+      if (NPCS.every((n) => n.isAlly)) {
+        pendingFriendshipEnding = true;
+      }
     }
 
     scene = "town";
@@ -759,7 +817,20 @@
     document.body.classList.remove("battle-active");
     flashTransition();
     ending = {
+      type: "lonely",
       phase: "vanish",
+      phaseStart: performance.now(),
+      doneShown: false,
+    };
+  }
+
+  function startFriendshipEnding() {
+    scene = "ending";
+    document.body.classList.remove("battle-active");
+    flashTransition();
+    ending = {
+      type: "friendship",
+      phase: "celebrate",
       phaseStart: performance.now(),
       doneShown: false,
     };
@@ -768,6 +839,21 @@
   function updateEnding(timestamp) {
     if (!ending) return;
     const elapsed = timestamp - ending.phaseStart;
+
+    if (ending.type === "friendship") {
+      if (ending.phase === "celebrate" && elapsed > 2600) {
+        ending.phase = "credits";
+        ending.phaseStart = timestamp;
+      } else if (ending.phase === "credits" && !ending.doneShown) {
+        const totalHeight = FRIENDSHIP_CREDITS.length * 34 + WORLD_H;
+        const scrolled = (elapsed / 1000) * 40;
+        if (scrolled > totalHeight) {
+          ending.doneShown = true;
+          restartButton.hidden = false;
+        }
+      }
+      return;
+    }
 
     if (ending.phase === "vanish" && elapsed > 2200) {
       ending.phase = "void";
@@ -789,7 +875,12 @@
     NPCS.forEach((npc) => {
       npc.defeated = false;
       npc.isAlly = false;
+      npc.x = npc.homeX;
+      npc.y = npc.homeY;
     });
+    partyOrder = [];
+    partyTrail = [];
+    pendingFriendshipEnding = false;
     visited.clear();
     updateProgress();
     playerStats.maxHp = BASE_PLAYER_STATS.maxHp;
@@ -870,7 +961,7 @@
     for (const npc of NPCS) {
       ctx.beginPath();
       ctx.moveTo(PLAZA_X, PLAZA_Y);
-      ctx.lineTo(npc.x, npc.y + 6);
+      ctx.lineTo(npc.homeX, npc.homeY + 6);
       ctx.stroke();
     }
     ctx.strokeStyle = "#e8dcbc";
@@ -878,7 +969,7 @@
     for (const npc of NPCS) {
       ctx.beginPath();
       ctx.moveTo(PLAZA_X, PLAZA_Y);
-      ctx.lineTo(npc.x, npc.y + 6);
+      ctx.lineTo(npc.homeX, npc.homeY + 6);
       ctx.stroke();
     }
   }
@@ -1000,8 +1091,8 @@
     const width = 108;
     const wallHeight = 56;
     const roofHeight = 46;
-    const cx = npc.x;
-    const baseY = npc.y - 6;
+    const cx = npc.homeX;
+    const baseY = npc.homeY - 6;
     const wallTop = baseY - wallHeight;
 
     ctx.fillStyle = "rgba(32,32,32,0.08)";
@@ -1119,6 +1210,8 @@
         drawSprite(player.img, player.frame, player.row, player.x, player.y);
       } else if (entity.defeated) {
         drawGrave(entity);
+      } else if (entity.isAlly) {
+        drawSprite(entity.img, entity.allyFrame ?? 0, entity.allyRow ?? ROW_IDLE, entity.x, entity.y);
       } else {
         drawSprite(entity.img, entity.frame || 0, ROW_IDLE, entity.x, entity.y);
       }
@@ -1225,6 +1318,21 @@
       WORLD_H * 0.42,
       DRAW_SIZE * 1.7
     );
+
+    const allies = NPCS.filter((n) => n.isAlly);
+    allies.forEach((npc, i) => {
+      const offsetX = -46 - (i % 3) * 32;
+      const offsetY = 24 + Math.floor(i / 3) * 30;
+      drawBigSprite(
+        npc.img,
+        player.frame,
+        ROW_IDLE,
+        WORLD_W * 0.28 + offsetX,
+        WORLD_H * 0.82 + offsetY,
+        DRAW_SIZE * 0.55
+      );
+    });
+
     drawBigSprite(
       player.img,
       player.frame,
@@ -1310,6 +1418,15 @@
 
     const elapsed = performance.now() - ending.phaseStart;
 
+    if (ending.type === "friendship") {
+      if (ending.phase === "celebrate") {
+        drawFriendshipCelebrate(elapsed);
+      } else {
+        drawFriendshipCredits(elapsed);
+      }
+      return;
+    }
+
     if (ending.phase === "vanish") {
       drawEndingVanish(elapsed);
     } else if (ending.phase === "void") {
@@ -1317,6 +1434,51 @@
     } else {
       drawEndingCredits(elapsed);
     }
+  }
+
+  function drawFriendshipCelebrate(elapsed) {
+    drawTown();
+    const t = Math.min(1, elapsed / 1500);
+    ctx.fillStyle = `rgba(255, 220, 140, ${t * 0.35})`;
+    ctx.fillRect(0, 0, WORLD_W, WORLD_H);
+
+    for (let i = 0; i < 24; i++) {
+      const seedX = (i * 97) % WORLD_W;
+      const speed = 60 + (i % 5) * 20;
+      const fallT = ((elapsed / 1000) * speed + i * 40) % (WORLD_H + 40);
+      const hue = (i * 37) % 360;
+      ctx.fillStyle = `hsla(${hue}, 70%, 65%, 0.85)`;
+      ctx.beginPath();
+      ctx.arc(seedX, fallT - 20, 4, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    ctx.textAlign = "center";
+    ctx.textBaseline = "top";
+    ctx.fillStyle = "rgba(90, 60, 20, 0.92)";
+    ctx.font = "bold 24px sans-serif";
+    ctx.fillText("町の みんなが なかまに なった!", WORLD_W / 2, 26);
+  }
+
+  function drawFriendshipCredits(elapsed) {
+    const grad = ctx.createLinearGradient(0, 0, 0, WORLD_H);
+    grad.addColorStop(0, "#fff3d6");
+    grad.addColorStop(1, "#ffe1a8");
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, WORLD_W, WORLD_H);
+
+    const lineHeight = 34;
+    const scrollY = (elapsed / 1000) * 40;
+    ctx.textAlign = "center";
+    FRIENDSHIP_CREDITS.forEach((line, i) => {
+      const y = WORLD_H + i * lineHeight - scrollY;
+      if (y < -20 || y > WORLD_H + 20) return;
+      const isEnd = line === "THE END";
+      const isHeading = i === 0 || line.startsWith("─");
+      ctx.fillStyle = isEnd || isHeading ? "#b7442a" : "#5a4227";
+      ctx.font = isEnd ? "bold 28px sans-serif" : isHeading ? "bold 22px sans-serif" : "16px sans-serif";
+      ctx.fillText(line, WORLD_W / 2, y);
+    });
   }
 
   function drawEndingVanish(elapsed) {
@@ -1394,6 +1556,8 @@
 
     if (scene === "town") {
       updatePlayer();
+      recordPartyTrail();
+      updatePartyPositions();
       const blocked = dialogOpen || squatResultActive;
       activeNpc = blocked ? null : findActiveNpc();
       talkHint.hidden = !activeNpc || blocked;
@@ -1539,6 +1703,10 @@
   async function init() {
     updateProgress();
     updateStatsDisplay();
+    NPCS.forEach((npc) => {
+      npc.homeX = npc.x;
+      npc.homeY = npc.y;
+    });
     player.img = await loadImage(PLAYER.sprite);
     await Promise.all(
       NPCS.map(async (npc) => {
