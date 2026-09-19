@@ -1,3 +1,9 @@
+body {
+  min-height: 100vh;
+  margin: 0;
+  background: #f3f6f9;
+}
+
 .character-module {
   position: fixed;
   right: 24px;
