@@ -481,6 +481,7 @@
     let nearest = null;
     let nearestDist = TALK_RADIUS;
     for (const npc of NPCS) {
+      if (npc.isAlly) continue;
       const d = distance(player.x, player.y, npc.x, npc.y);
       if (d < nearestDist) {
         nearest = npc;
