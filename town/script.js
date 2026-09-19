@@ -30,6 +30,8 @@
       sprite: "../butamin/assets/piggybank_simple_sprite_sheet.png",
       x: 140,
       y: 190,
+      roof: "#c96a4c",
+      wall: "#f6ead9",
       lines: ["コツコツ貯金するのが趣味なんだ。", "いつか大きな貯金箱になるのが夢さ!"],
     },
     {
@@ -38,6 +40,8 @@
       sprite: "../fukurin/assets/fukurin_sprite_sheet_v2.png",
       x: 340,
       y: 175,
+      roof: "#4f7f77",
+      wall: "#eee3c8",
       lines: ["夜になると目が冴えちゃうんだよね。", "静かな町がお気に入りなんだ。"],
     },
     {
@@ -46,6 +50,8 @@
       sprite: "../kanepiyo/assets/kanepiyo_sprite_sheet_v2.png",
       x: 560,
       y: 170,
+      roof: "#d9a441",
+      wall: "#f6efdb",
       lines: ["ピヨ!今日の運勢は絶好調だよ!", "見つけてくれてうれしいピヨ。"],
     },
     {
@@ -54,6 +60,8 @@
       sprite: "../kokeshin/assets/kokeshin_sprite_sheet_v4_no_arms.png",
       x: 780,
       y: 150,
+      roof: "#a8524a",
+      wall: "#f2e4d3",
       lines: ["じっとしているのが得意なんだ。", "たまには町を見て回るのもいいね。"],
     },
     {
@@ -62,6 +70,8 @@
       sprite: "../moneymask/assets/moneymask_luchador_sprite_sheet.png",
       x: 890,
       y: 260,
+      roof: "#4c6fa5",
+      wall: "#eee6d3",
       lines: ["ファイトマネーは全部貯金してるぜ!", "強さもお金も磨き続けるのさ。"],
     },
     {
@@ -70,6 +80,8 @@
       sprite: "../monster/assets/custom_module_monster_sprite_transparent.png",
       x: 860,
       y: 460,
+      roof: "#6b7a4f",
+      wall: "#e9e8d6",
       lines: ["驚かせてごめんね、実はやさしいんだ。", "友達になってくれる?"],
     },
     {
@@ -78,6 +90,8 @@
       sprite: "../negiduck/assets/negiduck_sprite_sheet_v4_back_negi.png",
       x: 640,
       y: 510,
+      roof: "#5a9463",
+      wall: "#eee6d3",
       lines: ["ねぎ、持っていく?", "新鮮なねぎ、自慢なんだ。"],
     },
     {
@@ -86,6 +100,8 @@
       sprite: "../okame-hibachi/assets/okame_hibachi_sprite_sheet.png",
       x: 400,
       y: 500,
+      roof: "#b0563f",
+      wall: "#f0e2cf",
       lines: ["火鉢であったまっていってね。", "寒い日はここに集まるんだ。"],
     },
     {
@@ -94,8 +110,32 @@
       sprite: "../retrobo/assets/retrobo_sprite_sheet_v2.png",
       x: 150,
       y: 420,
+      roof: "#6f6f78",
+      wall: "#e7e4da",
       lines: ["ピポパポ…なつかしい音がするでしょ?", "町の見回りが仕事なんだ。"],
     },
+  ];
+
+  const PLAZA_X = WORLD_W / 2;
+  const PLAZA_Y = 330;
+  const PLAZA_RADIUS = 78;
+
+  const BUSHES = [
+    { x: 40, y: 60, r: 16 },
+    { x: 70, y: 80, r: 12 },
+    { x: 960, y: 60, r: 16 },
+    { x: 930, y: 85, r: 12 },
+    { x: 40, y: 560, r: 16 },
+    { x: 70, y: 585, r: 12 },
+    { x: 960, y: 560, r: 16 },
+    { x: 930, y: 585, r: 12 },
+    { x: 500, y: 55, r: 14 },
+    { x: 460, y: 40, r: 10 },
+    { x: 540, y: 40, r: 10 },
+    { x: 60, y: 300, r: 14 },
+    { x: 940, y: 360, r: 14 },
+    { x: 230, y: 300, r: 12 },
+    { x: 720, y: 350, r: 12 },
   ];
 
   const canvas = document.getElementById("gameCanvas");
@@ -311,6 +351,134 @@
     ctx.closePath();
   }
 
+  function drawPaths() {
+    ctx.strokeStyle = "#ddcda8";
+    ctx.lineWidth = 30;
+    ctx.lineCap = "round";
+    for (const npc of NPCS) {
+      ctx.beginPath();
+      ctx.moveTo(PLAZA_X, PLAZA_Y);
+      ctx.lineTo(npc.x, npc.y + 6);
+      ctx.stroke();
+    }
+    ctx.strokeStyle = "#e8dcbc";
+    ctx.lineWidth = 20;
+    for (const npc of NPCS) {
+      ctx.beginPath();
+      ctx.moveTo(PLAZA_X, PLAZA_Y);
+      ctx.lineTo(npc.x, npc.y + 6);
+      ctx.stroke();
+    }
+  }
+
+  function drawPlaza() {
+    ctx.fillStyle = "#e9dfc4";
+    ctx.beginPath();
+    ctx.arc(PLAZA_X, PLAZA_Y, PLAZA_RADIUS, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = "#cbb888";
+    ctx.lineWidth = 4;
+    ctx.stroke();
+
+    ctx.strokeStyle = "#d8cba3";
+    ctx.lineWidth = 2;
+    for (let r = 20; r < PLAZA_RADIUS; r += 18) {
+      ctx.beginPath();
+      ctx.arc(PLAZA_X, PLAZA_Y, r, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+
+    ctx.fillStyle = "#9cc4d1";
+    ctx.beginPath();
+    ctx.arc(PLAZA_X, PLAZA_Y, 22, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = "#7ea9b6";
+    ctx.lineWidth = 3;
+    ctx.stroke();
+
+    ctx.fillStyle = "#c7e0e8";
+    ctx.beginPath();
+    ctx.arc(PLAZA_X, PLAZA_Y, 9, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = "rgba(255,255,255,0.55)";
+    ctx.beginPath();
+    ctx.moveTo(PLAZA_X, PLAZA_Y - 26);
+    ctx.lineTo(PLAZA_X + 4, PLAZA_Y - 10);
+    ctx.lineTo(PLAZA_X - 4, PLAZA_Y - 10);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  function drawBush(x, y, r) {
+    ctx.fillStyle = "#7fa06a";
+    ctx.beginPath();
+    ctx.arc(x - r * 0.5, y, r * 0.7, 0, Math.PI * 2);
+    ctx.arc(x + r * 0.5, y, r * 0.7, 0, Math.PI * 2);
+    ctx.arc(x, y - r * 0.4, r * 0.8, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#6a8f57";
+    ctx.beginPath();
+    ctx.arc(x, y + r * 0.15, r * 0.9, 0.1 * Math.PI, 0.9 * Math.PI);
+    ctx.fill();
+  }
+
+  function drawBuilding(npc) {
+    const width = 108;
+    const wallHeight = 56;
+    const roofHeight = 46;
+    const cx = npc.x;
+    const baseY = npc.y - 6;
+    const wallTop = baseY - wallHeight;
+
+    ctx.fillStyle = "rgba(32,32,32,0.08)";
+    ctx.beginPath();
+    ctx.ellipse(cx, baseY + 4, width / 2 + 6, 8, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = npc.wall;
+    ctx.strokeStyle = "rgba(32,32,32,0.15)";
+    ctx.lineWidth = 1.5;
+    roundRect(cx - width / 2, wallTop, width, wallHeight, 6);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = "#8a5a3a";
+    const doorW = 26;
+    const doorH = 30;
+    roundRect(cx - doorW / 2, baseY - doorH, doorW, doorH, 4);
+    ctx.fill();
+
+    ctx.fillStyle = npc.roof;
+    ctx.beginPath();
+    ctx.moveTo(cx - width / 2 - 10, wallTop);
+    ctx.lineTo(cx + width / 2 + 10, wallTop);
+    ctx.lineTo(cx, wallTop - roofHeight);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = "rgba(32,32,32,0.18)";
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    const winSize = 16;
+    const winY = wallTop + 10;
+    ctx.fillStyle = "#fdf6e6";
+    ctx.strokeStyle = "rgba(32,32,32,0.2)";
+    [cx - width / 2 + 18, cx + width / 2 - 18 - winSize].forEach((wx) => {
+      roundRect(wx, winY, winSize, winSize, 3);
+      ctx.fill();
+      ctx.stroke();
+    });
+  }
+
+  function drawFence() {
+    ctx.strokeStyle = "#c9c0a6";
+    ctx.lineWidth = 4;
+    ctx.setLineDash([2, 10]);
+    ctx.strokeRect(10, 10, WORLD_W - 20, WORLD_H - 20);
+    ctx.setLineDash([]);
+  }
+
   function drawTalkBubble(npc) {
     const bx = npc.x;
     const by = npc.y - DRAW_SIZE - 26;
@@ -334,14 +502,27 @@
     ctx.fillStyle = pattern;
     ctx.fillRect(0, 0, WORLD_W, WORLD_H);
 
-    ctx.fillStyle = "rgba(183, 68, 42, 0.06)";
-    ctx.fillRect(0, 0, WORLD_W, 90);
+    drawFence();
 
+    for (const bush of BUSHES) {
+      drawBush(bush.x, bush.y, bush.r);
+    }
+
+    drawPaths();
+    drawPlaza();
+
+    for (const npc of NPCS) {
+      drawBuilding(npc);
+    }
+
+    ctx.fillStyle = "rgba(255, 253, 248, 0.85)";
+    roundRect(10, 10, 96, 24, 8);
+    ctx.fill();
     ctx.fillStyle = "#66645f";
-    ctx.font = "12px sans-serif";
+    ctx.font = "bold 12px sans-serif";
     ctx.textAlign = "left";
-    ctx.textBaseline = "top";
-    ctx.fillText("勇者の町", 16, 14);
+    ctx.textBaseline = "middle";
+    ctx.fillText("勇者の町", 20, 23);
 
     for (const npc of NPCS) {
       drawSign(npc);
