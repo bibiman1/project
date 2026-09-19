@@ -308,21 +308,39 @@
     }
   }
 
+  const PLAYER_SIZE = 96;
+
   function drawPlayer(t) {
     const bob = Math.sin(t * 6) * (player.moving ? 3 : 1.2);
-    const grad = ctx.createRadialGradient(VW / 2, VH / 2 + bob, 0, VW / 2, VH / 2 + bob, 26);
-    grad.addColorStop(0, "rgba(255,255,255,0.95)");
-    grad.addColorStop(0.5, "rgba(214,225,255,0.6)");
-    grad.addColorStop(1, "rgba(214,225,255,0)");
-    ctx.fillStyle = grad;
+    const cx = VW / 2;
+    const cy = VH / 2 + bob;
+
+    ctx.fillStyle = "rgba(60, 60, 50, 0.18)";
     ctx.beginPath();
-    ctx.arc(VW / 2, VH / 2 + bob, 26, 0, Math.PI * 2);
+    ctx.ellipse(cx, VH / 2 + 34, 26, 8, 0, 0, Math.PI * 2);
     ctx.fill();
 
-    ctx.fillStyle = "#fdfdfd";
-    ctx.beginPath();
-    ctx.arc(VW / 2, VH / 2 + bob, 9, 0, Math.PI * 2);
-    ctx.fill();
+    if (!kiLoaded) return;
+
+    const frame = player.moving
+      ? Math.floor(t * 10) % KI_COLS
+      : Math.floor(t * 2) % KI_COLS;
+
+    ctx.save();
+    ctx.translate(cx, cy);
+    if (player.facing < 0) ctx.scale(-1, 1);
+    ctx.drawImage(
+      kiSprite,
+      frame * KI_FRAME,
+      0,
+      KI_FRAME,
+      KI_FRAME,
+      -PLAYER_SIZE / 2,
+      -PLAYER_SIZE / 2,
+      PLAYER_SIZE,
+      PLAYER_SIZE
+    );
+    ctx.restore();
   }
 
   let lastTime = 0;
