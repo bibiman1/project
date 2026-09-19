@@ -8,6 +8,7 @@ const characters = [
   { folder: "negiduck", name: "ネギダック" },
   { folder: "okame-hibachi", name: "オカメ火鉢" },
   { folder: "retrobo", name: "レトロボ" },
+  { folder: "tanukichi", name: "たぬきち" },
   { folder: "yusha", name: "勇者" }
 ];
 
