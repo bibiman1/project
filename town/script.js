@@ -734,11 +734,6 @@
     battleMenu.hidden = true;
     talkHint.hidden = true;
 
-    const angle = Math.atan2(player.y - npc.y, player.x - npc.x) || -Math.PI / 2;
-    const pushDist = SOLID_RADIUS + TALK_RADIUS + 20;
-    player.x = clamp(npc.x + Math.cos(angle) * pushDist, 60, WORLD_W - 60);
-    player.y = clamp(npc.y + Math.sin(angle) * pushDist, 150, WORLD_H - 40);
-
     let allDefeated = false;
     if (result === "win") {
       visited.add(npc.id);
