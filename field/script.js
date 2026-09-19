@@ -73,7 +73,7 @@
   const player = {
     x: WORLD_W / 2,
     y: WORLD_H / 2,
-    facing: 1,
+    dir: "south",
     moving: false,
   };
 
@@ -134,6 +134,36 @@
   const KI_FRAME = 128;
   const KI_COLS = 8;
 
+  const manateeSprite = new Image();
+  let manateeLoaded = false;
+  manateeSprite.onload = () => {
+    manateeLoaded = true;
+  };
+  manateeSprite.src = "./assets/manatee_walk_sheet.png";
+  const MANATEE_W = 64;
+  const MANATEE_H = 48;
+  const MANATEE_FRAMES = 8;
+  const MANATEE_DIR_ROW = {
+    south: 0,
+    "south-east": 1,
+    east: 2,
+    "north-east": 3,
+    north: 4,
+    "north-west": 5,
+    west: 6,
+    "south-west": 7,
+  };
+  const MANATEE_ANGLE_DIRS = [
+    "east",
+    "south-east",
+    "south",
+    "south-west",
+    "west",
+    "north-west",
+    "north",
+    "north-east",
+  ];
+
   function clamp(v, min, max) {
     return Math.max(min, Math.min(max, v));
   }
@@ -160,7 +190,9 @@
       const len = Math.hypot(dx, dy) || 1;
       dx /= len;
       dy /= len;
-      if (dx !== 0) player.facing = dx > 0 ? 1 : -1;
+      const angleDeg = (Math.atan2(dy, dx) * 180) / Math.PI;
+      const idx = Math.round(((angleDeg + 360) % 360) / 45) % 8;
+      player.dir = MANATEE_ANGLE_DIRS[idx];
       player.x = clamp(player.x + dx * SPEED * dt, 40, WORLD_W - 40);
       player.y = clamp(player.y + dy * SPEED * dt, 40, WORLD_H - 40);
     }
@@ -308,7 +340,8 @@
     }
   }
 
-  const PLAYER_SIZE = 96;
+  const PLAYER_W = 96;
+  const PLAYER_H = 72;
 
   function drawPlayer(t) {
     const bob = Math.sin(t * 6) * (player.moving ? 3 : 1.2);
@@ -320,27 +353,22 @@
     ctx.ellipse(cx, VH / 2 + 34, 26, 8, 0, 0, Math.PI * 2);
     ctx.fill();
 
-    if (!kiLoaded) return;
+    if (!manateeLoaded) return;
 
-    const frame = player.moving
-      ? Math.floor(t * 10) % KI_COLS
-      : Math.floor(t * 2) % KI_COLS;
+    const row = MANATEE_DIR_ROW[player.dir];
+    const frame = player.moving ? Math.floor(t * 10) % MANATEE_FRAMES : 0;
 
-    ctx.save();
-    ctx.translate(cx, cy);
-    if (player.facing < 0) ctx.scale(-1, 1);
     ctx.drawImage(
-      kiSprite,
-      frame * KI_FRAME,
-      0,
-      KI_FRAME,
-      KI_FRAME,
-      -PLAYER_SIZE / 2,
-      -PLAYER_SIZE / 2,
-      PLAYER_SIZE,
-      PLAYER_SIZE
+      manateeSprite,
+      frame * MANATEE_W,
+      row * MANATEE_H,
+      MANATEE_W,
+      MANATEE_H,
+      cx - PLAYER_W / 2,
+      cy - PLAYER_H / 2,
+      PLAYER_W,
+      PLAYER_H
     );
-    ctx.restore();
   }
 
   let lastTime = 0;
