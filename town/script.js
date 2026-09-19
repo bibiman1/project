@@ -33,6 +33,7 @@
       roof: "#c96a4c",
       wall: "#f6ead9",
       lines: ["コツコツ貯金するのが趣味なんだ。", "いつか大きな貯金箱になるのが夢さ!"],
+      accusingLines: ["……どうして あんな ことを したんだ。", "しばらく 貯金箱に かくれて いるよ。"],
     },
     {
       id: "fukurin",
@@ -43,6 +44,7 @@
       roof: "#4f7f77",
       wall: "#eee3c8",
       lines: ["夜になると目が冴えちゃうんだよね。", "静かな町がお気に入りなんだ。"],
+      accusingLines: ["町が 赤く 染まってる…… こわいよ。", "しばらく そっとしておいて ほしい。"],
     },
     {
       id: "kanepiyo",
@@ -53,6 +55,7 @@
       roof: "#d9a441",
       wall: "#f6efdb",
       lines: ["ピヨ!今日の運勢は絶好調だよ!", "見つけてくれてうれしいピヨ。"],
+      accusingLines: ["ピヨ……もう いっしょに あそべないよ。", "モンスターは わるい 子じゃ なかったのに。"],
     },
     {
       id: "kokeshin",
@@ -63,6 +66,7 @@
       roof: "#a8524a",
       wall: "#f2e4d3",
       lines: ["じっとしているのが得意なんだ。", "たまには町を見て回るのもいいね。"],
+      accusingLines: ["……。", "(だまって そっと 目を そらした)"],
     },
     {
       id: "moneymask",
@@ -73,6 +77,7 @@
       roof: "#4c6fa5",
       wall: "#eee6d3",
       lines: ["ファイトマネーは全部貯金してるぜ!", "強さもお金も磨き続けるのさ。"],
+      accusingLines: ["力を 見せつける ためだけに 命を うばうなんて。", "強さの いみを はきちがえてるんじゃないか?"],
     },
     {
       id: "monster",
@@ -84,6 +89,7 @@
       wall: "#e9e8d6",
       battle: true,
       lines: ["驚かせてごめんね、実はやさしいんだ。", "友達になってくれる?"],
+      graveLines: ["……。", "ここに しずかに ねむっている。"],
     },
     {
       id: "negiduck",
@@ -94,6 +100,7 @@
       roof: "#5a9463",
       wall: "#eee6d3",
       lines: ["ねぎ、持っていく?", "新鮮なねぎ、自慢なんだ。"],
+      accusingLines: ["今は ねぎを わたす 気分じゃ ないよ。", "……少し ひとりに させて。"],
     },
     {
       id: "okame-hibachi",
@@ -104,6 +111,7 @@
       roof: "#b0563f",
       wall: "#f0e2cf",
       lines: ["火鉢であったまっていってね。", "寒い日はここに集まるんだ。"],
+      accusingLines: ["火鉢の 火も、なんだか 冷たく 感じるよ。", "みんな おびえて しまった。"],
     },
     {
       id: "retrobo",
@@ -114,6 +122,7 @@
       roof: "#6f6f78",
       wall: "#e7e4da",
       lines: ["ピポパポ…なつかしい音がするでしょ?", "町の見回りが仕事なんだ。"],
+      accusingLines: ["けいこく:勇者の せっきんを けんち。", "みまもりを きょうかします……。"],
     },
   ];
 
@@ -167,9 +176,26 @@
   let dialogOpen = false;
   let dialogNpc = null;
   let dialogLineIndex = 0;
+  let activeDialogLines = [];
 
   let scene = "town";
   let battle = null;
+  let monsterDefeated = false;
+
+  const BLOOD_SPLATS = [
+    { x: 860, y: 460, r: 46 },
+    { x: 905, y: 500, r: 26 },
+    { x: 805, y: 500, r: 22 },
+    { x: 930, y: 425, r: 20 },
+    { x: 500, y: 330, r: 18 },
+    { x: 300, y: 250, r: 16 },
+    { x: 700, y: 250, r: 16 },
+    { x: 200, y: 480, r: 16 },
+    { x: 600, y: 560, r: 18 },
+    { x: 120, y: 300, r: 14 },
+    { x: 950, y: 220, r: 14 },
+    { x: 450, y: 500, r: 16 },
+  ];
 
   const pressed = { up: false, down: false, left: false, right: false };
   let talkKeyEdge = false;
@@ -266,10 +292,21 @@
     return nearest;
   }
 
+  function getDialogLines(npc) {
+    if (npc.id === "monster") {
+      return npc.graveLines;
+    }
+    if (monsterDefeated && npc.accusingLines) {
+      return npc.accusingLines;
+    }
+    return npc.lines;
+  }
+
   function openDialog(npc) {
     dialogOpen = true;
     dialogNpc = npc;
     dialogLineIndex = 0;
+    activeDialogLines = getDialogLines(npc);
     visited.add(npc.id);
     updateProgress();
     showDialogLine();
@@ -279,12 +316,12 @@
 
   function showDialogLine() {
     dialogName.textContent = dialogNpc.name;
-    dialogText.textContent = dialogNpc.lines[dialogLineIndex];
+    dialogText.textContent = activeDialogLines[dialogLineIndex];
   }
 
   function advanceDialog() {
     dialogLineIndex += 1;
-    if (dialogLineIndex >= dialogNpc.lines.length) {
+    if (dialogLineIndex >= activeDialogLines.length) {
       closeDialog();
     } else {
       showDialogLine();
@@ -305,7 +342,7 @@
     if (dialogOpen) {
       advanceDialog();
     } else if (activeNpc) {
-      if (activeNpc.battle) {
+      if (activeNpc.battle && !monsterDefeated) {
         startBattle(activeNpc);
       } else {
         openDialog(activeNpc);
@@ -454,6 +491,7 @@
     if (result === "win") {
       visited.add(npc.id);
       updateProgress();
+      monsterDefeated = true;
     } else if (result === "lose") {
       player.x = PLAZA_X;
       player.y = PLAZA_Y + 40;
@@ -557,26 +595,87 @@
       ctx.stroke();
     }
 
-    ctx.fillStyle = "#9cc4d1";
+    const waterColor = monsterDefeated ? "#8a2620" : "#9cc4d1";
+    const waterEdge = monsterDefeated ? "#651c17" : "#7ea9b6";
+    const waterHighlight = monsterDefeated ? "#a8433c" : "#c7e0e8";
+
+    ctx.fillStyle = waterColor;
     ctx.beginPath();
     ctx.arc(PLAZA_X, PLAZA_Y, 22, 0, Math.PI * 2);
     ctx.fill();
-    ctx.strokeStyle = "#7ea9b6";
+    ctx.strokeStyle = waterEdge;
     ctx.lineWidth = 3;
     ctx.stroke();
 
-    ctx.fillStyle = "#c7e0e8";
+    ctx.fillStyle = waterHighlight;
     ctx.beginPath();
     ctx.arc(PLAZA_X, PLAZA_Y, 9, 0, Math.PI * 2);
     ctx.fill();
 
-    ctx.fillStyle = "rgba(255,255,255,0.55)";
+    if (!monsterDefeated) {
+      ctx.fillStyle = "rgba(255,255,255,0.55)";
+      ctx.beginPath();
+      ctx.moveTo(PLAZA_X, PLAZA_Y - 26);
+      ctx.lineTo(PLAZA_X + 4, PLAZA_Y - 10);
+      ctx.lineTo(PLAZA_X - 4, PLAZA_Y - 10);
+      ctx.closePath();
+      ctx.fill();
+    }
+  }
+
+  function drawBloodSplat(x, y, r) {
+    ctx.fillStyle = "rgba(108, 20, 18, 0.55)";
+    for (let i = 0; i < 5; i++) {
+      const ang = (i / 5) * Math.PI * 2;
+      const dx = Math.cos(ang) * r * 0.4;
+      const dy = Math.sin(ang) * r * 0.4;
+      ctx.beginPath();
+      ctx.ellipse(
+        x + dx,
+        y + dy,
+        r * (0.3 + (i % 2) * 0.15),
+        r * (0.22 + (i % 2) * 0.1),
+        ang,
+        0,
+        Math.PI * 2
+      );
+      ctx.fill();
+    }
+    ctx.fillStyle = "rgba(84, 14, 12, 0.6)";
     ctx.beginPath();
-    ctx.moveTo(PLAZA_X, PLAZA_Y - 26);
-    ctx.lineTo(PLAZA_X + 4, PLAZA_Y - 10);
-    ctx.lineTo(PLAZA_X - 4, PLAZA_Y - 10);
+    ctx.ellipse(x, y, r * 0.5, r * 0.38, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  function drawGrave(npc) {
+    const cx = npc.x;
+    const baseY = npc.y;
+
+    ctx.fillStyle = "rgba(32,32,32,0.18)";
+    ctx.beginPath();
+    ctx.ellipse(cx, baseY + 2, 30, 8, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = "#9a9a92";
+    ctx.strokeStyle = "#63635c";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(cx - 22, baseY);
+    ctx.lineTo(cx - 22, baseY - 34);
+    ctx.arc(cx, baseY - 34, 22, Math.PI, 0);
+    ctx.lineTo(cx + 22, baseY);
     ctx.closePath();
     ctx.fill();
+    ctx.stroke();
+
+    ctx.strokeStyle = "#70706a";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(cx, baseY - 46);
+    ctx.lineTo(cx, baseY - 14);
+    ctx.moveTo(cx - 10, baseY - 34);
+    ctx.lineTo(cx + 10, baseY - 34);
+    ctx.stroke();
   }
 
   function drawBush(x, y, r) {
@@ -677,6 +776,12 @@
       drawBush(bush.x, bush.y, bush.r);
     }
 
+    if (monsterDefeated) {
+      for (const splat of BLOOD_SPLATS) {
+        drawBloodSplat(splat.x, splat.y, splat.r);
+      }
+    }
+
     drawPaths();
     drawPlaza();
 
@@ -687,20 +792,26 @@
     ctx.fillStyle = "rgba(255, 253, 248, 0.85)";
     roundRect(10, 10, 96, 24, 8);
     ctx.fill();
-    ctx.fillStyle = "#66645f";
+    ctx.fillStyle = monsterDefeated ? "#8a2620" : "#66645f";
     ctx.font = "bold 12px sans-serif";
     ctx.textAlign = "left";
     ctx.textBaseline = "middle";
-    ctx.fillText("勇者の町", 20, 23);
+    ctx.fillText(monsterDefeated ? "荒れた町" : "勇者の町", 20, 23);
 
     for (const npc of NPCS) {
-      drawSign(npc);
+      if (npc.id === "monster" && monsterDefeated) {
+        drawSign({ ...npc, name: "🪦 おはか" });
+      } else {
+        drawSign(npc);
+      }
     }
 
     const entities = [player, ...NPCS].slice().sort((a, b) => a.y - b.y);
     for (const entity of entities) {
       if (entity === player) {
         drawSprite(player.img, player.frame, player.row, player.x, player.y);
+      } else if (entity.id === "monster" && monsterDefeated) {
+        drawGrave(entity);
       } else {
         drawSprite(entity.img, entity.frame || 0, ROW_IDLE, entity.x, entity.y);
       }
@@ -708,6 +819,11 @@
 
     if (activeNpc && !dialogOpen) {
       drawTalkBubble(activeNpc);
+    }
+
+    if (monsterDefeated) {
+      ctx.fillStyle = "rgba(120, 20, 20, 0.1)";
+      ctx.fillRect(0, 0, WORLD_W, WORLD_H);
     }
   }
 
@@ -831,7 +947,7 @@
       activeNpc = dialogOpen ? null : findActiveNpc();
       talkHint.hidden = !activeNpc || dialogOpen;
       if (activeNpc) {
-        talkHint.textContent = activeNpc.battle
+        talkHint.textContent = activeNpc.battle && !monsterDefeated
           ? "Enter / Space / Z で たたかう"
           : "Enter / Space / Z で話す";
       }
