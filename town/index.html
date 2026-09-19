@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="勇者を操作して町のキャラクターに話しかけよう">
+  <title>勇者の町 - キャラクター探検</title>
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+  <header class="town-header">
+    <a class="back-link" href="../index.html">← キャラクター一覧に戻る</a>
+    <h1>勇者の町</h1>
+    <p class="lead">矢印キー / WASDで移動して、町のキャラクターに近づいて話しかけよう。</p>
+  </header>
+
+  <main class="town-wrap">
+    <div class="game-frame">
+      <canvas id="gameCanvas" width="1000" height="620" aria-label="町のマップ"></canvas>
+
+      <div id="talkHint" class="talk-hint" hidden>Enter / Space / Z で話す</div>
+
+      <div id="dialogBox" class="dialog-box" hidden>
+        <p id="dialogName" class="dialog-name"></p>
+        <p id="dialogText" class="dialog-text"></p>
+        <p id="dialogNext" class="dialog-next">▼</p>
+      </div>
+    </div>
+
+    <div class="town-status">
+      <p id="progressText" class="progress-text">話した人数: 0 / 9</p>
+    </div>
+
+    <div class="touch-controls" aria-hidden="true">
+      <div class="dpad">
+        <button type="button" class="dpad-btn dpad-up" data-dir="up" aria-label="上へ移動">▲</button>
+        <button type="button" class="dpad-btn dpad-left" data-dir="left" aria-label="左へ移動">◀</button>
+        <button type="button" class="dpad-btn dpad-right" data-dir="right" aria-label="右へ移動">▶</button>
+        <button type="button" class="dpad-btn dpad-down" data-dir="down" aria-label="下へ移動">▼</button>
+      </div>
+      <button type="button" id="talkButton" class="talk-btn">話す</button>
+    </div>
+  </main>
+
+  <footer class="town-footer">
+    <small>© Character Project</small>
+  </footer>
+
+  <script src="./script.js"></script>
+</body>
+</html>
