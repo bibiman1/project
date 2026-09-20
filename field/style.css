@@ -114,6 +114,30 @@ body {
   box-shadow: var(--shadow);
 }
 
+button.gallery-hint {
+  all: unset;
+  box-sizing: border-box;
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  bottom: 16px;
+  display: block;
+  width: auto;
+  padding: 16px 20px 14px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--paper);
+  box-shadow: var(--shadow);
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+button.gallery-hint:hover,
+button.gallery-hint:focus-visible {
+  border-color: var(--accent);
+}
+
 .fragment-title {
   margin: 0 0 6px;
   color: var(--accent);

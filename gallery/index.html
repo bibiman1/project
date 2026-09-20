@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="ぼぎだぢの世界のイメージボード・手描き資料ギャラリー">
+  <title>ぼぎだぢ - イメージボード</title>
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+  <header class="gallery-header">
+    <a class="back-link" href="../index.html">← キャラクター一覧に戻る</a>
+    <h1>ぼぎだぢ イメージボード</h1>
+    <p class="lead">世界観の元になった手描きスケッチ・資料写真の一覧。クリックで拡大表示。</p>
+  </header>
+
+  <main class="gallery-wrap">
+    <div id="galleryGrid" class="gallery-grid"></div>
+  </main>
+
+  <div id="lightbox" class="lightbox" hidden>
+    <button type="button" id="lightboxClose" class="lightbox-close" aria-label="閉じる">✕</button>
+    <button type="button" id="lightboxPrev" class="lightbox-nav lightbox-prev" aria-label="前の画像">‹</button>
+    <img id="lightboxImg" class="lightbox-img" alt="">
+    <button type="button" id="lightboxNext" class="lightbox-nav lightbox-next" aria-label="次の画像">›</button>
+    <p id="lightboxCount" class="lightbox-count"></p>
+  </div>
+
+  <footer class="gallery-footer">
+    <small>© Character Project</small>
+  </footer>
+
+  <script src="./script.js"></script>
+</body>
+</html>
