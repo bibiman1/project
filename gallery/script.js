@@ -115,10 +115,85 @@
     },
   ];
 
+  const ESSAY_INTRO = [
+    "以下は、『ぼぎだぢ』の設定資料(あらすじ・用語集・断片の見取り図)を一次資料として、二人の架空の解説者に読ませたものである。一人は比較文化学者(民俗学寄りの、翻訳者の語注に近い書き方をする)。もう一人は理論物理学者。同じ語彙―「ぼぎ」「ちゃん」「ださいおさむん」「超現実爆弾」「チェレンコフ光」―を、まったく別の道具立てで読み解く。",
+    "二人の読みは競合しない。むしろ、この作品の語彙が最初から二重の読みに開かれていることを示している。器物が意志を持つという話は、片方の耳では神話の文法で、もう片方の耳では観測問題の比喩で鳴る。どちらか一方が「正解」なのではなく、両方が同時に成立するように語彙が選ばれている、というのがこの解説の立場である。",
+  ];
+
+  const ESSAY_SECTIONS = [
+    {
+      title: "比較文化学者の読み ― 付喪神の倒置",
+      blocks: [
+        {
+          h: "日付けされない付喪神",
+          p: "日本の民俗には、器物が百年を経て魂を宿すという「付喪神」の伝承がある。長く人に使われたものが、人の手を離れてもものを言うようになる。ところが『ぼぎだぢ』の世界はこの因果を逆転させている。人間(「ちゃん」)が使い込んだ末に魂を宿らせたのではなく、人間が去ったあとの時代―本文の言う「アフターマンエイジ」―に、器物たちは最初から役割を与えられずに存在している。付喪神が「使い戻されなくなった道具の後日談」だとすれば、ぼぎは「使い手が最初からいない道具の現在進行形」である。この順序の入れ替えは、作品全体の時間感覚を決めている。",
+        },
+        {
+          h: "個体差というアニミズムの粒度",
+          p: "鉄瓶は「怒れる」、マトリョーシカは「交戦的」、おばけは器物ではなく「認識のされ方」そのもの――ここには単一のアニミズムではなく、精霊の分類学がある。比較宗教学が精霊や妖怪を発生源・気性・関係性で類型化するのと同じ手つきで、この世界の器物たちも器物性の強弱によって並んでいる。",
+        },
+        {
+          h: "目的を失った乗り物たち",
+          p: "ぼぎカーは光速度と慣性に縛られず、車箪笥はガソリンがなくても走る。乗り物の数が異様に多いという資料内の自己言及(「移動そのものが目的から外れている」)は、比較民俗学的には「彷徨う乗り物」のモチーフ――さまよえるオランダ人の幽霊船、行き先のない永遠の巡礼――に近い。到達点のない移動は、目的地よりも移動という状態そのものが存在理由になっている乗り物群を生む。",
+        },
+        {
+          h: "失われたことばと存続することば",
+          p: "「ださいおさむん」は失われた言葉として、「リンガボガー」は今も使われる儀式言語として並置される。これは、特定の共同体だけに通じる私的な言語(双子語、あるいはカーゴカルトが外部文明との接触を儀式化して保存することば)の構造に似ている。意味を失った断片が神託の言葉として保存される一方、実用の言語は生きて更新され続ける――両者の対比が、この世界の「宗教」の輪郭を描いている。",
+        },
+        {
+          h: "不在の神",
+          p: "「ちゃん」はほとんど登場せず、看板や仕組み、置き去りにされたことばとしてのみ痕跡を残す。これは比較宗教学が「デウス・オティオースス」(隠遁した創造神)と呼ぶ構造そのものである。世界を作った、あるいは去っていった存在は不在であることによってかえって信仰の中心になる。「きー」が生涯かけて「ださいおさむん」という一語を探し求め、やがて目的からも衝動からも解放されて「あるがままを感じる」に至り、最後には「時空検閲官」として「ちゃん」のいる世界を再建する――この弧は、悟りを得たのちに衆生救済のためにこの世へ戻る菩薩の誓願と同型である。探し物は、探すことをやめたときに初めて意味を変える。",
+        },
+      ],
+    },
+    {
+      title: "理論物理学者の読み ― 用語を真面目に受けとる",
+      blocks: [
+        {
+          h: "超現実爆弾と偽真空崩壊",
+          p: "「時空連続体の泡として投下された超現実爆弾は、事象の蓋然性を攪乱する」——この一文を式に起こすなら、場の量子論で言う「偽真空崩壊(false vacuum decay)」に一番近い。真空は安定ではなく準安定な局所極小にすぎず、量子トンネリングで真の真空の泡が核生成すると、その内側では物理定数さえ別の値をとりうる。「事象の蓋然性を攪乱する」とは、確率の前提そのものが内側で書き換わった、と読むのが一番腑に落ちる。以降の世界は、その新しい泡の内側——物理定数が少しずつ違う場所——として読める。",
+        },
+        {
+          h: "チェレンコフ光と誤訳された光速",
+          p: "「青い光漁」の別名が「チェレンコフ光」であることは、この資料中で最も物理的に正確な一文だ。チェレンコフ光とは、荷電粒子が媒質(水や発電炉の冷却水など)中を「その媒質中での光速」より速く進むときに発する青白い発光で、真空中の光速を超えるわけではない。実際には原子炉のプールが青く光る現象として一般に知られている。つまりこの一文——「ぼぎが炉心内部の燃料ペレットをもて遊び、海に投げ込んだ」——は、選ばれた語の水準から見ると、子供の遊びの表現をした臨界事故(メルトダウン)の報告でもある。戯れと危険の距離がこの一行だけでなくなる。",
+        },
+        {
+          h: "慣性からの自由",
+          p: "「ぼぎカーは光速度と慣性に制限を受けない」——特殊相対性理論とニュートン力学の両方を一行で破棄する宣言である。慣性とは物体が時空の座標系に対して持つ性質のことだが、それがないということは、この乗り物が定義上、物理的な意味では「移動していない」ことを意味する。まばたきの度に座標が書き換わると言った方が正確かもしれない。物語内の乗り物は、物理法則に従う乗り物ではなく、物理法則の外側からレンダリングされている存在——作中人物の目には「走っている」としか見えない、と読むことができる。",
+        },
+        {
+          h: "観測されるまで何もない空間",
+          p: "懲罰空間(この書庫のある場所)を直接歩けば、この奇妙さは一層明確になる。何もない平面を歩き、何かに一定距離以内に近づくまでそれは「存在しない」ように見える。これは比喩ではなく、量子力学の測定問題(観測するまで状態が確定しない)をゲームメカニクスのレベルで文字通り実装したものだとも言える。この空間は「何もない」のではなく、「視線が届くまで確定しない」。",
+        },
+        {
+          h: "月の裏側という実在の物理",
+          p: "本題とは別に、一つ実際の天体物理を確認しておきたい。月は地球に対して自転周期と公転周期が一致する「潮汐固定(tidal locking)」の状態にあり、その結果、月の裏側は地球から永遠に直接観測できない。人類が月の裏側を初めて目にしたのは1959年のルナ3号の探査機以降である。つまり「永遠に見えない場所」とは、フィクションではなく天文学上実在するカテゴリーである——この事実だけをここでは記しておく。",
+        },
+      ],
+    },
+  ];
+
+  const ESSAY_SYNTHESIS = {
+    title: "結び ― 二つの視線が交わる場所",
+    warning: "⚠️ ここから先は「懲罰空間」の物語の結末に直接触れる内容です。",
+    paragraphs: [
+      "比較文化学者の読みは「不在の神」で終わった。理論物理学者の読みは「永遠に直接観測できない場所」(月の裏側)で終わった。この二つは、実は同じ一点を指している。",
+      "設定上、懲罰空間の正体は月の裏側にある「ださいおさむん」そのものであり、人間(「ちゃん」)が最後に言い残した場所である。つまりこのゲームのフィールドとは、字面通りに「人類が永遠に見られない場所」の中に、その人類の最後の言葉だけが置かれている、という構造だ。民俗学の「不在の神」と、天体力学の「永遠の裏面」が、ここで一致する。",
+      "さらに重要なのは、プレイヤーキャラクター(ぼぎだぢ)が、探している「ださいおさむん」の中に最初からいた、という点だ。ゲーム開始時点からすでに、探し求めていた場所の中を歩き回っていた。この一点に、二つの学問の語彙がそれぞれ別の名前を与えている。",
+    ],
+    list: [
+      ["比較宗教学の名前", "「探し物は、探すことをやめたときに初めて意味を変える」——禅の問答や「衆生はすでに仏性を備えている」という本覚思想の構造と同型。探求の終わりは発見ではなく想起である。"],
+      ["理論物理学の名前", "系を外部から測定する特権的な観測者は存在しない。量子重力の思想実験でも一般相対性理論でも、観測者は常に系の内側にいる。ゲームの主人公は、対象を外側から探しに行く主体ではなく、最初から系の一部である。"],
+    ],
+    closing: "開示の瞬間に必要なのは新しい情報ではなく、「あなたは最初からここにいた」という見方の変更だけなのかもしれない。日常の雑多を集めた玩具箱のような体裁をまとったまま、この作品は内側と外側、探索と内在という、かなり古い哲学的問題を、静かに仕掛けている。",
+  };
+
   const grid = document.getElementById("galleryGrid");
   const glossaryPanel = document.getElementById("glossaryPanel");
+  const essayPanel = document.getElementById("essayPanel");
   const tabImages = document.getElementById("tabImages");
   const tabGlossary = document.getElementById("tabGlossary");
+  const tabEssay = document.getElementById("tabEssay");
   const lightbox = document.getElementById("lightbox");
   const lightboxImg = document.getElementById("lightboxImg");
   const lightboxCount = document.getElementById("lightboxCount");
@@ -171,22 +246,94 @@
     glossaryPanel.appendChild(sectionEl);
   });
 
+  ESSAY_INTRO.forEach((text) => {
+    const p = document.createElement("p");
+    p.className = "essay-intro";
+    p.textContent = text;
+    essayPanel.appendChild(p);
+  });
+
+  ESSAY_SECTIONS.forEach((section) => {
+    const sectionEl = document.createElement("section");
+    sectionEl.className = "essay-section";
+    const h2 = document.createElement("h2");
+    h2.textContent = section.title;
+    sectionEl.appendChild(h2);
+    section.blocks.forEach((block) => {
+      const h3 = document.createElement("h3");
+      h3.textContent = block.h;
+      const p = document.createElement("p");
+      p.textContent = block.p;
+      sectionEl.appendChild(h3);
+      sectionEl.appendChild(p);
+    });
+    essayPanel.appendChild(sectionEl);
+  });
+
+  const synthesisEl = document.createElement("section");
+  synthesisEl.className = "essay-section";
+  const synthesisH2 = document.createElement("h2");
+  synthesisH2.textContent = ESSAY_SYNTHESIS.title;
+  synthesisEl.appendChild(synthesisH2);
+
+  const warningEl = document.createElement("p");
+  warningEl.className = "essay-warning";
+  warningEl.textContent = ESSAY_SYNTHESIS.warning;
+  synthesisEl.appendChild(warningEl);
+
+  ESSAY_SYNTHESIS.paragraphs.forEach((text) => {
+    const p = document.createElement("p");
+    p.textContent = text;
+    synthesisEl.appendChild(p);
+  });
+
+  const synthesisList = document.createElement("ul");
+  ESSAY_SYNTHESIS.list.forEach(([term, def]) => {
+    const li = document.createElement("li");
+    const strong = document.createElement("strong");
+    strong.textContent = term;
+    li.appendChild(strong);
+    li.appendChild(document.createTextNode(`: ${def}`));
+    synthesisList.appendChild(li);
+  });
+  synthesisEl.appendChild(synthesisList);
+
+  const closingEl = document.createElement("p");
+  closingEl.textContent = ESSAY_SYNTHESIS.closing;
+  synthesisEl.appendChild(closingEl);
+
+  essayPanel.appendChild(synthesisEl);
+
   function showImages() {
     grid.hidden = false;
     glossaryPanel.hidden = true;
+    essayPanel.hidden = true;
     tabImages.classList.add("active");
     tabGlossary.classList.remove("active");
+    tabEssay.classList.remove("active");
   }
 
   function showGlossary() {
     grid.hidden = true;
     glossaryPanel.hidden = false;
+    essayPanel.hidden = true;
     tabImages.classList.remove("active");
     tabGlossary.classList.add("active");
+    tabEssay.classList.remove("active");
+  }
+
+  function showEssay() {
+    grid.hidden = true;
+    glossaryPanel.hidden = true;
+    essayPanel.hidden = false;
+    tabImages.classList.remove("active");
+    tabGlossary.classList.remove("active");
+    tabEssay.classList.add("active");
   }
 
   tabImages.addEventListener("click", showImages);
   tabGlossary.addEventListener("click", showGlossary);
+  tabEssay.addEventListener("click", showEssay);
 
   function openLightbox(index) {
     currentIndex = index;
