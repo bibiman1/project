@@ -43,6 +43,53 @@
     { passive: false }
   );
 
+  const fullscreenBtn = document.getElementById("fullscreenBtn");
+
+  function isFullscreen() {
+    return !!(document.fullscreenElement || document.webkitFullscreenElement);
+  }
+
+  function requestFullscreen(el) {
+    const req = el.requestFullscreen || el.webkitRequestFullscreen;
+    if (!req) return Promise.reject(new Error("fullscreen not supported"));
+    return req.call(el);
+  }
+
+  function exitFullscreen() {
+    const exit = document.exitFullscreen || document.webkitExitFullscreen;
+    if (!exit) return Promise.reject(new Error("fullscreen not supported"));
+    return exit.call(document);
+  }
+
+  fullscreenBtn.addEventListener("click", async () => {
+    if (isFullscreen()) {
+      try {
+        await exitFullscreen();
+      } catch (e) {
+        // ignore
+      }
+      return;
+    }
+    try {
+      await requestFullscreen(gameFrame);
+    } catch (e) {
+      // fullscreen not supported here; nothing more we can do
+      return;
+    }
+    if (screen.orientation && screen.orientation.lock) {
+      screen.orientation.lock("landscape").catch(() => {
+        // orientation lock not supported (e.g. iOS Safari); ignore
+      });
+    }
+  });
+
+  document.addEventListener("fullscreenchange", () => {
+    fullscreenBtn.textContent = isFullscreen() ? "⤢" : "⛶";
+  });
+  document.addEventListener("webkitfullscreenchange", () => {
+    fullscreenBtn.textContent = isFullscreen() ? "⤢" : "⛶";
+  });
+
   const FRAGMENTS = [
     {
       id: "lake",
