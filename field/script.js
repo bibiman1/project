@@ -26,17 +26,39 @@
     joystick.classList.add("touch-enabled");
   }
 
+  const gameFrame = document.querySelector(".game-frame");
+  const JOY_SIZE = 112;
+  const JOY_INSET = 20;
+
+  function positionJoystick() {
+    const frameRect = gameFrame.getBoundingClientRect();
+    const isCompact = document.body.classList.contains("landscape-compact");
+    const leftMargin = frameRect.left;
+
+    let left, top;
+    if (isCompact && leftMargin > JOY_SIZE + 16) {
+      // enough letterbox space beside the game view: rest the stick there
+      // instead of covering the field
+      left = leftMargin / 2 - JOY_SIZE / 2;
+      top = frameRect.top + frameRect.height / 2 - JOY_SIZE / 2;
+    } else {
+      left = frameRect.left + JOY_INSET;
+      top = frameRect.bottom - JOY_INSET - JOY_SIZE;
+    }
+    joystick.style.left = `${left}px`;
+    joystick.style.top = `${top}px`;
+  }
+
   function updateLayoutMode() {
     const isLandscape = window.innerWidth > window.innerHeight;
     const compact = isTouchDevice && isLandscape;
     document.body.classList.toggle("landscape-compact", compact);
     document.documentElement.classList.toggle("landscape-compact", compact);
+    positionJoystick();
   }
   updateLayoutMode();
   window.addEventListener("resize", updateLayoutMode);
   window.addEventListener("orientationchange", updateLayoutMode);
-
-  const gameFrame = document.querySelector(".game-frame");
   gameFrame.addEventListener(
     "touchmove",
     (e) => {

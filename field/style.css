@@ -215,7 +215,7 @@ body {
 
 .joystick {
   display: none;
-  position: absolute;
+  position: fixed;
   left: 20px;
   bottom: 20px;
   width: 112px;
@@ -225,7 +225,7 @@ body {
   border: 1px solid rgba(216, 210, 197, 0.7);
   box-shadow: var(--shadow);
   touch-action: none;
-  z-index: 5;
+  z-index: 50;
 }
 
 .joystick-knob {
