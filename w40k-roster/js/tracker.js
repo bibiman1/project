@@ -40,6 +40,7 @@
     els.logList = document.getElementById("log-list");
     els.phaseTabs = document.getElementById("phase-tabs");
     els.phaseItems = document.getElementById("phase-checklist-items");
+    els.stratagemSelect = document.getElementById("stratagem-use-select");
   };
 
   const persist = () => W40K.save(W40K.KEYS.GAME, game);
@@ -117,6 +118,17 @@
       li.innerHTML = `<span class="log-round">R${entry.round}</span> ${escapeHtml(entry.text)}`;
       els.logList.appendChild(li);
     });
+
+    const stratagems = roster ? roster.stratagems : [];
+    if (stratagems.length === 0) {
+      els.stratagemSelect.innerHTML = '<option value="">ストラタジム未登録</option>';
+      els.stratagemSelect.disabled = true;
+    } else {
+      els.stratagemSelect.disabled = false;
+      els.stratagemSelect.innerHTML = stratagems
+        .map((s) => `<option value="${s.id}">${escapeHtml(s.name)} (CP${s.cost})</option>`)
+        .join("");
+    }
 
     renderPhaseChecklist();
   };
@@ -270,6 +282,17 @@
       game.log.push({ id: W40K.uid(), text, round: game.round, ts: Date.now() });
       persist();
       input.value = "";
+      render();
+    });
+
+    document.getElementById("btn-use-stratagem").addEventListener("click", () => {
+      if (!game) return;
+      const roster = W40K.Roster.getById(game.rosterId);
+      const stratagem = roster?.stratagems.find((s) => s.id === els.stratagemSelect.value);
+      if (!stratagem) return;
+      game.cp.me = Math.max(0, game.cp.me - stratagem.cost);
+      game.log.push({ id: W40K.uid(), text: `ストラタジム使用: ${stratagem.name} (CP${stratagem.cost})`, round: game.round, ts: Date.now() });
+      persist();
       render();
     });
 

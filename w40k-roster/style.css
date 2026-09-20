@@ -285,6 +285,51 @@ main {
   font-size: 0.9rem;
 }
 
+.unit-enhancement {
+  margin: 0.3rem 0 0;
+  color: var(--gold-bright);
+  font-size: 0.85rem;
+}
+
+.detachment-section {
+  margin-bottom: 0.8rem;
+}
+
+.detachment-name {
+  margin: 0;
+  font-weight: 600;
+  color: var(--gold-bright);
+}
+
+.detachment-rule {
+  margin: 0.3rem 0 0;
+  color: var(--text-dim);
+  font-size: 0.9rem;
+  white-space: pre-wrap;
+}
+
+.stratagem-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin-bottom: 1.2rem;
+}
+
+.stratagem-card {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.7rem 0.9rem;
+}
+
+.stratagem-card h4 {
+  margin: 0;
+  font-size: 1rem;
+}
+
 .unit-side {
   display: flex;
   flex-direction: column;
@@ -356,7 +401,8 @@ main {
 
 .counter-pair {
   display: flex;
-  gap: 1.2rem;
+  flex-wrap: wrap;
+  gap: 0.8rem 1.2rem;
 }
 
 .counter-item {
@@ -368,6 +414,15 @@ main {
   font-size: 0.8rem;
   color: var(--text-dim);
   margin-bottom: 0.3rem;
+}
+
+#stratagem-use-select {
+  width: 100%;
+}
+
+.btn-use-stratagem {
+  margin-top: 0.6rem;
+  width: 100%;
 }
 
 .phase-checklist-card {

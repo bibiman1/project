@@ -55,6 +55,21 @@
                 <button id="btn-delete-roster" class="btn btn-danger">削除</button>
               </div>
             </div>
+            <div class="detachment-section">
+              <div class="pane-heading">
+                <h3>デタッチメント</h3>
+                <button id="btn-edit-detachment" class="btn btn-ghost btn-sm">編集</button>
+              </div>
+              <p id="detachment-name" class="detachment-name"></p>
+              <p id="detachment-rule" class="detachment-rule"></p>
+            </div>
+
+            <div class="pane-heading">
+              <h3>ストラタジム</h3>
+              <button id="btn-new-stratagem" class="btn btn-primary btn-sm">＋ ストラタジム追加</button>
+            </div>
+            <div id="stratagem-list" class="stratagem-list"></div>
+
             <div class="pane-heading">
               <h3>ユニット</h3>
               <button id="btn-new-unit" class="btn btn-primary">＋ ユニット追加</button>
@@ -148,6 +163,12 @@
               </div>
             </div>
           </div>
+
+          <div class="tracker-card">
+            <h3>ストラタジム使用</h3>
+            <select id="stratagem-use-select"></select>
+            <button id="btn-use-stratagem" class="btn btn-primary btn-use-stratagem">使用してCP消費</button>
+          </div>
         </div>
 
         <div class="tracker-card phase-checklist-card">
@@ -233,6 +254,52 @@
       </label>
       <label>ワーギア・備考
         <textarea id="unit-form-notes" rows="3"></textarea>
+      </label>
+      <label>エンハンスメント名（任意）
+        <input id="unit-form-enh-name" type="text" placeholder="例: 修理の達人">
+      </label>
+      <label>エンハンスメント追加ポイント
+        <input id="unit-form-enh-points" type="number" min="0" step="1" value="0">
+      </label>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" data-close-modal>キャンセル</button>
+        <button type="submit" class="btn btn-primary">保存</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Detachment form modal -->
+  <dialog id="modal-detachment" class="modal">
+    <form id="form-detachment" method="dialog" class="form-grid">
+      <h3>デタッチメント編集</h3>
+      <label>デタッチメント名
+        <input id="detachment-form-name" type="text" placeholder="例: グラディウス任務部隊">
+      </label>
+      <label>デタッチメントルール・メモ
+        <textarea id="detachment-form-rule" rows="4"></textarea>
+      </label>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" data-close-modal>キャンセル</button>
+        <button type="submit" class="btn btn-primary">保存</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Stratagem form modal -->
+  <dialog id="modal-stratagem" class="modal">
+    <form id="form-stratagem" method="dialog" class="form-grid">
+      <h3 id="modal-stratagem-title">ストラタジム追加</h3>
+      <label>ストラタジム名
+        <input id="stratagem-form-name" type="text" required>
+      </label>
+      <label>CPコスト
+        <input id="stratagem-form-cost" type="number" min="0" step="1" value="1">
+      </label>
+      <label>使用タイミング（任意）
+        <input id="stratagem-form-phase" type="text" placeholder="例: 相手のシューティングフェイズ">
+      </label>
+      <label>効果
+        <textarea id="stratagem-form-text" rows="3"></textarea>
       </label>
       <div class="modal-actions">
         <button type="button" class="btn btn-ghost" data-close-modal>キャンセル</button>
