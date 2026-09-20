@@ -2,6 +2,27 @@
 (() => {
   let game = W40K.load(W40K.KEYS.GAME, null);
 
+  const PHASES = ["コマンド", "ムーブメント", "シューティング", "チャージ", "ファイト", "バトルショック"];
+
+  const DEFAULT_CHECKLIST = {
+    "コマンド": ["戦略ラウンドの特殊ルールを確認", "CP使用を検討"],
+    "ムーブメント": ["予備兵力の入場を忘れずに", "移動制限のあるユニットを確認"],
+    "シューティング": ["オーバーウォッチ・対応能力を確認", "射線・遮蔽物を確認"],
+    "チャージ": ["突撃距離を確認", "介入の可否を確認"],
+    "ファイト": ["先制攻撃を確認", "戦闘ボーナス発動を確認"],
+    "バトルショック": ["損耗判定を忘れずに", "指揮官特性の影響を確認"],
+  };
+
+  let checklistTemplate = W40K.load(W40K.KEYS.PHASE_CHECKLIST, null);
+  if (!checklistTemplate) {
+    checklistTemplate = {};
+    PHASES.forEach((phase) => {
+      checklistTemplate[phase] = DEFAULT_CHECKLIST[phase].map((text) => ({ id: W40K.uid(), text }));
+    });
+  }
+  const persistTemplate = () => W40K.save(W40K.KEYS.PHASE_CHECKLIST, checklistTemplate);
+  persistTemplate();
+
   const els = {};
 
   const cacheEls = () => {
@@ -17,6 +38,8 @@
     els.vpOpponent = document.getElementById("vp-opponent");
     els.unitList = document.getElementById("tracker-unit-list");
     els.logList = document.getElementById("log-list");
+    els.phaseTabs = document.getElementById("phase-tabs");
+    els.phaseItems = document.getElementById("phase-checklist-items");
   };
 
   const persist = () => W40K.save(W40K.KEYS.GAME, game);
@@ -94,6 +117,65 @@
       li.innerHTML = `<span class="log-round">R${entry.round}</span> ${escapeHtml(entry.text)}`;
       els.logList.appendChild(li);
     });
+
+    renderPhaseChecklist();
+  };
+
+  const renderPhaseChecklist = () => {
+    if (!game.currentPhase) game.currentPhase = PHASES[0];
+    if (!game.checkedItems) game.checkedItems = {};
+
+    els.phaseTabs.innerHTML = PHASES.map(
+      (phase) =>
+        `<button type="button" class="btn btn-ghost btn-sm phase-tab-btn${phase === game.currentPhase ? " is-active" : ""}" data-phase="${escapeHtml(phase)}">${escapeHtml(phase)}</button>`
+    ).join("");
+    els.phaseTabs.querySelectorAll("[data-phase]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        game.currentPhase = btn.dataset.phase;
+        persist();
+        render();
+      });
+    });
+
+    const items = checklistTemplate[game.currentPhase] || [];
+    const checkedForPhase = game.checkedItems[game.currentPhase] || {};
+
+    els.phaseItems.innerHTML = "";
+    if (items.length === 0) {
+      els.phaseItems.innerHTML = '<p class="empty-state">このフェイズの項目がまだありません。下のフォームから追加してください。</p>';
+      return;
+    }
+    items.forEach((item) => {
+      const checked = !!checkedForPhase[item.id];
+      const row = document.createElement("div");
+      row.className = "phase-checklist-item" + (checked ? " is-checked" : "");
+      row.innerHTML = `
+        <label>
+          <input type="checkbox" data-check-item="${item.id}" ${checked ? "checked" : ""}>
+          <span>${escapeHtml(item.text)}</span>
+        </label>
+        <button type="button" class="btn btn-danger btn-sm" data-remove-item="${item.id}">削除</button>
+      `;
+      els.phaseItems.appendChild(row);
+    });
+
+    els.phaseItems.querySelectorAll("[data-check-item]").forEach((cb) => {
+      cb.addEventListener("change", () => {
+        const id = cb.dataset.checkItem;
+        game.checkedItems[game.currentPhase] = game.checkedItems[game.currentPhase] || {};
+        game.checkedItems[game.currentPhase][id] = cb.checked;
+        persist();
+        render();
+      });
+    });
+    els.phaseItems.querySelectorAll("[data-remove-item]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const id = btn.dataset.removeItem;
+        checklistTemplate[game.currentPhase] = checklistTemplate[game.currentPhase].filter((it) => it.id !== id);
+        persistTemplate();
+        render();
+      });
+    });
   };
 
   const startGame = ({ rosterId, opponentName, missionName, pointsLimit }) => {
@@ -108,6 +190,8 @@
       vp: { me: 0, opponent: 0 },
       unitStatus: {},
       log: [],
+      currentPhase: PHASES[0],
+      checkedItems: {},
     };
     persist();
     render();
@@ -144,12 +228,14 @@
     document.getElementById("round-dec").addEventListener("click", () => {
       if (!game || game.round <= 1) return;
       game.round -= 1;
+      game.checkedItems = {};
       persist();
       render();
     });
     document.getElementById("round-inc").addEventListener("click", () => {
       if (!game) return;
       game.round += 1;
+      game.checkedItems = {};
       persist();
       render();
     });
@@ -183,6 +269,20 @@
       if (!text) return;
       game.log.push({ id: W40K.uid(), text, round: game.round, ts: Date.now() });
       persist();
+      input.value = "";
+      render();
+    });
+
+    document.getElementById("form-phase-item").addEventListener("submit", (e) => {
+      e.preventDefault();
+      if (!game) return;
+      if (!game.currentPhase) game.currentPhase = PHASES[0];
+      const input = document.getElementById("phase-item-input");
+      const text = input.value.trim();
+      if (!text) return;
+      checklistTemplate[game.currentPhase] = checklistTemplate[game.currentPhase] || [];
+      checklistTemplate[game.currentPhase].push({ id: W40K.uid(), text });
+      persistTemplate();
       input.value = "";
       render();
     });

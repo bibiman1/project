@@ -370,6 +370,52 @@ main {
   margin-bottom: 0.3rem;
 }
 
+.phase-checklist-card {
+  margin-bottom: 1.5rem;
+}
+
+.phase-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 0.8rem;
+}
+
+.phase-tab-btn.is-active {
+  border-color: var(--gold);
+  color: var(--gold-bright);
+}
+
+.phase-checklist-items {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-bottom: 0.8rem;
+}
+
+.phase-checklist-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.5rem 0.7rem;
+}
+
+.phase-checklist-item label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+}
+
+.phase-checklist-item.is-checked span {
+  text-decoration: line-through;
+  color: var(--text-dim);
+}
+
 .tracker-columns {
   display: grid;
   grid-template-columns: 1fr 1fr;
