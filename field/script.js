@@ -34,6 +34,15 @@
   window.addEventListener("resize", updateLayoutMode);
   window.addEventListener("orientationchange", updateLayoutMode);
 
+  const gameFrame = document.querySelector(".game-frame");
+  gameFrame.addEventListener(
+    "touchmove",
+    (e) => {
+      e.preventDefault();
+    },
+    { passive: false }
+  );
+
   const FRAGMENTS = [
     {
       id: "lake",
