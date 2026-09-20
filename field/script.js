@@ -204,6 +204,14 @@
     "north-east",
   ];
 
+  const floorTile = new Image();
+  let floorLoaded = false;
+  let floorPattern = null;
+  floorTile.onload = () => {
+    floorLoaded = true;
+  };
+  floorTile.src = "./assets/floor_tile.png";
+
   const bogiSprite = new Image();
   let bogiLoaded = false;
   bogiSprite.onload = () => {
@@ -344,24 +352,63 @@
   }
 
   function drawVoid(camX, camY) {
-    ctx.fillStyle = "#eef0ee";
-    ctx.fillRect(0, 0, VW, VH);
-
-    const spacing = 60;
-    const startX = -((camX - VW / 2) % spacing);
-    const startY = -((camY - VH / 2) % spacing);
-    ctx.fillStyle = "rgba(120, 130, 120, 0.22)";
-    for (let x = startX; x < VW; x += spacing) {
-      for (let y = startY; y < VH; y += spacing) {
-        ctx.beginPath();
-        ctx.arc(x, y, 1.6, 0, Math.PI * 2);
-        ctx.fill();
-      }
+    if (!floorLoaded) {
+      ctx.fillStyle = "#eef0ee";
+      ctx.fillRect(0, 0, VW, VH);
+      return;
     }
+
+    if (!floorPattern) {
+      floorPattern = ctx.createPattern(floorTile, "repeat");
+    }
+
+    const tw = floorTile.width;
+    const th = floorTile.height;
+    const offsetX = (((camX - VW / 2) % tw) + tw) % tw;
+    const offsetY = (((camY - VH / 2) % th) + th) % th;
+
+    ctx.save();
+    ctx.translate(-offsetX, -offsetY);
+    ctx.fillStyle = floorPattern;
+    ctx.fillRect(0, 0, VW + tw, VH + th);
+    ctx.restore();
   }
 
   function worldToScreen(camX, camY, wx, wy) {
     return { sx: wx - camX + VW / 2, sy: wy - camY + VH / 2 };
+  }
+
+  function drawPedestal(sx, sy) {
+    const w = 116;
+    const topH = 16;
+    const baseH = 30;
+    const topY = sy + 40;
+
+    ctx.fillStyle = "rgba(60, 60, 50, 0.16)";
+    ctx.beginPath();
+    ctx.ellipse(sx, topY + baseH + 6, w * 0.42, 8, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    const grad = ctx.createLinearGradient(sx - w / 2, 0, sx + w / 2, 0);
+    grad.addColorStop(0, "#d9d4c6");
+    grad.addColorStop(0.5, "#f8f6ef");
+    grad.addColorStop(1, "#cfc9ba");
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.moveTo(sx - w / 2, topY + topH * 0.5);
+    ctx.lineTo(sx + w / 2, topY + topH * 0.5);
+    ctx.lineTo(sx + w * 0.4, topY + baseH);
+    ctx.lineTo(sx - w * 0.4, topY + baseH);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.fillStyle = "#fbfaf5";
+    ctx.beginPath();
+    ctx.ellipse(sx, topY, w / 2, topH / 2, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = "rgba(150, 145, 130, 0.35)";
+    ctx.lineWidth = 1;
+    ctx.stroke();
   }
 
   function drawFragment(frag, camX, camY, t) {
@@ -371,13 +418,16 @@
       return;
     }
 
-    const grad = ctx.createRadialGradient(sx, sy, 0, sx, sy, frag.r);
+    const glowR = 100;
+    const grad = ctx.createRadialGradient(sx, sy, 0, sx, sy, glowR);
     grad.addColorStop(0, frag.color);
     grad.addColorStop(1, "rgba(238, 240, 238, 0)");
     ctx.fillStyle = grad;
     ctx.beginPath();
-    ctx.arc(sx, sy, frag.r, 0, Math.PI * 2);
+    ctx.arc(sx, sy, glowR, 0, Math.PI * 2);
     ctx.fill();
+
+    drawPedestal(sx, sy);
 
     ctx.save();
     ctx.translate(sx, sy);
