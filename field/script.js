@@ -204,6 +204,14 @@
     "north-east",
   ];
 
+  const floorTile = new Image();
+  let floorLoaded = false;
+  let floorPattern = null;
+  floorTile.onload = () => {
+    floorLoaded = true;
+  };
+  floorTile.src = "./assets/floor_tile.png";
+
   const bogiSprite = new Image();
   let bogiLoaded = false;
   bogiSprite.onload = () => {
@@ -344,20 +352,26 @@
   }
 
   function drawVoid(camX, camY) {
-    ctx.fillStyle = "#eef0ee";
-    ctx.fillRect(0, 0, VW, VH);
-
-    const spacing = 60;
-    const startX = -((camX - VW / 2) % spacing);
-    const startY = -((camY - VH / 2) % spacing);
-    ctx.fillStyle = "rgba(120, 130, 120, 0.22)";
-    for (let x = startX; x < VW; x += spacing) {
-      for (let y = startY; y < VH; y += spacing) {
-        ctx.beginPath();
-        ctx.arc(x, y, 1.6, 0, Math.PI * 2);
-        ctx.fill();
-      }
+    if (!floorLoaded) {
+      ctx.fillStyle = "#eef0ee";
+      ctx.fillRect(0, 0, VW, VH);
+      return;
     }
+
+    if (!floorPattern) {
+      floorPattern = ctx.createPattern(floorTile, "repeat");
+    }
+
+    const tw = floorTile.width;
+    const th = floorTile.height;
+    const offsetX = (((camX - VW / 2) % tw) + tw) % tw;
+    const offsetY = (((camY - VH / 2) % th) + th) % th;
+
+    ctx.save();
+    ctx.translate(-offsetX, -offsetY);
+    ctx.fillStyle = floorPattern;
+    ctx.fillRect(0, 0, VW + tw, VH + th);
+    ctx.restore();
   }
 
   function worldToScreen(camX, camY, wx, wy) {
