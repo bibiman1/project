@@ -44,51 +44,56 @@
   );
 
   const fullscreenBtn = document.getElementById("fullscreenBtn");
+  const fullscreenSupported = !!(document.fullscreenEnabled || document.webkitFullscreenEnabled);
 
-  function isFullscreen() {
-    return !!(document.fullscreenElement || document.webkitFullscreenElement);
-  }
+  if (!fullscreenSupported) {
+    // iPhone Safari exposes no working Fullscreen API for non-video elements;
+    // showing a button that can't do anything is worse than no button.
+    fullscreenBtn.style.display = "none";
+  } else {
+    function isFullscreen() {
+      return !!(document.fullscreenElement || document.webkitFullscreenElement);
+    }
 
-  function requestFullscreen(el) {
-    const req = el.requestFullscreen || el.webkitRequestFullscreen;
-    if (!req) return Promise.reject(new Error("fullscreen not supported"));
-    return req.call(el);
-  }
+    function requestFullscreen(el) {
+      const req = el.requestFullscreen || el.webkitRequestFullscreen;
+      return req.call(el);
+    }
 
-  function exitFullscreen() {
-    const exit = document.exitFullscreen || document.webkitExitFullscreen;
-    if (!exit) return Promise.reject(new Error("fullscreen not supported"));
-    return exit.call(document);
-  }
+    function exitFullscreen() {
+      const exit = document.exitFullscreen || document.webkitExitFullscreen;
+      return exit.call(document);
+    }
 
-  fullscreenBtn.addEventListener("click", async () => {
-    if (isFullscreen()) {
-      try {
-        await exitFullscreen();
-      } catch (e) {
-        // ignore
+    fullscreenBtn.addEventListener("click", async () => {
+      if (isFullscreen()) {
+        try {
+          await exitFullscreen();
+        } catch (e) {
+          // ignore
+        }
+        return;
       }
-      return;
-    }
-    try {
-      await requestFullscreen(gameFrame);
-    } catch (e) {
-      // fullscreen not supported here; nothing more we can do
-      return;
-    }
-    if (screen.orientation && screen.orientation.lock) {
-      screen.orientation.lock("landscape").catch(() => {
-        // orientation lock not supported (e.g. iOS Safari); ignore
-      });
-    }
-  });
+      try {
+        await requestFullscreen(gameFrame);
+      } catch (e) {
+        // fullscreen request rejected; nothing more we can do
+        return;
+      }
+      if (screen.orientation && screen.orientation.lock) {
+        screen.orientation.lock("landscape").catch(() => {
+          // orientation lock not supported; ignore
+        });
+      }
+    });
 
-  document.addEventListener("fullscreenchange", () => {
-    fullscreenBtn.textContent = isFullscreen() ? "⤢" : "⛶";
-  });
-  document.addEventListener("webkitfullscreenchange", () => {
-    fullscreenBtn.textContent = isFullscreen() ? "⤢" : "⛶";
-  });
+    document.addEventListener("fullscreenchange", () => {
+      fullscreenBtn.textContent = isFullscreen() ? "⤢" : "⛶";
+    });
+    document.addEventListener("webkitfullscreenchange", () => {
+      fullscreenBtn.textContent = isFullscreen() ? "⤢" : "⛶";
+    });
+  }
 
   const FRAGMENTS = [
     {
