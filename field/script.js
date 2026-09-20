@@ -31,13 +31,49 @@
   }
 
   const gameFrame = document.querySelector(".game-frame");
-  const JOY_SIZE = 112;
-  const JOY_INSET = 20;
-  const BTN_SIZE = 56;
+  const fieldHeader = document.querySelector(".field-header");
+  const fieldWrap = document.querySelector(".field-wrap");
+  const fieldStatus = document.querySelector(".field-status");
+  const JOY_SIZE = 92;
+  const JOY_INSET = 16;
+  const BTN_SIZE = 46;
   // Diagonal offset (in each of x/y) from the pair's shared center to each
   // button's center. Distance between the two centers ends up BTN_DIAG*2*sqrt(2)
-  // (~73px), safely more than BTN_SIZE (56px) so the circles don't overlap.
-  const BTN_DIAG = 26;
+  // (~62px), safely more than BTN_SIZE (46px) so the circles don't overlap.
+  const BTN_DIAG = 22;
+
+  function fitGameFrame() {
+    const isCompact = document.body.classList.contains("landscape-compact");
+    if (!isCompact) {
+      gameFrame.style.width = "";
+      gameFrame.style.height = "";
+      return;
+    }
+    // Compute the exact box available for the game-frame directly from the
+    // DOM rather than relying on CSS aspect-ratio + flexbox sizing, which
+    // resolves inconsistently between browser engines (notably iOS Safari).
+    const wrapStyle = getComputedStyle(fieldWrap);
+    const wrapPadTop = parseFloat(wrapStyle.paddingTop) || 0;
+    const wrapPadBottom = parseFloat(wrapStyle.paddingBottom) || 0;
+    const wrapPadLeft = parseFloat(wrapStyle.paddingLeft) || 0;
+    const wrapPadRight = parseFloat(wrapStyle.paddingRight) || 0;
+    const gap = parseFloat(wrapStyle.rowGap) || 0;
+
+    const headerH = fieldHeader.getBoundingClientRect().height;
+    const statusH = fieldStatus.getBoundingClientRect().height;
+    const availH = window.innerHeight - headerH - wrapPadTop - wrapPadBottom - gap - statusH;
+    const availW = window.innerWidth - wrapPadLeft - wrapPadRight;
+
+    const ratio = 960 / 600;
+    let w = Math.max(0, availW);
+    let h = w / ratio;
+    if (h > availH) {
+      h = Math.max(0, availH);
+      w = h * ratio;
+    }
+    gameFrame.style.width = `${w}px`;
+    gameFrame.style.height = `${h}px`;
+  }
 
   function diagonalPair(cx, cy) {
     return {
@@ -102,6 +138,7 @@
     const compact = isTouchDevice && isLandscape;
     document.body.classList.toggle("landscape-compact", compact);
     document.documentElement.classList.toggle("landscape-compact", compact);
+    fitGameFrame();
     positionJoystick();
     positionActionButtons();
   }
