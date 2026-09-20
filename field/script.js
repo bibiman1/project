@@ -396,12 +396,16 @@
     advanceStory();
   });
 
-  actionBtnA.addEventListener("click", (e) => {
+  // pointerdown (not click) so touch input reacts immediately, matching the
+  // joystick's own event handling rather than waiting on click synthesis
+  actionBtnA.addEventListener("pointerdown", (e) => {
     e.preventDefault();
+    e.stopPropagation();
     advanceStory();
   });
-  actionBtnB.addEventListener("click", (e) => {
+  actionBtnB.addEventListener("pointerdown", (e) => {
     e.preventDefault();
+    e.stopPropagation();
     skipStory();
   });
 
