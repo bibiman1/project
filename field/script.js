@@ -21,6 +21,9 @@
   const storyTextEl = document.getElementById("storyText");
   const joystick = document.getElementById("joystick");
   const joystickKnob = document.getElementById("joystickKnob");
+  if ("ontouchstart" in window || navigator.maxTouchPoints > 0) {
+    joystick.classList.add("touch-enabled");
+  }
 
   const FRAGMENTS = [
     {
