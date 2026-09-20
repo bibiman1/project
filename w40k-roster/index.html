@@ -51,13 +51,36 @@
               <div class="detail-actions">
                 <button id="btn-edit-roster" class="btn btn-ghost">編集</button>
                 <button id="btn-duplicate-roster" class="btn btn-ghost">複製</button>
-                <button id="btn-export-roster" class="btn btn-ghost">📤 エクスポート</button>
+                <button id="btn-export-roster" class="btn btn-ghost">📤 JSON保存</button>
+                <button id="btn-export-units-csv" class="btn btn-ghost">📄 CSV保存</button>
                 <button id="btn-delete-roster" class="btn btn-danger">削除</button>
               </div>
             </div>
+            <div class="detachment-section">
+              <div class="pane-heading">
+                <h3>デタッチメント</h3>
+                <button id="btn-edit-detachment" class="btn btn-ghost btn-sm">編集</button>
+              </div>
+              <p id="detachment-name" class="detachment-name"></p>
+              <p id="detachment-rule" class="detachment-rule"></p>
+            </div>
+
+            <div class="pane-heading">
+              <h3>ストラタジム</h3>
+              <button id="btn-new-stratagem" class="btn btn-primary btn-sm">＋ ストラタジム追加</button>
+            </div>
+            <div id="stratagem-list" class="stratagem-list"></div>
+
             <div class="pane-heading">
               <h3>ユニット</h3>
-              <button id="btn-new-unit" class="btn btn-primary">＋ ユニット追加</button>
+              <div class="detail-actions">
+                <label class="btn btn-ghost">
+                  📥 CSV読込
+                  <input id="units-csv-import-input" type="file" accept=".csv,text/csv" hidden>
+                </label>
+                <button id="btn-bulk-units" class="btn btn-ghost">📋 一括入力</button>
+                <button id="btn-new-unit" class="btn btn-primary">＋ ユニット追加</button>
+              </div>
             </div>
             <div id="unit-list" class="unit-list"></div>
           </div>
@@ -148,6 +171,25 @@
               </div>
             </div>
           </div>
+
+          <div class="tracker-card">
+            <h3>ストラタジム使用</h3>
+            <select id="stratagem-use-select"></select>
+            <button id="btn-use-stratagem" class="btn btn-primary btn-use-stratagem">使用してCP消費</button>
+          </div>
+        </div>
+
+        <div class="tracker-card phase-checklist-card">
+          <div class="pane-heading">
+            <h3>フェイズチェックリスト</h3>
+            <p class="meta-line">ラウンドが進むとチェックはリセットされます</p>
+          </div>
+          <div id="phase-tabs" class="phase-tabs"></div>
+          <div id="phase-checklist-items" class="phase-checklist-items"></div>
+          <form id="form-phase-item" class="log-form">
+            <input id="phase-item-input" type="text" placeholder="このフェイズでやることを追加">
+            <button type="submit" class="btn btn-ghost">追加</button>
+          </form>
         </div>
 
         <div class="tracker-columns">
@@ -203,7 +245,7 @@
   </dialog>
 
   <!-- Unit form modal -->
-  <dialog id="modal-unit" class="modal">
+  <dialog id="modal-unit" class="modal modal-wide">
     <form id="form-unit" method="dialog" class="form-grid">
       <h3 id="modal-unit-title">ユニット追加</h3>
       <label>ユニット名
@@ -212,7 +254,7 @@
       <label>モデル数
         <input id="unit-form-models" type="number" min="1" step="1" value="1">
       </label>
-      <label>ポイント
+      <label>合計ポイント（コデックスに書かれている値をそのまま）
         <input id="unit-form-points" type="number" min="0" step="1" value="0">
       </label>
       <label>キーワード
@@ -220,6 +262,88 @@
       </label>
       <label>ワーギア・備考
         <textarea id="unit-form-notes" rows="3"></textarea>
+      </label>
+      <label>エンハンスメント名（任意）
+        <input id="unit-form-enh-name" type="text" placeholder="例: 修理の達人">
+      </label>
+      <label>エンハンスメント追加ポイント
+        <input id="unit-form-enh-points" type="number" min="0" step="1" value="0">
+      </label>
+
+      <div class="form-section-label">プロフィール（任意）</div>
+      <div class="profile-grid">
+        <label>移動<input id="unit-form-move" type="text" placeholder="6&quot;"></label>
+        <label>耐久<input id="unit-form-toughness" type="text" placeholder="4"></label>
+        <label>防御<input id="unit-form-save" type="text" placeholder="3+"></label>
+        <label>傷<input id="unit-form-wounds" type="text" placeholder="2"></label>
+        <label>統率<input id="unit-form-leadership" type="text" placeholder="6+"></label>
+        <label>確保<input id="unit-form-oc" type="text" placeholder="2"></label>
+      </div>
+
+      <label>武器（一括入力・任意）
+        <p class="hint">1行1武器。「種別(射撃/白兵), 武器名, 射程, 攻撃回数, 技能, 攻撃力, 貫通値, ダメージ[, アビリティ]」の順。</p>
+        <textarea id="unit-form-weapons" rows="4" placeholder="射撃, ボルトライフル, 24&quot;, 2, 3+, 4, 0, 1
+白兵, コンバットナイフ, 白兵, 1, 3+, 4, 0, 1"></textarea>
+      </label>
+
+      <label>アビリティ（一括入力・任意）
+        <p class="hint">1行1アビリティ。「アビリティ名: 説明」の形式（説明は省略可）。</p>
+        <textarea id="unit-form-abilities" rows="3" placeholder="オブジェクティブ・セキュアード: 作戦目標の確保判定でこのユニットの兵を2体分として数える"></textarea>
+      </label>
+
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" data-close-modal>キャンセル</button>
+        <button type="submit" class="btn btn-primary">保存</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Bulk unit input modal -->
+  <dialog id="modal-bulk-units" class="modal modal-wide">
+    <form id="form-bulk-units" method="dialog" class="form-grid">
+      <h3>ユニット一括入力</h3>
+      <p class="hint">1行につきユニット1つ。カンマ区切りで「ユニット名, モデル数, 合計ポイント, キーワード(任意), 備考(任意)」の順に入力してください。コデックスに書かれている合計ポイントをそのまま使えます。</p>
+      <textarea id="bulk-units-input" rows="10" placeholder="インターセッサー分隊, 5, 80, INFANTRY
+キャプテン, 1, 80, CHARACTER, パワーソード装備"></textarea>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" data-close-modal>キャンセル</button>
+        <button type="submit" class="btn btn-primary">まとめて追加</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Detachment form modal -->
+  <dialog id="modal-detachment" class="modal">
+    <form id="form-detachment" method="dialog" class="form-grid">
+      <h3>デタッチメント編集</h3>
+      <label>デタッチメント名
+        <input id="detachment-form-name" type="text" placeholder="例: グラディウス任務部隊">
+      </label>
+      <label>デタッチメントルール・メモ
+        <textarea id="detachment-form-rule" rows="4"></textarea>
+      </label>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" data-close-modal>キャンセル</button>
+        <button type="submit" class="btn btn-primary">保存</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Stratagem form modal -->
+  <dialog id="modal-stratagem" class="modal">
+    <form id="form-stratagem" method="dialog" class="form-grid">
+      <h3 id="modal-stratagem-title">ストラタジム追加</h3>
+      <label>ストラタジム名
+        <input id="stratagem-form-name" type="text" required>
+      </label>
+      <label>CPコスト
+        <input id="stratagem-form-cost" type="number" min="0" step="1" value="1">
+      </label>
+      <label>使用タイミング（任意）
+        <input id="stratagem-form-phase" type="text" placeholder="例: 相手のシューティングフェイズ">
+      </label>
+      <label>効果
+        <textarea id="stratagem-form-text" rows="3"></textarea>
       </label>
       <div class="modal-actions">
         <button type="button" class="btn btn-ghost" data-close-modal>キャンセル</button>

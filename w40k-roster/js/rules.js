@@ -1,12 +1,11 @@
 // Rules quick-reference / memo notes, grouped by category and searchable.
 (() => {
   const DEFAULT_CATEGORIES = [
-    "コマンドフェイズ",
-    "ムーブメントフェイズ",
-    "シューティングフェイズ",
-    "チャージフェイズ",
-    "ファイトフェイズ",
-    "バトルショック",
+    "指揮フェイズ",
+    "移動フェイズ",
+    "射撃フェイズ",
+    "突撃フェイズ",
+    "白兵フェイズ",
     "ミッション・得点",
     "その他",
   ];

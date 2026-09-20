@@ -285,6 +285,111 @@ main {
   font-size: 0.9rem;
 }
 
+.unit-enhancement {
+  margin: 0.3rem 0 0;
+  color: var(--gold-bright);
+  font-size: 0.85rem;
+}
+
+.unit-profile {
+  margin: 0.4rem 0 0;
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.unit-profile span {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.1rem 0.5rem;
+  font-size: 0.78rem;
+  color: var(--text-dim);
+}
+
+.unit-profile span strong {
+  color: var(--text);
+}
+
+.weapon-table {
+  width: 100%;
+  margin-top: 0.5rem;
+  border-collapse: collapse;
+  font-size: 0.78rem;
+}
+
+.weapon-table th,
+.weapon-table td {
+  padding: 0.25rem 0.4rem;
+  text-align: center;
+  border-bottom: 1px solid var(--border);
+}
+
+.weapon-table th:first-child,
+.weapon-table td:first-child {
+  text-align: left;
+}
+
+.weapon-table th {
+  color: var(--text-dim);
+  font-weight: 600;
+}
+
+.weapon-ability {
+  color: var(--gold-bright);
+  font-size: 0.72rem;
+}
+
+.ability-list {
+  margin: 0.5rem 0 0;
+  padding-left: 1.1rem;
+  font-size: 0.85rem;
+  color: var(--text-dim);
+}
+
+.ability-list li strong {
+  color: var(--text);
+}
+
+.detachment-section {
+  margin-bottom: 0.8rem;
+}
+
+.detachment-name {
+  margin: 0;
+  font-weight: 600;
+  color: var(--gold-bright);
+}
+
+.detachment-rule {
+  margin: 0.3rem 0 0;
+  color: var(--text-dim);
+  font-size: 0.9rem;
+  white-space: pre-wrap;
+}
+
+.stratagem-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin-bottom: 1.2rem;
+}
+
+.stratagem-card {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.7rem 0.9rem;
+}
+
+.stratagem-card h4 {
+  margin: 0;
+  font-size: 1rem;
+}
+
 .unit-side {
   display: flex;
   flex-direction: column;
@@ -356,7 +461,8 @@ main {
 
 .counter-pair {
   display: flex;
-  gap: 1.2rem;
+  flex-wrap: wrap;
+  gap: 0.8rem 1.2rem;
 }
 
 .counter-item {
@@ -368,6 +474,61 @@ main {
   font-size: 0.8rem;
   color: var(--text-dim);
   margin-bottom: 0.3rem;
+}
+
+#stratagem-use-select {
+  width: 100%;
+}
+
+.btn-use-stratagem {
+  margin-top: 0.6rem;
+  width: 100%;
+}
+
+.phase-checklist-card {
+  margin-bottom: 1.5rem;
+}
+
+.phase-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 0.8rem;
+}
+
+.phase-tab-btn.is-active {
+  border-color: var(--gold);
+  color: var(--gold-bright);
+}
+
+.phase-checklist-items {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-bottom: 0.8rem;
+}
+
+.phase-checklist-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.5rem 0.7rem;
+}
+
+.phase-checklist-item label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+}
+
+.phase-checklist-item.is-checked span {
+  text-decoration: line-through;
+  color: var(--text-dim);
 }
 
 .tracker-columns {
@@ -562,6 +723,47 @@ textarea:focus {
   padding: 1.5rem;
   max-width: 440px;
   width: 90vw;
+}
+
+.modal-wide {
+  max-width: 640px;
+}
+
+.hint {
+  margin: -0.4rem 0 0;
+  color: var(--text-dim);
+  font-size: 0.85rem;
+}
+
+#bulk-units-input,
+#unit-form-weapons {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.85rem;
+}
+
+.form-section-label {
+  margin-top: 0.2rem;
+  padding-top: 0.6rem;
+  border-top: 1px solid var(--border);
+  color: var(--gold-bright);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.profile-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 0.5rem;
+}
+
+.profile-grid label {
+  font-size: 0.75rem;
+}
+
+.profile-grid input {
+  width: 100%;
+  padding: 0.4rem;
+  text-align: center;
 }
 
 .modal::backdrop {

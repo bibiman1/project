@@ -5,6 +5,7 @@ W40K.KEYS = {
   ROSTERS: "w40k_rosters",
   GAME: "w40k_active_game",
   NOTES: "w40k_rules_notes",
+  PHASE_CHECKLIST: "w40k_phase_checklist_template",
 };
 
 W40K.uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
