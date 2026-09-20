@@ -23,6 +23,7 @@
   const joystickKnob = document.getElementById("joystickKnob");
   const actionBtnA = document.getElementById("actionBtnA");
   const actionBtnB = document.getElementById("actionBtnB");
+  const galleryHint = document.getElementById("galleryHint");
   const isTouchDevice = "ontouchstart" in window || navigator.maxTouchPoints > 0;
   if (isTouchDevice) {
     joystick.classList.add("touch-enabled");
@@ -265,6 +266,13 @@
     moving: false,
   };
 
+  const GALLERY_FACILITY = { x: WORLD_W / 2 + 900, y: WORLD_H / 2, r: 130 };
+  let nearGallery = false;
+
+  function enterGallery() {
+    window.location.href = "../gallery/index.html";
+  }
+
   const discovered = new Set();
   let currentNear = null;
   let allShownOnce = false;
@@ -324,6 +332,11 @@
         advanceStory();
         e.preventDefault();
       }
+      return;
+    }
+    if (nearGallery && (e.code === "Enter" || e.code === "Space" || e.code === "KeyZ")) {
+      enterGallery();
+      e.preventDefault();
       return;
     }
     const dir = KEY_MAP[e.code];
@@ -396,12 +409,20 @@
     advanceStory();
   });
 
+  galleryHint.addEventListener("click", () => {
+    enterGallery();
+  });
+
   // pointerdown (not click) so touch input reacts immediately, matching the
   // joystick's own event handling rather than waiting on click synthesis
   actionBtnA.addEventListener("pointerdown", (e) => {
     e.preventDefault();
     e.stopPropagation();
-    advanceStory();
+    if (story) {
+      advanceStory();
+    } else if (nearGallery) {
+      enterGallery();
+    }
   });
   actionBtnB.addEventListener("pointerdown", (e) => {
     e.preventDefault();
@@ -635,6 +656,13 @@
     updateWanderer(toribogikaaWanderer, dt, t);
     updateWanderer(bogikaaWanderer, dt, t);
 
+    const galleryDist = Math.hypot(GALLERY_FACILITY.x - player.x, GALLERY_FACILITY.y - player.y);
+    const nowNearGallery = galleryDist <= GALLERY_FACILITY.r;
+    if (nowNearGallery !== nearGallery) {
+      nearGallery = nowNearGallery;
+      galleryHint.hidden = !nearGallery;
+    }
+
     let near = null;
     for (const frag of FRAGMENTS) {
       const dist = Math.hypot(frag.x - player.x, frag.y - player.y);
@@ -687,6 +715,46 @@
 
   function worldToScreen(camX, camY, wx, wy) {
     return { sx: wx - camX + VW / 2, sy: wy - camY + VH / 2 };
+  }
+
+  function drawGalleryFacility(camX, camY) {
+    const { sx, sy } = worldToScreen(camX, camY, GALLERY_FACILITY.x, GALLERY_FACILITY.y);
+    if (sx < -150 || sx > VW + 150 || sy < -150 || sy > VH + 150) return;
+
+    ctx.save();
+    ctx.translate(sx, sy);
+
+    ctx.fillStyle = "rgba(60, 60, 50, 0.15)";
+    ctx.beginPath();
+    ctx.ellipse(0, 58, 74, 16, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = "#e7e2d4";
+    ctx.fillRect(-70, -30, 140, 85);
+    ctx.strokeStyle = "#c7c0ac";
+    ctx.lineWidth = 2;
+    ctx.strokeRect(-70, -30, 140, 85);
+
+    ctx.fillStyle = "#b7442a";
+    ctx.beginPath();
+    ctx.moveTo(-80, -30);
+    ctx.lineTo(0, -75);
+    ctx.lineTo(80, -30);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.fillStyle = "#5a4632";
+    ctx.fillRect(-18, 15, 36, 40);
+    ctx.fillStyle = "#9a8a6e";
+    ctx.fillRect(-13, 25, 8, 8);
+
+    ctx.fillStyle = "#3a2c18";
+    ctx.font = "bold 14px sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("資料館", 0, -8);
+
+    ctx.restore();
   }
 
   function drawPedestal(sx, sy) {
@@ -976,6 +1044,7 @@
     const camX = player.x;
     const camY = player.y;
     drawVoid(camX, camY);
+    drawGalleryFacility(camX, camY);
     for (const frag of FRAGMENTS) drawFragment(frag, camX, camY, t);
     drawWanderer(camX, camY, t);
     drawManateeWanderer(camX, camY, t);
