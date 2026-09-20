@@ -14,6 +14,9 @@
     if (!roster.stratagems) roster.stratagems = [];
     roster.units.forEach((u) => {
       if (u.enhancement === undefined) u.enhancement = null;
+      if (!u.profile) u.profile = { move: "", toughness: "", save: "", wounds: "", leadership: "", oc: "" };
+      if (!u.weapons) u.weapons = [];
+      if (!u.abilities) u.abilities = [];
     });
     return roster;
   };
@@ -116,12 +119,52 @@
       const row = document.createElement("article");
       row.className = "unit-card";
       const unitTotal = unit.points + (unit.enhancement ? unit.enhancement.points : 0);
+      const p = unit.profile;
+      const hasProfile = p && (p.move || p.toughness || p.save || p.wounds || p.leadership || p.oc);
+      const profileHtml = hasProfile
+        ? `<p class="unit-profile">
+            <span>移動<strong>${escapeHtml(p.move || "-")}</strong></span>
+            <span>耐久<strong>${escapeHtml(p.toughness || "-")}</strong></span>
+            <span>防御<strong>${escapeHtml(p.save || "-")}</strong></span>
+            <span>傷<strong>${escapeHtml(p.wounds || "-")}</strong></span>
+            <span>統率<strong>${escapeHtml(p.leadership || "-")}</strong></span>
+            <span>確保<strong>${escapeHtml(p.oc || "-")}</strong></span>
+          </p>`
+        : "";
+      const weaponsHtml = unit.weapons.length
+        ? `<table class="weapon-table">
+            <thead><tr><th>武器</th><th>射程</th><th>攻</th><th>技</th><th>攻撃力</th><th>貫通</th><th>ダメ</th></tr></thead>
+            <tbody>
+              ${unit.weapons
+                .map(
+                  (w) => `<tr>
+                    <td>${w.type === "melee" ? "⚔" : "🔫"} ${escapeHtml(w.name)}${w.abilities ? ` <span class="weapon-ability">[${escapeHtml(w.abilities)}]</span>` : ""}</td>
+                    <td>${escapeHtml(w.range)}</td>
+                    <td>${escapeHtml(w.attacks)}</td>
+                    <td>${escapeHtml(w.skill)}</td>
+                    <td>${escapeHtml(w.strength)}</td>
+                    <td>${escapeHtml(w.ap)}</td>
+                    <td>${escapeHtml(w.damage)}</td>
+                  </tr>`
+                )
+                .join("")}
+            </tbody>
+          </table>`
+        : "";
+      const abilitiesHtml = unit.abilities.length
+        ? `<ul class="ability-list">
+            ${unit.abilities.map((a) => `<li><strong>${escapeHtml(a.name)}</strong>${a.text ? `: ${escapeHtml(a.text)}` : ""}</li>`).join("")}
+          </ul>`
+        : "";
       row.innerHTML = `
         <div class="unit-main">
           <h4>${escapeHtml(unit.name)} <span class="unit-models">×${unit.models}</span></h4>
           <p class="meta-line">${escapeHtml(unit.keywords || "")}</p>
           ${unit.notes ? `<p class="unit-notes">${escapeHtml(unit.notes)}</p>` : ""}
           ${unit.enhancement ? `<p class="unit-enhancement">✦ ${escapeHtml(unit.enhancement.name)} (+${unit.enhancement.points}pts)</p>` : ""}
+          ${profileHtml}
+          ${weaponsHtml}
+          ${abilitiesHtml}
         </div>
         <div class="unit-side">
           <span class="unit-points">${unitTotal} pts</span>
@@ -151,6 +194,52 @@
   const escapeHtml = (str) =>
     String(str ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
+  // Each line: "種別(射撃/白兵), 武器名, 射程, 攻撃回数, 技能, 攻撃力, 貫通値, ダメージ[, アビリティ]"
+  const parseWeapons = (text) =>
+    text
+      .split("\n")
+      .map((line) => line.trim())
+      .filter((line) => line.length > 0)
+      .map((line) => {
+        const [type, name, range, attacks, skill, strength, ap, damage, abilities] = line.split(/\t|,/).map((p) => p.trim());
+        return {
+          id: W40K.uid(),
+          type: type === "白兵" ? "melee" : "ranged",
+          name: name || "無名武器",
+          range: range || "",
+          attacks: attacks || "",
+          skill: skill || "",
+          strength: strength || "",
+          ap: ap || "",
+          damage: damage || "",
+          abilities: abilities || "",
+        };
+      });
+
+  const serializeWeapons = (weapons) =>
+    (weapons || [])
+      .map((w) => {
+        const fields = [w.type === "melee" ? "白兵" : "射撃", w.name, w.range, w.attacks, w.skill, w.strength, w.ap, w.damage];
+        if (w.abilities) fields.push(w.abilities);
+        return fields.join(", ");
+      })
+      .join("\n");
+
+  // Each line: "アビリティ名: 説明"（説明は省略可）
+  const parseAbilities = (text) =>
+    text
+      .split("\n")
+      .map((line) => line.trim())
+      .filter((line) => line.length > 0)
+      .map((line) => {
+        const sepIndex = [line.indexOf(":"), line.indexOf("：")].filter((i) => i >= 0).sort((a, b) => a - b)[0];
+        if (sepIndex === undefined) return { id: W40K.uid(), name: line, text: "" };
+        return { id: W40K.uid(), name: line.slice(0, sepIndex).trim(), text: line.slice(sepIndex + 1).trim() };
+      });
+
+  const serializeAbilities = (abilities) =>
+    (abilities || []).map((a) => (a.text ? `${a.name}: ${a.text}` : a.name)).join("\n");
+
   // ---- actions ----
 
   const selectRoster = (id) => {
@@ -175,7 +264,14 @@
       name: `${roster.name} (コピー)`,
       detachment: { ...roster.detachment },
       stratagems: roster.stratagems.map((s) => ({ ...s, id: W40K.uid() })),
-      units: roster.units.map((u) => ({ ...u, enhancement: u.enhancement ? { ...u.enhancement } : null, id: W40K.uid() })),
+      units: roster.units.map((u) => ({
+        ...u,
+        id: W40K.uid(),
+        enhancement: u.enhancement ? { ...u.enhancement } : null,
+        profile: { ...u.profile },
+        weapons: u.weapons.map((w) => ({ ...w, id: W40K.uid() })),
+        abilities: u.abilities.map((a) => ({ ...a, id: W40K.uid() })),
+      })),
     };
     state.rosters.push(copy);
     state.selectedRosterId = copy.id;
@@ -242,6 +338,31 @@
             keywords: u.keywords || "",
             notes: u.notes || "",
             enhancement: u.enhancement ? { name: u.enhancement.name || "", points: Number(u.enhancement.points) || 0 } : null,
+            profile: {
+              move: u.profile?.move || "",
+              toughness: u.profile?.toughness || "",
+              save: u.profile?.save || "",
+              wounds: u.profile?.wounds || "",
+              leadership: u.profile?.leadership || "",
+              oc: u.profile?.oc || "",
+            },
+            weapons: Array.isArray(u.weapons)
+              ? u.weapons.map((w) => ({
+                  id: W40K.uid(),
+                  type: w.type === "melee" ? "melee" : "ranged",
+                  name: w.name || "無名武器",
+                  range: w.range || "",
+                  attacks: w.attacks || "",
+                  skill: w.skill || "",
+                  strength: w.strength || "",
+                  ap: w.ap || "",
+                  damage: w.damage || "",
+                  abilities: w.abilities || "",
+                }))
+              : [],
+            abilities: Array.isArray(u.abilities)
+              ? u.abilities.map((a) => ({ id: W40K.uid(), name: a.name || "", text: a.text || "" }))
+              : [],
           })),
         };
         state.rosters.push(roster);
@@ -378,6 +499,14 @@
     document.getElementById("unit-form-notes").value = unit?.notes || "";
     document.getElementById("unit-form-enh-name").value = unit?.enhancement?.name || "";
     document.getElementById("unit-form-enh-points").value = unit?.enhancement?.points ?? 0;
+    document.getElementById("unit-form-move").value = unit?.profile?.move || "";
+    document.getElementById("unit-form-toughness").value = unit?.profile?.toughness || "";
+    document.getElementById("unit-form-save").value = unit?.profile?.save || "";
+    document.getElementById("unit-form-wounds").value = unit?.profile?.wounds || "";
+    document.getElementById("unit-form-leadership").value = unit?.profile?.leadership || "";
+    document.getElementById("unit-form-oc").value = unit?.profile?.oc || "";
+    document.getElementById("unit-form-weapons").value = serializeWeapons(unit?.weapons);
+    document.getElementById("unit-form-abilities").value = serializeAbilities(unit?.abilities);
     unitModal.showModal();
   };
 
@@ -393,6 +522,16 @@
       keywords: document.getElementById("unit-form-keywords").value.trim(),
       notes: document.getElementById("unit-form-notes").value.trim(),
       enhancement: enhName ? { name: enhName, points: Number(document.getElementById("unit-form-enh-points").value) || 0 } : null,
+      profile: {
+        move: document.getElementById("unit-form-move").value.trim(),
+        toughness: document.getElementById("unit-form-toughness").value.trim(),
+        save: document.getElementById("unit-form-save").value.trim(),
+        wounds: document.getElementById("unit-form-wounds").value.trim(),
+        leadership: document.getElementById("unit-form-leadership").value.trim(),
+        oc: document.getElementById("unit-form-oc").value.trim(),
+      },
+      weapons: parseWeapons(document.getElementById("unit-form-weapons").value),
+      abilities: parseAbilities(document.getElementById("unit-form-abilities").value),
     };
     if (state.editingUnitId) {
       const unit = roster.units.find((u) => u.id === state.editingUnitId);
@@ -424,6 +563,9 @@
           keywords: keywords || "",
           notes: notes || "",
           enhancement: null,
+          profile: { move: "", toughness: "", save: "", wounds: "", leadership: "", oc: "" },
+          weapons: [],
+          abilities: [],
         };
       });
 

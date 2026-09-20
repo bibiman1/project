@@ -291,6 +291,66 @@ main {
   font-size: 0.85rem;
 }
 
+.unit-profile {
+  margin: 0.4rem 0 0;
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.unit-profile span {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.1rem 0.5rem;
+  font-size: 0.78rem;
+  color: var(--text-dim);
+}
+
+.unit-profile span strong {
+  color: var(--text);
+}
+
+.weapon-table {
+  width: 100%;
+  margin-top: 0.5rem;
+  border-collapse: collapse;
+  font-size: 0.78rem;
+}
+
+.weapon-table th,
+.weapon-table td {
+  padding: 0.25rem 0.4rem;
+  text-align: center;
+  border-bottom: 1px solid var(--border);
+}
+
+.weapon-table th:first-child,
+.weapon-table td:first-child {
+  text-align: left;
+}
+
+.weapon-table th {
+  color: var(--text-dim);
+  font-weight: 600;
+}
+
+.weapon-ability {
+  color: var(--gold-bright);
+  font-size: 0.72rem;
+}
+
+.ability-list {
+  margin: 0.5rem 0 0;
+  padding-left: 1.1rem;
+  font-size: 0.85rem;
+  color: var(--text-dim);
+}
+
+.ability-list li strong {
+  color: var(--text);
+}
+
 .detachment-section {
   margin-bottom: 0.8rem;
 }
@@ -675,9 +735,35 @@ textarea:focus {
   font-size: 0.85rem;
 }
 
-#bulk-units-input {
+#bulk-units-input,
+#unit-form-weapons {
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   font-size: 0.85rem;
+}
+
+.form-section-label {
+  margin-top: 0.2rem;
+  padding-top: 0.6rem;
+  border-top: 1px solid var(--border);
+  color: var(--gold-bright);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.profile-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 0.5rem;
+}
+
+.profile-grid label {
+  font-size: 0.75rem;
+}
+
+.profile-grid input {
+  width: 100%;
+  padding: 0.4rem;
+  text-align: center;
 }
 
 .modal::backdrop {
