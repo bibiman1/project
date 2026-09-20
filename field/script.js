@@ -28,7 +28,9 @@
 
   function updateLayoutMode() {
     const isLandscape = window.innerWidth > window.innerHeight;
-    document.body.classList.toggle("landscape-compact", isTouchDevice && isLandscape);
+    const compact = isTouchDevice && isLandscape;
+    document.body.classList.toggle("landscape-compact", compact);
+    document.documentElement.classList.toggle("landscape-compact", compact);
   }
   updateLayoutMode();
   window.addEventListener("resize", updateLayoutMode);

@@ -284,8 +284,22 @@ body {
   }
 }
 
+html.landscape-compact,
+body.landscape-compact {
+  height: 100%;
+  overflow: hidden;
+}
+
+body.landscape-compact {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  height: 100dvh;
+}
+
 body.landscape-compact .field-header {
-  padding: 6px 12px;
+  flex: 0 0 auto;
+  padding: 4px 12px;
 }
 
 body.landscape-compact .field-header h1,
@@ -298,16 +312,23 @@ body.landscape-compact .back-link {
 }
 
 body.landscape-compact .field-wrap {
-  padding: 8px 12px 16px;
-  gap: 8px;
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 6px 12px;
+  gap: 4px;
+  justify-content: center;
 }
 
 body.landscape-compact .game-frame {
+  flex: 1 1 auto;
+  min-height: 0;
   width: auto;
   max-width: 100%;
-  max-height: calc(100vh - 100px);
-  max-height: calc(100dvh - 100px);
   aspect-ratio: 960 / 600;
+}
+
+body.landscape-compact .field-status {
+  flex: 0 0 auto;
 }
 
 body.landscape-compact .field-footer {
