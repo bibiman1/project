@@ -302,6 +302,14 @@ body.landscape-compact .field-wrap {
   gap: 8px;
 }
 
+body.landscape-compact .game-frame {
+  width: auto;
+  max-width: 100%;
+  max-height: calc(100vh - 100px);
+  max-height: calc(100dvh - 100px);
+  aspect-ratio: 960 / 600;
+}
+
 body.landscape-compact .field-footer {
   display: none;
 }
