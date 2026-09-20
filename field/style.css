@@ -132,8 +132,13 @@ body {
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  padding: 32px;
-  background: rgba(20, 18, 14, 0.55);
+  padding: 16px;
+  background: linear-gradient(
+    to top,
+    rgba(20, 18, 14, 0.45) 0%,
+    rgba(20, 18, 14, 0.18) 38%,
+    rgba(20, 18, 14, 0) 68%
+  );
   cursor: pointer;
   animation: story-fade-in 260ms ease;
 }
@@ -202,40 +207,38 @@ body {
   font-size: 13px;
 }
 
-.touch-controls {
+.joystick {
   display: none;
-  align-items: center;
-  justify-content: center;
-  width: min(960px, 100%);
-}
-
-.dpad {
-  display: grid;
-  grid-template-columns: repeat(3, 44px);
-  grid-template-rows: repeat(2, 44px);
-  gap: 4px;
-}
-
-.dpad-btn {
-  display: grid;
-  place-items: center;
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  background: var(--paper);
-  color: var(--ink);
-  font-size: 16px;
+  position: absolute;
+  left: 20px;
+  bottom: 20px;
+  width: 112px;
+  height: 112px;
+  border-radius: 50%;
+  background: rgba(255, 253, 248, 0.35);
+  border: 1px solid rgba(216, 210, 197, 0.7);
   box-shadow: var(--shadow);
+  touch-action: none;
+  z-index: 5;
 }
 
-.dpad-btn:active {
-  background: var(--accent);
-  color: #fff;
+.joystick-knob {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 48px;
+  height: 48px;
+  margin-left: -24px;
+  margin-top: -24px;
+  border-radius: 50%;
+  background: rgba(183, 68, 42, 0.85);
+  box-shadow: var(--shadow);
+  transition: transform 100ms ease-out;
 }
 
-.dpad-up { grid-column: 2; grid-row: 1; }
-.dpad-left { grid-column: 1; grid-row: 2; }
-.dpad-right { grid-column: 3; grid-row: 2; }
-.dpad-down { grid-column: 2; grid-row: 2; }
+.joystick.active .joystick-knob {
+  transition: none;
+}
 
 .field-footer {
   padding: 24px;
@@ -245,8 +248,8 @@ body {
 }
 
 @media (hover: none) and (pointer: coarse) {
-  .touch-controls {
-    display: flex;
+  .joystick {
+    display: block;
   }
 }
 
