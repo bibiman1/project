@@ -259,6 +259,25 @@
     "north-west": 7,
   };
 
+  const bogikaaSprite = new Image();
+  let bogikaaLoaded = false;
+  bogikaaSprite.onload = () => {
+    bogikaaLoaded = true;
+  };
+  bogikaaSprite.src = "./assets/bogikaa_walk_sheet.png";
+  const BOGIKAA_W = 128;
+  const BOGIKAA_H = 44;
+  const BOGIKAA_DIR_COL = {
+    west: 0,
+    "south-west": 1,
+    south: 2,
+    east: 3,
+    "south-east": 4,
+    "north-east": 5,
+    north: 6,
+    "north-west": 7,
+  };
+
   const wanderer = {
     x: 1800,
     y: 1400,
@@ -282,6 +301,16 @@
   const toribogikaaWanderer = {
     x: 2000,
     y: 2000,
+    vx: 0,
+    vy: 0,
+    dir: "south",
+    moving: false,
+    changeAt: 0,
+  };
+
+  const bogikaaWanderer = {
+    x: 1700,
+    y: 1650,
     vx: 0,
     vy: 0,
     dir: "south",
@@ -354,6 +383,7 @@
     updateWanderer(wanderer, dt, t);
     updateWanderer(manateeWanderer, dt, t);
     updateWanderer(toribogikaaWanderer, dt, t);
+    updateWanderer(bogikaaWanderer, dt, t);
 
     let near = null;
     for (const frag of FRAGMENTS) {
@@ -655,6 +685,35 @@
     );
   }
 
+  const BOGIKAA_WANDERER_W = 96;
+  const BOGIKAA_WANDERER_H = 33;
+
+  function drawBogikaaWanderer(camX, camY, t) {
+    if (!bogikaaLoaded) return;
+    const { sx, sy } = worldToScreen(camX, camY, bogikaaWanderer.x, bogikaaWanderer.y);
+    if (sx < -70 || sx > VW + 70 || sy < -70 || sy > VH + 70) return;
+
+    const bob = bogikaaWanderer.moving ? Math.sin(t * 10 + 2.1) * 1.4 : 0;
+    ctx.fillStyle = "rgba(60, 60, 50, 0.16)";
+    ctx.beginPath();
+    ctx.ellipse(sx, sy + 14, 24, 6, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    const col = BOGIKAA_DIR_COL[bogikaaWanderer.dir];
+
+    ctx.drawImage(
+      bogikaaSprite,
+      col * BOGIKAA_W,
+      0,
+      BOGIKAA_W,
+      BOGIKAA_H,
+      sx - BOGIKAA_WANDERER_W / 2,
+      sy + bob - BOGIKAA_WANDERER_H / 2,
+      BOGIKAA_WANDERER_W,
+      BOGIKAA_WANDERER_H
+    );
+  }
+
   let lastTime = 0;
   function loop(timestamp) {
     if (!lastTime) lastTime = timestamp;
@@ -671,6 +730,7 @@
     drawWanderer(camX, camY, t);
     drawManateeWanderer(camX, camY, t);
     drawToribogikaaWanderer(camX, camY, t);
+    drawBogikaaWanderer(camX, camY, t);
     drawPlayer(t);
 
     requestAnimationFrame(loop);
