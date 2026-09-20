@@ -114,6 +114,10 @@ body {
   box-shadow: var(--shadow);
 }
 
+button.gallery-hint[hidden] {
+  display: none;
+}
+
 button.gallery-hint {
   all: unset;
   box-sizing: border-box;
