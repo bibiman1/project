@@ -16,6 +16,9 @@
   const fragmentText = document.getElementById("fragmentText");
   const progressText = document.getElementById("progressText");
   const completeToast = document.getElementById("completeToast");
+  const storyOverlay = document.getElementById("storyOverlay");
+  const storyTitleEl = document.getElementById("storyTitle");
+  const storyTextEl = document.getElementById("storyText");
 
   const FRAGMENTS = [
     {
@@ -82,6 +85,32 @@
   let allShownOnce = false;
   let moved = false;
 
+  const STORY_REVEAL_CHARS_PER_SEC = 38;
+  let story = null; // { text, revealed }
+
+  function startStory(frag) {
+    story = { text: frag.text, revealed: 0 };
+    storyTitleEl.textContent = frag.title;
+    storyTextEl.textContent = "";
+    storyOverlay.hidden = false;
+  }
+
+  function updateStory(dt) {
+    story.revealed = Math.min(story.text.length, story.revealed + STORY_REVEAL_CHARS_PER_SEC * dt);
+    storyTextEl.textContent = story.text.slice(0, Math.floor(story.revealed));
+  }
+
+  function advanceStory() {
+    if (!story) return;
+    if (story.revealed < story.text.length) {
+      story.revealed = story.text.length;
+      storyTextEl.textContent = story.text;
+      return;
+    }
+    story = null;
+    storyOverlay.hidden = true;
+  }
+
   const keys = { up: false, down: false, left: false, right: false };
   const KEY_MAP = {
     ArrowUp: "up",
@@ -95,6 +124,13 @@
   };
 
   window.addEventListener("keydown", (e) => {
+    if (story) {
+      if (e.code === "Enter" || e.code === "Space" || e.code === "KeyZ") {
+        advanceStory();
+        e.preventDefault();
+      }
+      return;
+    }
     const dir = KEY_MAP[e.code];
     if (!dir) return;
     keys[dir] = true;
@@ -123,6 +159,10 @@
     btn.addEventListener("mousedown", press);
     btn.addEventListener("mouseup", release);
     btn.addEventListener("mouseleave", release);
+  });
+
+  storyOverlay.addEventListener("click", () => {
+    advanceStory();
   });
 
   const kiSprite = new Image();
@@ -241,6 +281,11 @@
   }
 
   function update(dt, t) {
+    if (story) {
+      updateStory(dt);
+      return;
+    }
+
     let dx = 0;
     let dy = 0;
     if (keys.up) dy -= 1;
@@ -270,6 +315,8 @@
         if (!discovered.has(frag.id)) {
           discovered.add(frag.id);
           progressText.textContent = `見つけた断片: ${discovered.size} / ${FRAGMENTS.length}`;
+          startStory(frag);
+          return;
         }
         near = frag;
         break;
