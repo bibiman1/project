@@ -31,8 +31,8 @@
       <div id="completeToast" class="complete-toast" hidden>断片が出そろった。まだ、この先がある。</div>
 
       <button type="button" id="galleryHint" class="fragment-box gallery-hint" hidden>
-        <p class="fragment-title">資料館</p>
-        <p class="fragment-text">タップ / Enterキーで中に入る</p>
+        <p class="fragment-title">書庫</p>
+        <p id="galleryHintText" class="fragment-text">タップ / Enterキーで中に入る</p>
       </button>
 
       <div id="storyOverlay" class="story-overlay" hidden>
@@ -40,6 +40,19 @@
           <p id="storyTitle" class="story-title"></p>
           <p id="storyText" class="story-text"></p>
           <p class="story-hint">クリック / Enterキーで進む</p>
+        </div>
+      </div>
+
+      <div id="lockOverlay" class="story-overlay lock-overlay" hidden>
+        <div class="story-card lock-card">
+          <p class="story-title">書庫の扉 - ナンバー錠</p>
+          <p class="lock-desc">4桁の番号を合わせると開くようだ。</p>
+          <input id="lockInput" class="lock-input" type="tel" inputmode="numeric" pattern="[0-9]*" maxlength="4" autocomplete="off" placeholder="----">
+          <p id="lockError" class="lock-error" hidden>番号が違うようだ。</p>
+          <div class="lock-actions">
+            <button type="button" id="lockCancel" class="lock-btn lock-btn-cancel">閉じる</button>
+            <button type="button" id="lockSubmit" class="lock-btn lock-btn-submit">開ける</button>
+          </div>
         </div>
       </div>
 
