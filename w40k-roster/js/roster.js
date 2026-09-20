@@ -240,6 +240,103 @@
   const serializeAbilities = (abilities) =>
     (abilities || []).map((a) => (a.text ? `${a.name}: ${a.text}` : a.name)).join("\n");
 
+  // ---- CSV backup (units) ----
+
+  const CSV_HEADER = [
+    "name", "models", "points", "keywords", "notes",
+    "enh_name", "enh_points",
+    "move", "toughness", "save", "wounds", "leadership", "oc",
+    "weapons", "abilities",
+  ];
+
+  const csvEscapeField = (value) => {
+    const str = String(value ?? "");
+    return /[",\n]/.test(str) ? `"${str.replace(/"/g, '""')}"` : str;
+  };
+
+  const toCsvRow = (fields) => fields.map(csvEscapeField).join(",");
+
+  // Minimal RFC4180-style parser: handles quoted fields with embedded commas/newlines and "" escapes.
+  const parseCsv = (text) => {
+    const rows = [];
+    let row = [];
+    let field = "";
+    let inQuotes = false;
+    for (let i = 0; i < text.length; i++) {
+      const c = text[i];
+      if (inQuotes) {
+        if (c === '"') {
+          if (text[i + 1] === '"') {
+            field += '"';
+            i++;
+          } else {
+            inQuotes = false;
+          }
+        } else {
+          field += c;
+        }
+      } else if (c === '"') {
+        inQuotes = true;
+      } else if (c === ",") {
+        row.push(field);
+        field = "";
+      } else if (c === "\n") {
+        row.push(field);
+        field = "";
+        rows.push(row);
+        row = [];
+      } else if (c !== "\r") {
+        field += c;
+      }
+    }
+    if (field.length > 0 || row.length > 0) {
+      row.push(field);
+      rows.push(row);
+    }
+    return rows.filter((r) => r.some((cell) => cell.trim() !== ""));
+  };
+
+  const unitToCsvRow = (u) => [
+    u.name,
+    u.models,
+    u.points,
+    u.keywords,
+    u.notes,
+    u.enhancement?.name || "",
+    u.enhancement ? u.enhancement.points : "",
+    u.profile?.move || "",
+    u.profile?.toughness || "",
+    u.profile?.save || "",
+    u.profile?.wounds || "",
+    u.profile?.leadership || "",
+    u.profile?.oc || "",
+    serializeWeapons(u.weapons),
+    serializeAbilities(u.abilities),
+  ];
+
+  const csvRowToUnit = (cols) => {
+    const [name, models, points, keywords, notes, enhName, enhPoints, move, toughness, save, wounds, leadership, oc, weaponsText, abilitiesText] = cols;
+    return {
+      id: W40K.uid(),
+      name: name || "無名ユニット",
+      models: Number(models) || 1,
+      points: Number(points) || 0,
+      keywords: keywords || "",
+      notes: notes || "",
+      enhancement: enhName ? { name: enhName, points: Number(enhPoints) || 0 } : null,
+      profile: {
+        move: move || "",
+        toughness: toughness || "",
+        save: save || "",
+        wounds: wounds || "",
+        leadership: leadership || "",
+        oc: oc || "",
+      },
+      weapons: parseWeapons(weaponsText || ""),
+      abilities: parseAbilities(abilitiesText || ""),
+    };
+  };
+
   // ---- actions ----
 
   const selectRoster = (id) => {
@@ -307,6 +404,44 @@
     a.download = `${roster.name || "roster"}.json`;
     a.click();
     URL.revokeObjectURL(url);
+  };
+
+  const exportUnitsCsv = (id) => {
+    const roster = getById(id);
+    if (!roster) return;
+    const rows = [CSV_HEADER, ...roster.units.map(unitToCsvRow)].map(toCsvRow).join("\n");
+    // Leading BOM so Excel opens the Japanese text as UTF-8 instead of guessing Shift-JIS.
+    const blob = new Blob(["﻿" + rows], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${roster.name || "roster"}_units.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const importUnitsCsv = (file) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const roster = getById(state.selectedRosterId);
+        if (!roster) {
+          alert("先にロスターを選択してください。");
+          return;
+        }
+        let rows = parseCsv(reader.result);
+        if (rows.length && rows[0][0]?.trim().toLowerCase() === "name") rows = rows.slice(1);
+        const units = rows.map(csvRowToUnit);
+        if (units.length === 0) return;
+        roster.units.push(...units);
+        persist();
+        render();
+      } catch (err) {
+        alert("CSVの読み込みに失敗しました。");
+        console.error(err);
+      }
+    };
+    reader.readAsText(file);
   };
 
   const importRoster = (file) => {
@@ -593,8 +728,15 @@
     document.getElementById("btn-duplicate-roster").addEventListener("click", () => duplicateRoster(state.selectedRosterId));
     document.getElementById("btn-delete-roster").addEventListener("click", () => deleteRoster(state.selectedRosterId));
     document.getElementById("btn-export-roster").addEventListener("click", () => exportRoster(state.selectedRosterId));
+    document.getElementById("btn-export-units-csv").addEventListener("click", () => exportUnitsCsv(state.selectedRosterId));
     document.getElementById("btn-new-unit").addEventListener("click", () => openUnitModal());
     document.getElementById("btn-bulk-units").addEventListener("click", () => bulkUnitsModal.showModal());
+
+    document.getElementById("units-csv-import-input").addEventListener("change", (e) => {
+      const file = e.target.files[0];
+      if (file) importUnitsCsv(file);
+      e.target.value = "";
+    });
     document.getElementById("btn-edit-detachment").addEventListener("click", () => openDetachmentModal());
     document.getElementById("btn-new-stratagem").addEventListener("click", () => openStratagemModal());
 

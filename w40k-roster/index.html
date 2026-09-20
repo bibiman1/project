@@ -51,7 +51,8 @@
               <div class="detail-actions">
                 <button id="btn-edit-roster" class="btn btn-ghost">編集</button>
                 <button id="btn-duplicate-roster" class="btn btn-ghost">複製</button>
-                <button id="btn-export-roster" class="btn btn-ghost">📤 エクスポート</button>
+                <button id="btn-export-roster" class="btn btn-ghost">📤 JSON保存</button>
+                <button id="btn-export-units-csv" class="btn btn-ghost">📄 CSV保存</button>
                 <button id="btn-delete-roster" class="btn btn-danger">削除</button>
               </div>
             </div>
@@ -73,6 +74,10 @@
             <div class="pane-heading">
               <h3>ユニット</h3>
               <div class="detail-actions">
+                <label class="btn btn-ghost">
+                  📥 CSV読込
+                  <input id="units-csv-import-input" type="file" accept=".csv,text/csv" hidden>
+                </label>
                 <button id="btn-bulk-units" class="btn btn-ghost">📋 一括入力</button>
                 <button id="btn-new-unit" class="btn btn-primary">＋ ユニット追加</button>
               </div>
