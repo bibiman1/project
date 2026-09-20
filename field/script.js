@@ -206,9 +206,18 @@
 
   const floorTile = new Image();
   let floorLoaded = false;
-  let floorPattern = null;
+  let floorBuffer = null;
   floorTile.onload = () => {
     floorLoaded = true;
+    const tw = floorTile.width;
+    const th = floorTile.height;
+    floorBuffer = document.createElement("canvas");
+    floorBuffer.width = VW + tw;
+    floorBuffer.height = VH + th;
+    const bctx = floorBuffer.getContext("2d");
+    const pattern = bctx.createPattern(floorTile, "repeat");
+    bctx.fillStyle = pattern;
+    bctx.fillRect(0, 0, floorBuffer.width, floorBuffer.height);
   };
   floorTile.src = "./assets/floor_tile.png";
 
@@ -358,20 +367,12 @@
       return;
     }
 
-    if (!floorPattern) {
-      floorPattern = ctx.createPattern(floorTile, "repeat");
-    }
-
     const tw = floorTile.width;
     const th = floorTile.height;
     const offsetX = (((camX - VW / 2) % tw) + tw) % tw;
     const offsetY = (((camY - VH / 2) % th) + th) % th;
 
-    ctx.save();
-    ctx.translate(-offsetX, -offsetY);
-    ctx.fillStyle = floorPattern;
-    ctx.fillRect(0, 0, VW + tw, VH + th);
-    ctx.restore();
+    ctx.drawImage(floorBuffer, -offsetX, -offsetY);
   }
 
   function worldToScreen(camX, camY, wx, wy) {
