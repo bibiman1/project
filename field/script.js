@@ -34,7 +34,24 @@
   const JOY_SIZE = 112;
   const JOY_INSET = 20;
   const BTN_SIZE = 56;
-  const BTN_DIAG = 16;
+  // Diagonal offset (in each of x/y) from the pair's shared center to each
+  // button's center. Distance between the two centers ends up BTN_DIAG*2*sqrt(2)
+  // (~73px), safely more than BTN_SIZE (56px) so the circles don't overlap.
+  const BTN_DIAG = 26;
+
+  function diagonalPair(cx, cy) {
+    return {
+      aLeft: cx - BTN_SIZE / 2 + BTN_DIAG,
+      aTop: cy - BTN_SIZE / 2 + BTN_DIAG,
+      bLeft: cx - BTN_SIZE / 2 - BTN_DIAG,
+      bTop: cy - BTN_SIZE / 2 - BTN_DIAG,
+    };
+  }
+  // Shared margin threshold so the joystick and A/B buttons always agree on
+  // whether there's "enough" letterbox space to escape into, given the left
+  // and right margins are normally equal. Must clear the larger of the two
+  // controls (the joystick) plus a little breathing room.
+  const MARGIN_THRESHOLD = JOY_SIZE + 8;
 
   function positionJoystick() {
     const frameRect = gameFrame.getBoundingClientRect();
@@ -42,7 +59,7 @@
     const leftMargin = frameRect.left;
 
     let left, top;
-    if (isCompact && leftMargin > JOY_SIZE + 16) {
+    if (isCompact && leftMargin > MARGIN_THRESHOLD) {
       // enough letterbox space beside the game view: rest the stick there
       // instead of covering the field
       left = leftMargin / 2 - JOY_SIZE / 2;
@@ -61,20 +78,18 @@
     const rightMargin = window.innerWidth - frameRect.right;
 
     let aLeft, aTop, bLeft, bTop;
-    if (isCompact && rightMargin > BTN_SIZE + BTN_DIAG * 2 + 16) {
+    if (isCompact && rightMargin > MARGIN_THRESHOLD) {
       // enough letterbox space beside the game view: rest the buttons there,
       // diagonally, instead of covering the field
       const cx = frameRect.right + rightMargin / 2;
       const cy = frameRect.top + frameRect.height / 2;
-      aLeft = cx - BTN_SIZE / 2 + BTN_DIAG;
-      aTop = cy - BTN_SIZE / 2 + BTN_DIAG;
-      bLeft = cx - BTN_SIZE / 2 - BTN_DIAG;
-      bTop = cy - BTN_SIZE / 2 - BTN_DIAG;
+      ({ aLeft, aTop, bLeft, bTop } = diagonalPair(cx, cy));
     } else {
-      aLeft = frameRect.right - JOY_INSET - BTN_SIZE;
-      aTop = frameRect.bottom - JOY_INSET - BTN_SIZE;
-      bLeft = aLeft - BTN_SIZE * 0.7;
-      bTop = aTop - BTN_SIZE * 0.7;
+      // overlay the bottom-right corner of the game view: pick the pair's
+      // center so its bounding box corner lands at the inset point
+      const cx = frameRect.right - JOY_INSET - BTN_SIZE / 2 - BTN_DIAG;
+      const cy = frameRect.bottom - JOY_INSET - BTN_SIZE / 2 - BTN_DIAG;
+      ({ aLeft, aTop, bLeft, bTop } = diagonalPair(cx, cy));
     }
     actionBtnA.style.left = `${aLeft}px`;
     actionBtnA.style.top = `${aTop}px`;
