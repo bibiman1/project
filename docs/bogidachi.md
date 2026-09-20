@@ -124,3 +124,4 @@
 ## フロントエンド開発上の既知のハマりどころ(field/)
 
 - **`hidden`属性とCSS`display`の競合**: `hidden`属性を使ってJSで表示/非表示するUI要素に対し、そのセレクタへ無条件で`display: block`等を指定すると、同じ詳細度の中で後に書いた宣言が勝つため`hidden`属性が効かなくなる(要素が消えない)。`storyOverlay`と`galleryHint`の両方でこれを踏んだ。**新しく`hidden`属性で出し分けるUI要素を追加するときは、必ず`セレクタ[hidden] { display: none; }`を明示的に書くこと。**
+- **iOSでのJS/CSSキャッシュ残留**: `field/`は`apple-mobile-web-app-capable`でホーム画面に追加できるようにしているため、スマホ(特にホーム画面追加後)では`script.js`/`style.css`が古いまま残ってタップしても新機能が反応しないことがある。`field/index.html`と`gallery/index.html`の`<script>`/`<link>`は`?v=N`のクエリを付けており、**見た目や挙動に関わる変更をpushするたびにこの番号を上げること**(新しいURLとして扱われキャッシュを回避できる)。
