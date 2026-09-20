@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Warhammer 40,000のロスター管理・対戦進行トラッカー・ルール備忘メモ">
+  <title>W40K ロスター＆戦闘記録</title>
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="header-inner">
+      <p class="eyebrow">WARHAMMER 40,000</p>
+      <h1>ロスター＆戦闘記録</h1>
+      <p class="lead">ロスターを管理し、対戦の進行を記録し、ルールをすぐ引ける備忘アプリ。すべてこのブラウザ内(localStorage)に保存されます。</p>
+    </div>
+    <nav class="tab-nav" role="tablist">
+      <button class="tab-btn is-active" data-tab="roster" role="tab" aria-selected="true">📋 ロスター</button>
+      <button class="tab-btn" data-tab="tracker" role="tab" aria-selected="false">⚔️ 対戦トラッカー</button>
+      <button class="tab-btn" data-tab="rules" role="tab" aria-selected="false">📖 ルール早見</button>
+    </nav>
+  </header>
+
+  <main>
+    <!-- ROSTER TAB -->
+    <section id="tab-roster" class="tab-panel is-active" role="tabpanel" aria-labelledby="roster">
+      <div class="roster-layout">
+        <div class="roster-list-pane">
+          <div class="pane-heading">
+            <h2>ロスター一覧</h2>
+            <button id="btn-new-roster" class="btn btn-primary">＋ 新規ロスター</button>
+          </div>
+          <div id="roster-list" class="roster-list"></div>
+          <div class="import-export-row">
+            <label class="btn btn-ghost">
+              📥 インポート
+              <input id="roster-import-input" type="file" accept="application/json" hidden>
+            </label>
+          </div>
+        </div>
+        <div class="roster-detail-pane">
+          <div id="roster-detail-empty" class="empty-state">
+            <p>左のロスターを選択するか、新規作成してください。</p>
+          </div>
+          <div id="roster-detail" class="roster-detail" hidden>
+            <div class="pane-heading">
+              <div>
+                <h2 id="roster-detail-name"></h2>
+                <p id="roster-detail-meta" class="meta-line"></p>
+              </div>
+              <div class="detail-actions">
+                <button id="btn-edit-roster" class="btn btn-ghost">編集</button>
+                <button id="btn-duplicate-roster" class="btn btn-ghost">複製</button>
+                <button id="btn-export-roster" class="btn btn-ghost">📤 エクスポート</button>
+                <button id="btn-delete-roster" class="btn btn-danger">削除</button>
+              </div>
+            </div>
+            <div class="pane-heading">
+              <h3>ユニット</h3>
+              <button id="btn-new-unit" class="btn btn-primary">＋ ユニット追加</button>
+            </div>
+            <div id="unit-list" class="unit-list"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TRACKER TAB -->
+    <section id="tab-tracker" class="tab-panel" role="tabpanel" aria-labelledby="tracker">
+      <div id="tracker-setup" class="tracker-setup">
+        <h2>対戦を開始する</h2>
+        <form id="form-new-game" class="form-grid">
+          <label>使用ロスター
+            <select id="game-roster-select"></select>
+          </label>
+          <label>対戦相手
+            <input id="game-opponent" type="text" placeholder="例: 田中さん">
+          </label>
+          <label>ミッション名
+            <input id="game-mission" type="text" placeholder="例: パージ・ザ・フォース">
+          </label>
+          <label>ポイント上限
+            <input id="game-points" type="number" min="0" step="5">
+          </label>
+          <button type="submit" class="btn btn-primary">対戦を開始</button>
+        </form>
+      </div>
+
+      <div id="tracker-active" class="tracker-active" hidden>
+        <div class="tracker-top">
+          <div class="tracker-title">
+            <h2 id="tracker-heading"></h2>
+            <p id="tracker-meta" class="meta-line"></p>
+          </div>
+          <button id="btn-end-game" class="btn btn-danger">🏁 ゲーム終了</button>
+        </div>
+
+        <div class="tracker-grid">
+          <div class="tracker-card">
+            <h3>バトルラウンド</h3>
+            <div class="counter-row">
+              <button class="btn btn-round" id="round-dec">−</button>
+              <span id="round-value" class="counter-value">1</span>
+              <button class="btn btn-round" id="round-inc">＋</button>
+            </div>
+          </div>
+
+          <div class="tracker-card">
+            <h3>コマンドポイント (CP)</h3>
+            <div class="counter-pair">
+              <div class="counter-item">
+                <span class="counter-label">自分</span>
+                <div class="counter-row">
+                  <button class="btn btn-round" data-cp="me" data-delta="-1">−</button>
+                  <span id="cp-me" class="counter-value">0</span>
+                  <button class="btn btn-round" data-cp="me" data-delta="1">＋</button>
+                </div>
+              </div>
+              <div class="counter-item">
+                <span class="counter-label">相手</span>
+                <div class="counter-row">
+                  <button class="btn btn-round" data-cp="opponent" data-delta="-1">−</button>
+                  <span id="cp-opponent" class="counter-value">0</span>
+                  <button class="btn btn-round" data-cp="opponent" data-delta="1">＋</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="tracker-card">
+            <h3>勝利ポイント (VP)</h3>
+            <div class="counter-pair">
+              <div class="counter-item">
+                <span class="counter-label">自分</span>
+                <div class="counter-row">
+                  <button class="btn btn-round" data-vp="me" data-delta="-1">−</button>
+                  <span id="vp-me" class="counter-value">0</span>
+                  <button class="btn btn-round" data-vp="me" data-delta="1">＋</button>
+                </div>
+              </div>
+              <div class="counter-item">
+                <span class="counter-label">相手</span>
+                <div class="counter-row">
+                  <button class="btn btn-round" data-vp="opponent" data-delta="-1">−</button>
+                  <span id="vp-opponent" class="counter-value">0</span>
+                  <button class="btn btn-round" data-vp="opponent" data-delta="1">＋</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="tracker-columns">
+          <div class="tracker-column">
+            <h3>ユニット状態</h3>
+            <div id="tracker-unit-list" class="tracker-unit-list"></div>
+          </div>
+          <div class="tracker-column">
+            <h3>ラウンドログ</h3>
+            <form id="form-log-entry" class="log-form">
+              <input id="log-entry-input" type="text" placeholder="例: R2 相手のイントセッサーを撃破">
+              <button type="submit" class="btn btn-ghost">追加</button>
+            </form>
+            <ul id="log-list" class="log-list"></ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- RULES TAB -->
+    <section id="tab-rules" class="tab-panel" role="tabpanel" aria-labelledby="rules">
+      <div class="pane-heading">
+        <h2>ルール早見・備忘メモ</h2>
+        <button id="btn-new-note" class="btn btn-primary">＋ メモ追加</button>
+      </div>
+      <input id="rules-search" class="search-input" type="search" placeholder="🔍 タイトル・タグ・本文を検索...">
+      <div id="rules-list" class="rules-list"></div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <small>© W40K Roster &amp; Battle Log — データはこのブラウザにのみ保存されます</small>
+  </footer>
+
+  <!-- Roster form modal -->
+  <dialog id="modal-roster" class="modal">
+    <form id="form-roster" method="dialog" class="form-grid">
+      <h3 id="modal-roster-title">新規ロスター</h3>
+      <label>ロスター名
+        <input id="roster-form-name" type="text" required>
+      </label>
+      <label>ファクション
+        <input id="roster-form-faction" type="text" placeholder="例: スペースマリーン">
+      </label>
+      <label>ポイント上限
+        <input id="roster-form-points" type="number" min="0" step="5" value="2000">
+      </label>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" data-close-modal>キャンセル</button>
+        <button type="submit" class="btn btn-primary">保存</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Unit form modal -->
+  <dialog id="modal-unit" class="modal">
+    <form id="form-unit" method="dialog" class="form-grid">
+      <h3 id="modal-unit-title">ユニット追加</h3>
+      <label>ユニット名
+        <input id="unit-form-name" type="text" required>
+      </label>
+      <label>モデル数
+        <input id="unit-form-models" type="number" min="1" step="1" value="1">
+      </label>
+      <label>ポイント
+        <input id="unit-form-points" type="number" min="0" step="1" value="0">
+      </label>
+      <label>キーワード
+        <input id="unit-form-keywords" type="text" placeholder="例: INFANTRY, CHARACTER">
+      </label>
+      <label>ワーギア・備考
+        <textarea id="unit-form-notes" rows="3"></textarea>
+      </label>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" data-close-modal>キャンセル</button>
+        <button type="submit" class="btn btn-primary">保存</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Rule note form modal -->
+  <dialog id="modal-note" class="modal">
+    <form id="form-note" method="dialog" class="form-grid">
+      <h3 id="modal-note-title">メモ追加</h3>
+      <label>カテゴリ
+        <select id="note-form-category"></select>
+      </label>
+      <label>タイトル
+        <input id="note-form-title" type="text" required>
+      </label>
+      <label>タグ (カンマ区切り)
+        <input id="note-form-tags" type="text" placeholder="例: 突撃, 遮蔽物">
+      </label>
+      <label>本文
+        <textarea id="note-form-text" rows="5"></textarea>
+      </label>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" data-close-modal>キャンセル</button>
+        <button type="submit" class="btn btn-primary">保存</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="./js/storage.js"></script>
+  <script src="./js/roster.js"></script>
+  <script src="./js/tracker.js"></script>
+  <script src="./js/rules.js"></script>
+  <script src="./js/app.js"></script>
+</body>
+</html>
