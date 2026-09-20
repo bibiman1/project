@@ -72,7 +72,10 @@
 
             <div class="pane-heading">
               <h3>ユニット</h3>
-              <button id="btn-new-unit" class="btn btn-primary">＋ ユニット追加</button>
+              <div class="detail-actions">
+                <button id="btn-bulk-units" class="btn btn-ghost">📋 一括入力</button>
+                <button id="btn-new-unit" class="btn btn-primary">＋ ユニット追加</button>
+              </div>
             </div>
             <div id="unit-list" class="unit-list"></div>
           </div>
@@ -246,7 +249,7 @@
       <label>モデル数
         <input id="unit-form-models" type="number" min="1" step="1" value="1">
       </label>
-      <label>ポイント
+      <label>合計ポイント（コデックスに書かれている値をそのまま）
         <input id="unit-form-points" type="number" min="0" step="1" value="0">
       </label>
       <label>キーワード
@@ -264,6 +267,20 @@
       <div class="modal-actions">
         <button type="button" class="btn btn-ghost" data-close-modal>キャンセル</button>
         <button type="submit" class="btn btn-primary">保存</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Bulk unit input modal -->
+  <dialog id="modal-bulk-units" class="modal modal-wide">
+    <form id="form-bulk-units" method="dialog" class="form-grid">
+      <h3>ユニット一括入力</h3>
+      <p class="hint">1行につきユニット1つ。カンマ区切りで「ユニット名, モデル数, 合計ポイント, キーワード(任意), 備考(任意)」の順に入力してください。コデックスに書かれている合計ポイントをそのまま使えます。</p>
+      <textarea id="bulk-units-input" rows="10" placeholder="インターセッサー分隊, 5, 80, INFANTRY
+キャプテン, 1, 80, CHARACTER, パワーソード装備"></textarea>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" data-close-modal>キャンセル</button>
+        <button type="submit" class="btn btn-primary">まとめて追加</button>
       </div>
     </form>
   </dialog>

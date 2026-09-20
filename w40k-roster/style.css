@@ -665,6 +665,21 @@ textarea:focus {
   width: 90vw;
 }
 
+.modal-wide {
+  max-width: 640px;
+}
+
+.hint {
+  margin: -0.4rem 0 0;
+  color: var(--text-dim);
+  font-size: 0.85rem;
+}
+
+#bulk-units-input {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.85rem;
+}
+
 .modal::backdrop {
   background: rgba(0, 0, 0, 0.6);
 }

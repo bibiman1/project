@@ -21,8 +21,9 @@
 
   const getById = (id) => state.rosters.find((r) => r.id === id);
 
+  // Unit points are the total cost for the unit (as printed in the codex), not a per-model cost.
   const totalPoints = (roster) =>
-    roster.units.reduce((sum, u) => sum + u.points * u.models + (u.enhancement ? u.enhancement.points : 0), 0);
+    roster.units.reduce((sum, u) => sum + u.points + (u.enhancement ? u.enhancement.points : 0), 0);
 
   // ---- rendering ----
 
@@ -114,7 +115,7 @@
     roster.units.forEach((unit) => {
       const row = document.createElement("article");
       row.className = "unit-card";
-      const unitTotal = unit.points * unit.models + (unit.enhancement ? unit.enhancement.points : 0);
+      const unitTotal = unit.points + (unit.enhancement ? unit.enhancement.points : 0);
       row.innerHTML = `
         <div class="unit-main">
           <h4>${escapeHtml(unit.name)} <span class="unit-models">×${unit.models}</span></h4>
@@ -404,6 +405,42 @@
     unitModal.close();
   });
 
+  const bulkUnitsModal = document.getElementById("modal-bulk-units");
+  const bulkUnitsForm = document.getElementById("form-bulk-units");
+
+  // Each line: "name, models, total points[, keywords][, notes]" (tabs also accepted, e.g. pasted from a spreadsheet).
+  const parseBulkUnits = (text) =>
+    text
+      .split("\n")
+      .map((line) => line.trim())
+      .filter((line) => line.length > 0)
+      .map((line) => {
+        const [name, models, points, keywords, notes] = line.split(/\t|,/).map((p) => p.trim());
+        return {
+          id: W40K.uid(),
+          name: name || "無名ユニット",
+          models: Number(models) || 1,
+          points: Number(points) || 0,
+          keywords: keywords || "",
+          notes: notes || "",
+          enhancement: null,
+        };
+      });
+
+  bulkUnitsForm.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const roster = getById(state.selectedRosterId);
+    if (!roster) return;
+    const input = document.getElementById("bulk-units-input");
+    const units = parseBulkUnits(input.value);
+    if (units.length === 0) return;
+    roster.units.push(...units);
+    persist();
+    render();
+    input.value = "";
+    bulkUnitsModal.close();
+  });
+
   // ---- init ----
 
   const init = () => {
@@ -415,6 +452,7 @@
     document.getElementById("btn-delete-roster").addEventListener("click", () => deleteRoster(state.selectedRosterId));
     document.getElementById("btn-export-roster").addEventListener("click", () => exportRoster(state.selectedRosterId));
     document.getElementById("btn-new-unit").addEventListener("click", () => openUnitModal());
+    document.getElementById("btn-bulk-units").addEventListener("click", () => bulkUnitsModal.showModal());
     document.getElementById("btn-edit-detachment").addEventListener("click", () => openDetachmentModal());
     document.getElementById("btn-new-stratagem").addEventListener("click", () => openStratagemModal());
 
