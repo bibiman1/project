@@ -174,13 +174,13 @@
   const BOGI_FRAMES = 2;
   const BOGI_DIR_ROW = {
     south: 0,
-    "south-east": 1,
-    east: 2,
-    "north-east": 3,
+    "south-west": 1,
+    west: 2,
+    "north-west": 3,
     north: 4,
-    "north-west": 5,
-    west: 6,
-    "south-west": 7,
+    "north-east": 5,
+    east: 6,
+    "south-east": 7,
   };
 
   const wanderer = {
