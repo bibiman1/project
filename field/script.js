@@ -35,6 +35,11 @@
   const JOY_INSET = 20;
   const BTN_SIZE = 56;
   const BTN_DIAG = 16;
+  // Shared margin threshold so the joystick and A/B buttons always agree on
+  // whether there's "enough" letterbox space to escape into, given the left
+  // and right margins are normally equal. Must clear the larger of the two
+  // controls (the joystick) plus a little breathing room.
+  const MARGIN_THRESHOLD = JOY_SIZE + 8;
 
   function positionJoystick() {
     const frameRect = gameFrame.getBoundingClientRect();
@@ -42,7 +47,7 @@
     const leftMargin = frameRect.left;
 
     let left, top;
-    if (isCompact && leftMargin > JOY_SIZE + 16) {
+    if (isCompact && leftMargin > MARGIN_THRESHOLD) {
       // enough letterbox space beside the game view: rest the stick there
       // instead of covering the field
       left = leftMargin / 2 - JOY_SIZE / 2;
@@ -61,7 +66,7 @@
     const rightMargin = window.innerWidth - frameRect.right;
 
     let aLeft, aTop, bLeft, bTop;
-    if (isCompact && rightMargin > BTN_SIZE + BTN_DIAG * 2 + 16) {
+    if (isCompact && rightMargin > MARGIN_THRESHOLD) {
       // enough letterbox space beside the game view: rest the buttons there,
       // diagonally, instead of covering the field
       const cx = frameRect.right + rightMargin / 2;
