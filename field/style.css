@@ -257,6 +257,28 @@ body {
   }
 }
 
+body.landscape-compact .field-header {
+  padding: 6px 12px;
+}
+
+body.landscape-compact .field-header h1,
+body.landscape-compact .field-header .lead {
+  display: none;
+}
+
+body.landscape-compact .back-link {
+  margin-bottom: 0;
+}
+
+body.landscape-compact .field-wrap {
+  padding: 8px 12px 16px;
+  gap: 8px;
+}
+
+body.landscape-compact .field-footer {
+  display: none;
+}
+
 @media (max-width: 700px) {
   .field-header {
     padding: 24px 16px 16px;

@@ -21,9 +21,18 @@
   const storyTextEl = document.getElementById("storyText");
   const joystick = document.getElementById("joystick");
   const joystickKnob = document.getElementById("joystickKnob");
-  if ("ontouchstart" in window || navigator.maxTouchPoints > 0) {
+  const isTouchDevice = "ontouchstart" in window || navigator.maxTouchPoints > 0;
+  if (isTouchDevice) {
     joystick.classList.add("touch-enabled");
   }
+
+  function updateLayoutMode() {
+    const isLandscape = window.innerWidth > window.innerHeight;
+    document.body.classList.toggle("landscape-compact", isTouchDevice && isLandscape);
+  }
+  updateLayoutMode();
+  window.addEventListener("resize", updateLayoutMode);
+  window.addEventListener("orientationchange", updateLayoutMode);
 
   const FRAGMENTS = [
     {
