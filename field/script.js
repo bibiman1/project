@@ -21,14 +21,20 @@
   const storyTextEl = document.getElementById("storyText");
   const joystick = document.getElementById("joystick");
   const joystickKnob = document.getElementById("joystickKnob");
+  const actionBtnA = document.getElementById("actionBtnA");
+  const actionBtnB = document.getElementById("actionBtnB");
   const isTouchDevice = "ontouchstart" in window || navigator.maxTouchPoints > 0;
   if (isTouchDevice) {
     joystick.classList.add("touch-enabled");
+    actionBtnA.classList.add("touch-enabled");
+    actionBtnB.classList.add("touch-enabled");
   }
 
   const gameFrame = document.querySelector(".game-frame");
   const JOY_SIZE = 112;
   const JOY_INSET = 20;
+  const BTN_SIZE = 56;
+  const BTN_DIAG = 16;
 
   function positionJoystick() {
     const frameRect = gameFrame.getBoundingClientRect();
@@ -49,12 +55,40 @@
     joystick.style.top = `${top}px`;
   }
 
+  function positionActionButtons() {
+    const frameRect = gameFrame.getBoundingClientRect();
+    const isCompact = document.body.classList.contains("landscape-compact");
+    const rightMargin = window.innerWidth - frameRect.right;
+
+    let aLeft, aTop, bLeft, bTop;
+    if (isCompact && rightMargin > BTN_SIZE + BTN_DIAG * 2 + 16) {
+      // enough letterbox space beside the game view: rest the buttons there,
+      // diagonally, instead of covering the field
+      const cx = frameRect.right + rightMargin / 2;
+      const cy = frameRect.top + frameRect.height / 2;
+      aLeft = cx - BTN_SIZE / 2 + BTN_DIAG;
+      aTop = cy - BTN_SIZE / 2 + BTN_DIAG;
+      bLeft = cx - BTN_SIZE / 2 - BTN_DIAG;
+      bTop = cy - BTN_SIZE / 2 - BTN_DIAG;
+    } else {
+      aLeft = frameRect.right - JOY_INSET - BTN_SIZE;
+      aTop = frameRect.bottom - JOY_INSET - BTN_SIZE;
+      bLeft = aLeft - BTN_SIZE * 0.7;
+      bTop = aTop - BTN_SIZE * 0.7;
+    }
+    actionBtnA.style.left = `${aLeft}px`;
+    actionBtnA.style.top = `${aTop}px`;
+    actionBtnB.style.left = `${bLeft}px`;
+    actionBtnB.style.top = `${bTop}px`;
+  }
+
   function updateLayoutMode() {
     const isLandscape = window.innerWidth > window.innerHeight;
     const compact = isTouchDevice && isLandscape;
     document.body.classList.toggle("landscape-compact", compact);
     document.documentElement.classList.toggle("landscape-compact", compact);
     positionJoystick();
+    positionActionButtons();
   }
   updateLayoutMode();
   window.addEventListener("resize", updateLayoutMode);
@@ -213,6 +247,13 @@
     joystick.style.display = "";
   }
 
+  function skipStory() {
+    if (!story) return;
+    story = null;
+    storyOverlay.hidden = true;
+    joystick.style.display = "";
+  }
+
   const keys = { up: false, down: false, left: false, right: false };
   const KEY_MAP = {
     ArrowUp: "up",
@@ -301,6 +342,15 @@
 
   storyOverlay.addEventListener("click", () => {
     advanceStory();
+  });
+
+  actionBtnA.addEventListener("click", (e) => {
+    e.preventDefault();
+    advanceStory();
+  });
+  actionBtnB.addEventListener("click", (e) => {
+    e.preventDefault();
+    skipStory();
   });
 
   const kiSprite = new Image();
