@@ -19,6 +19,8 @@
   const storyOverlay = document.getElementById("storyOverlay");
   const storyTitleEl = document.getElementById("storyTitle");
   const storyTextEl = document.getElementById("storyText");
+  const joystick = document.getElementById("joystick");
+  const joystickKnob = document.getElementById("joystickKnob");
 
   const FRAGMENTS = [
     {
@@ -93,6 +95,8 @@
     storyTitleEl.textContent = frag.title;
     storyTextEl.textContent = "";
     storyOverlay.hidden = false;
+    resetJoy();
+    joystick.style.display = "none";
   }
 
   function updateStory(dt) {
@@ -109,6 +113,7 @@
     }
     story = null;
     storyOverlay.hidden = true;
+    joystick.style.display = "";
   }
 
   const keys = { up: false, down: false, left: false, right: false };
@@ -143,23 +148,59 @@
     e.preventDefault();
   });
 
-  document.querySelectorAll(".dpad-btn").forEach((btn) => {
-    const dir = btn.dataset.dir;
-    const press = (e) => {
-      e.preventDefault();
-      keys[dir] = true;
-    };
-    const release = (e) => {
-      e.preventDefault();
-      keys[dir] = false;
-    };
-    btn.addEventListener("touchstart", press, { passive: false });
-    btn.addEventListener("touchend", release, { passive: false });
-    btn.addEventListener("touchcancel", release, { passive: false });
-    btn.addEventListener("mousedown", press);
-    btn.addEventListener("mouseup", release);
-    btn.addEventListener("mouseleave", release);
+  const joyVec = { x: 0, y: 0 };
+  let joyActive = false;
+  let joyPointerId = null;
+  const JOY_RADIUS = 36;
+  const JOY_DEADZONE = 0.15;
+
+  function updateJoyKnob(dx, dy) {
+    joystickKnob.style.transform = `translate(${dx}px, ${dy}px)`;
+  }
+
+  function setJoyFromPointer(e, rect) {
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height / 2;
+    let dx = e.clientX - cx;
+    let dy = e.clientY - cy;
+    const dist = Math.hypot(dx, dy);
+    if (dist > JOY_RADIUS) {
+      dx = (dx / dist) * JOY_RADIUS;
+      dy = (dy / dist) * JOY_RADIUS;
+    }
+    updateJoyKnob(dx, dy);
+    joyVec.x = dx / JOY_RADIUS;
+    joyVec.y = dy / JOY_RADIUS;
+  }
+
+  function resetJoy() {
+    joyActive = false;
+    joyPointerId = null;
+    joyVec.x = 0;
+    joyVec.y = 0;
+    joystick.classList.remove("active");
+    updateJoyKnob(0, 0);
+  }
+
+  joystick.addEventListener("pointerdown", (e) => {
+    e.preventDefault();
+    joyActive = true;
+    joyPointerId = e.pointerId;
+    joystick.classList.add("active");
+    joystick.setPointerCapture(e.pointerId);
+    setJoyFromPointer(e, joystick.getBoundingClientRect());
   });
+  joystick.addEventListener("pointermove", (e) => {
+    if (!joyActive || e.pointerId !== joyPointerId) return;
+    e.preventDefault();
+    setJoyFromPointer(e, joystick.getBoundingClientRect());
+  });
+  const endJoy = (e) => {
+    if (e.pointerId !== joyPointerId) return;
+    resetJoy();
+  };
+  joystick.addEventListener("pointerup", endJoy);
+  joystick.addEventListener("pointercancel", endJoy);
 
   storyOverlay.addEventListener("click", () => {
     advanceStory();
@@ -363,10 +404,16 @@
 
     let dx = 0;
     let dy = 0;
-    if (keys.up) dy -= 1;
-    if (keys.down) dy += 1;
-    if (keys.left) dx -= 1;
-    if (keys.right) dx += 1;
+    const joyMag = Math.hypot(joyVec.x, joyVec.y);
+    if (joyActive && joyMag > JOY_DEADZONE) {
+      dx = joyVec.x;
+      dy = joyVec.y;
+    } else {
+      if (keys.up) dy -= 1;
+      if (keys.down) dy += 1;
+      if (keys.left) dx -= 1;
+      if (keys.right) dx += 1;
+    }
 
     player.moving = dx !== 0 || dy !== 0;
 
