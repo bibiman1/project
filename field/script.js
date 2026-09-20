@@ -240,6 +240,25 @@
     "south-east": 7,
   };
 
+  const toribogikaaSprite = new Image();
+  let toribogikaaLoaded = false;
+  toribogikaaSprite.onload = () => {
+    toribogikaaLoaded = true;
+  };
+  toribogikaaSprite.src = "./assets/toribogikaa_walk_sheet.png";
+  const TORIBOGIKAA_W = 128;
+  const TORIBOGIKAA_H = 100;
+  const TORIBOGIKAA_DIR_COL = {
+    west: 0,
+    "south-west": 1,
+    south: 2,
+    east: 3,
+    "south-east": 4,
+    "north-east": 5,
+    north: 6,
+    "north-west": 7,
+  };
+
   const wanderer = {
     x: 1800,
     y: 1400,
@@ -253,6 +272,16 @@
   const manateeWanderer = {
     x: 2300,
     y: 1900,
+    vx: 0,
+    vy: 0,
+    dir: "south",
+    moving: false,
+    changeAt: 0,
+  };
+
+  const toribogikaaWanderer = {
+    x: 2000,
+    y: 2000,
     vx: 0,
     vy: 0,
     dir: "south",
@@ -324,6 +353,7 @@
 
     updateWanderer(wanderer, dt, t);
     updateWanderer(manateeWanderer, dt, t);
+    updateWanderer(toribogikaaWanderer, dt, t);
 
     let near = null;
     for (const frag of FRAGMENTS) {
@@ -596,6 +626,35 @@
     );
   }
 
+  const TORIBOGIKAA_WANDERER_W = 96;
+  const TORIBOGIKAA_WANDERER_H = 75;
+
+  function drawToribogikaaWanderer(camX, camY, t) {
+    if (!toribogikaaLoaded) return;
+    const { sx, sy } = worldToScreen(camX, camY, toribogikaaWanderer.x, toribogikaaWanderer.y);
+    if (sx < -70 || sx > VW + 70 || sy < -70 || sy > VH + 70) return;
+
+    const bob = toribogikaaWanderer.moving ? Math.sin(t * 10) * 1.6 : 0;
+    ctx.fillStyle = "rgba(60, 60, 50, 0.16)";
+    ctx.beginPath();
+    ctx.ellipse(sx, sy + 28, 24, 7, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    const col = TORIBOGIKAA_DIR_COL[toribogikaaWanderer.dir];
+
+    ctx.drawImage(
+      toribogikaaSprite,
+      col * TORIBOGIKAA_W,
+      0,
+      TORIBOGIKAA_W,
+      TORIBOGIKAA_H,
+      sx - TORIBOGIKAA_WANDERER_W / 2,
+      sy + bob - TORIBOGIKAA_WANDERER_H / 2,
+      TORIBOGIKAA_WANDERER_W,
+      TORIBOGIKAA_WANDERER_H
+    );
+  }
+
   let lastTime = 0;
   function loop(timestamp) {
     if (!lastTime) lastTime = timestamp;
@@ -611,6 +670,7 @@
     for (const frag of FRAGMENTS) drawFragment(frag, camX, camY, t);
     drawWanderer(camX, camY, t);
     drawManateeWanderer(camX, camY, t);
+    drawToribogikaaWanderer(camX, camY, t);
     drawPlayer(t);
 
     requestAnimationFrame(loop);
