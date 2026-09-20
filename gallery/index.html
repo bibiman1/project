@@ -4,18 +4,24 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="ぼぎだぢの世界のイメージボード・手描き資料ギャラリー">
-  <title>ぼぎだぢ - イメージボード</title>
+  <title>ぼぎだぢ - 書庫</title>
   <link rel="stylesheet" href="./style.css">
 </head>
 <body>
   <header class="gallery-header">
     <a class="back-link" href="../index.html">← キャラクター一覧に戻る</a>
-    <h1>ぼぎだぢ イメージボード</h1>
-    <p class="lead">世界観の元になった手描きスケッチ・資料写真の一覧。クリックで拡大表示。</p>
+    <h1>ぼぎだぢ 書庫</h1>
+    <p class="lead">世界観の元になった手描きスケッチ・資料写真と、断片からまとめられた用語集。</p>
   </header>
+
+  <nav class="gallery-tabs" aria-label="資料の種類">
+    <button type="button" id="tabImages" class="gallery-tab active">資料写真</button>
+    <button type="button" id="tabGlossary" class="gallery-tab">用語集</button>
+  </nav>
 
   <main class="gallery-wrap">
     <div id="galleryGrid" class="gallery-grid"></div>
+    <div id="glossaryPanel" class="glossary-panel" hidden></div>
   </main>
 
   <div id="lightbox" class="lightbox" hidden>

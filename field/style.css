@@ -192,6 +192,71 @@ button.gallery-hint:focus-visible {
   cursor: default;
 }
 
+.lock-overlay {
+  cursor: default;
+}
+
+.lock-card {
+  width: min(360px, 100%);
+  text-align: center;
+}
+
+.lock-desc {
+  margin: 0 0 14px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.lock-input {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--bg);
+  color: var(--ink);
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: 0.5em;
+  text-align: center;
+}
+
+.lock-input:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.lock-error {
+  margin: 10px 0 0;
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.lock-actions {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.lock-btn {
+  padding: 9px 20px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.lock-btn-submit {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #fff;
+}
+
 .story-title {
   margin: 0 0 10px;
   color: var(--accent);

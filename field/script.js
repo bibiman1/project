@@ -24,6 +24,12 @@
   const actionBtnA = document.getElementById("actionBtnA");
   const actionBtnB = document.getElementById("actionBtnB");
   const galleryHint = document.getElementById("galleryHint");
+  const galleryHintText = document.getElementById("galleryHintText");
+  const lockOverlay = document.getElementById("lockOverlay");
+  const lockInput = document.getElementById("lockInput");
+  const lockError = document.getElementById("lockError");
+  const lockCancel = document.getElementById("lockCancel");
+  const lockSubmit = document.getElementById("lockSubmit");
   const isTouchDevice = "ontouchstart" in window || navigator.maxTouchPoints > 0;
   if (isTouchDevice) {
     joystick.classList.add("touch-enabled");
@@ -267,10 +273,56 @@
   };
 
   const GALLERY_FACILITY = { x: WORLD_W / 2 + 900, y: WORLD_H / 2, r: 130 };
+  const GALLERY_CODE = "1234";
   let nearGallery = false;
+  let galleryUnlocked = false;
+  let lockPuzzleOpen = false;
 
   function enterGallery() {
     window.location.href = "../gallery/index.html";
+  }
+
+  function updateGalleryHintText() {
+    galleryHintText.textContent = galleryUnlocked
+      ? "タップ / Enterキーで中に入る"
+      : "鍵(ナンバー錠)がかかっている。タップ / Enterで番号を合わせる";
+  }
+
+  function openLockOverlay() {
+    lockPuzzleOpen = true;
+    lockError.hidden = true;
+    lockInput.value = "";
+    lockOverlay.hidden = false;
+    resetJoy();
+    joystick.style.display = "none";
+    setTimeout(() => lockInput.focus(), 50);
+  }
+
+  function closeLockOverlay() {
+    lockPuzzleOpen = false;
+    lockOverlay.hidden = true;
+    lockInput.blur();
+    joystick.style.display = "";
+  }
+
+  function submitLockCode() {
+    if (lockInput.value.trim() === GALLERY_CODE) {
+      galleryUnlocked = true;
+      closeLockOverlay();
+      enterGallery();
+    } else {
+      lockError.hidden = false;
+      lockInput.value = "";
+      lockInput.focus();
+    }
+  }
+
+  function interactWithGallery() {
+    if (galleryUnlocked) {
+      enterGallery();
+    } else {
+      openLockOverlay();
+    }
   }
 
   const discovered = new Set();
@@ -334,8 +386,16 @@
       }
       return;
     }
+    if (lockPuzzleOpen) {
+      if (e.code === "Escape") {
+        closeLockOverlay();
+        e.preventDefault();
+      }
+      // let Enter/digit typing reach the focused lock input normally
+      return;
+    }
     if (nearGallery && (e.code === "Enter" || e.code === "Space" || e.code === "KeyZ")) {
-      enterGallery();
+      interactWithGallery();
       e.preventDefault();
       return;
     }
@@ -410,7 +470,20 @@
   });
 
   galleryHint.addEventListener("click", () => {
-    enterGallery();
+    interactWithGallery();
+  });
+
+  lockCancel.addEventListener("click", () => {
+    closeLockOverlay();
+  });
+  lockSubmit.addEventListener("click", () => {
+    submitLockCode();
+  });
+  lockInput.addEventListener("keydown", (e) => {
+    if (e.code === "Enter") {
+      e.preventDefault();
+      submitLockCode();
+    }
   });
 
   // pointerdown (not click) so touch input reacts immediately, matching the
@@ -420,14 +493,20 @@
     e.stopPropagation();
     if (story) {
       advanceStory();
+    } else if (lockPuzzleOpen) {
+      submitLockCode();
     } else if (nearGallery) {
-      enterGallery();
+      interactWithGallery();
     }
   });
   actionBtnB.addEventListener("pointerdown", (e) => {
     e.preventDefault();
     e.stopPropagation();
-    skipStory();
+    if (lockPuzzleOpen) {
+      closeLockOverlay();
+    } else {
+      skipStory();
+    }
   });
 
   const kiSprite = new Image();
@@ -625,6 +704,7 @@
       updateStory(dt);
       return;
     }
+    if (lockPuzzleOpen) return;
 
     let dx = 0;
     let dy = 0;
@@ -661,6 +741,7 @@
     if (nowNearGallery !== nearGallery) {
       nearGallery = nowNearGallery;
       galleryHint.hidden = !nearGallery;
+      if (nearGallery) updateGalleryHintText();
     }
 
     let near = null;
@@ -752,7 +833,7 @@
     ctx.font = "bold 14px sans-serif";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.fillText("資料館", 0, -8);
+    ctx.fillText("書庫", 0, -8);
 
     ctx.restore();
   }
