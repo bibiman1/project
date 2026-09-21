@@ -542,12 +542,55 @@
   <dialog id="modal-group-buffs" class="modal modal-wide">
     <form id="form-group-buffs" method="dialog" class="form-grid">
       <h3>合流バフ編集</h3>
-      <p class="hint">1行1修正。「グループ名, オプション名, 種類(数値/キーワード/メモ), 対象ユニット名, 対象範囲(プロフィール/射撃/白兵), 項目, 値[, 常時]」の順（数値以外は空欄可）。同じグループ名＋オプション名の行はまとめて1つの選択肢になります。末尾に「常時」を付けると、トラッカーでのプルダウン選択と関係なく常に適用される効果になります（選択式のプロトコルと、常時有効な護衛アビリティなどを両方登録できます）。</p>
-      <textarea id="group-buffs-input" rows="8" placeholder="データスミス部隊, 生存プロトコル, 数値, カステラン・ロボット, プロフィール, 耐久, 1
+      <div class="buff-quick-add">
+        <p class="hint">下のフォームで項目を選んで「＋この内容を追加」を押すと、下のテキスト欄に正しい形式で1行追加されます。慣れたら直接テキスト欄を編集しても構いません。</p>
+        <div class="form-grid buff-quick-add-grid">
+          <label>グループ名
+            <input id="group-buff-quick-group" type="text" list="group-buff-quick-group-list" placeholder="例: データスミス部隊">
+            <datalist id="group-buff-quick-group-list"></datalist>
+          </label>
+          <label>オプション名
+            <input id="group-buff-quick-name" type="text" placeholder="例: 迎撃プロトコル">
+          </label>
+          <label>対象ユニット
+            <input id="group-buff-quick-target-unit" type="text" list="group-buff-quick-target-unit-list" placeholder="例: カステラン・ロボット">
+            <datalist id="group-buff-quick-target-unit-list"></datalist>
+          </label>
+          <label>種類
+            <select id="group-buff-quick-kind">
+              <option value="numeric">数値</option>
+              <option value="keyword">キーワード</option>
+              <option value="note">メモ</option>
+            </select>
+          </label>
+          <label>対象範囲
+            <select id="group-buff-quick-scope">
+              <option value="profile">プロフィール</option>
+              <option value="ranged">射撃</option>
+              <option value="melee">白兵</option>
+            </select>
+          </label>
+          <label>項目
+            <select id="group-buff-quick-field"></select>
+          </label>
+          <label>値
+            <input id="group-buff-quick-value" type="text" placeholder="数値の場合は2など、キーワードなら追加する語句、メモなら文章">
+          </label>
+          <label class="checkbox-label">
+            <input id="group-buff-quick-always" type="checkbox">
+            常時（プルダウン選択に関係なく常に適用）
+          </label>
+        </div>
+        <button type="button" id="btn-add-group-buff-line" class="btn btn-ghost btn-sm">＋ この内容を追加</button>
+      </div>
+      <label>登録済みの内容（1行1修正、直接編集も可）
+        <p class="hint">「グループ名, オプション名, 種類(数値/キーワード/メモ), 対象ユニット名, 対象範囲(プロフィール/射撃/白兵), 項目, 値[, 常時]」の順（数値以外は空欄可）。同じグループ名＋オプション名の行はまとめて1つの選択肢になります。末尾に「常時」を付けると、トラッカーでのプルダウン選択と関係なく常に適用される効果になります（選択式のプロトコルと、常時有効な護衛アビリティなどを両方登録できます）。</p>
+        <textarea id="group-buffs-input" rows="8" placeholder="データスミス部隊, 生存プロトコル, 数値, カステラン・ロボット, プロフィール, 耐久, 1
 データスミス部隊, 迎撃プロトコル, 数値, カステラン・ロボット, 射撃, 攻撃回数, 2
 データスミス部隊, 迎撃プロトコル, キーワード, カステラン・ロボット, 射撃, , 連続命中1
 データスミス部隊, 征服プロトコル, メモ, カステラン・ロボット, , , ヒットロールの出目1をリロールする
 データスミス部隊, 護衛ロボット, メモ, データスミス, , , 痛みを知らぬもの4+を得る, 常時"></textarea>
+      </label>
       <div class="modal-actions">
         <button type="button" class="btn btn-ghost" data-close-modal>キャンセル</button>
         <button type="submit" class="btn btn-primary">保存</button>
