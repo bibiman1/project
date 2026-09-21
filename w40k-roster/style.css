@@ -708,6 +708,29 @@ main {
   font-size: 0.8rem;
 }
 
+.unit-models-counter {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-shrink: 0;
+  font-size: 0.8rem;
+  color: var(--text-dim);
+}
+
+.unit-models-value {
+  min-width: 3.2rem;
+  text-align: center;
+}
+
+.btn-xs {
+  width: 1.6rem;
+  height: 1.6rem;
+  border-radius: 50%;
+  font-size: 0.9rem;
+  line-height: 1;
+  padding: 0;
+}
+
 .unit-status-notes {
   flex: 1;
   background: var(--bg);

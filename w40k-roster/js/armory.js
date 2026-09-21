@@ -89,5 +89,11 @@
     render();
   };
 
-  W40K.Armory = { init, getAll: () => library };
+  const replaceAll = (newLibrary) => {
+    library = Array.isArray(newLibrary) ? newLibrary : [];
+    persist();
+    render();
+  };
+
+  W40K.Armory = { init, getAll: () => library, replaceAll };
 })();

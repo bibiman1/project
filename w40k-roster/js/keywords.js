@@ -52,5 +52,11 @@
     });
   };
 
-  W40K.Keywords = { init, getAll: () => library, addKeyword };
+  const replaceAll = (newLibrary) => {
+    library = Array.isArray(newLibrary) ? newLibrary : [];
+    persist();
+    document.dispatchEvent(new CustomEvent("w40k:keywords-changed"));
+  };
+
+  W40K.Keywords = { init, getAll: () => library, addKeyword, replaceAll };
 })();

@@ -259,6 +259,18 @@
       </div>
       <p class="hint">ここに登録した武器は、ユニット編集フォームの「武器庫から追加」で選んで使い回せます。すでに入力済みのユニットの武器は自動で取り込まれています。</p>
       <div id="armory-list"></div>
+
+      <div class="pane-heading">
+        <h3>マスタデータの書き出し・読み込み</h3>
+      </div>
+      <p class="hint">武器庫・キーワード帳・デタッチメントマスタ（強化・策略・コア策略）をまとめてバックアップ/復元できます。ブラウザやデバイスを変える時にお使いください。読み込むと現在のマスタデータは上書きされます。</p>
+      <div class="detail-actions">
+        <button id="btn-export-master-data" class="btn btn-ghost">📤 マスタデータ書き出し</button>
+        <label class="btn btn-ghost">
+          📥 マスタデータ読み込み
+          <input id="master-data-import-input" type="file" accept=".json,application/json" hidden>
+        </label>
+      </div>
     </section>
   </main>
 
@@ -553,6 +565,7 @@
   <script src="./js/armory.js"></script>
   <script src="./js/keywords.js"></script>
   <script src="./js/detachments.js"></script>
+  <script src="./js/masterdata.js"></script>
   <script src="./js/roster.js"></script>
   <script src="./js/tracker.js"></script>
   <script src="./js/rules.js"></script>
