@@ -280,9 +280,21 @@
       <div id="armory-list"></div>
 
       <div class="pane-heading">
+        <h3>全データバックアップ（デバイス移行用）</h3>
+      </div>
+      <p class="hint">このブラウザに保存されている全データ（すべてのロスター・進行中の対戦・ルールメモ・フェイズチェックリストのひな形・武器庫やキーワード帳などの各種マスタ）を1つのJSONファイルにまとめてバックアップ/復元します。デバイスやブラウザを変える時はこちらを使ってください。読み込むと現在のデータはすべて上書きされ、ページが再読み込みされます。</p>
+      <div class="detail-actions">
+        <button id="btn-export-full-backup" class="btn btn-primary">📤 全データ書き出し</button>
+        <label class="btn btn-ghost">
+          📥 全データ読み込み
+          <input id="full-backup-import-input" type="file" accept=".json,application/json" hidden>
+        </label>
+      </div>
+
+      <div class="pane-heading">
         <h3>マスタデータの書き出し・読み込み</h3>
       </div>
-      <p class="hint">武器庫・キーワード帳・デタッチメントマスタ（強化・策略・コア策略）をまとめてバックアップ/復元できます。ブラウザやデバイスを変える時にお使いください。読み込むと現在のマスタデータは上書きされます。</p>
+      <p class="hint">武器庫・キーワード帳・アビリティ辞書・デタッチメントマスタ（強化・策略・コア策略）だけをバックアップ/復元します（ロスターや対戦記録は含みません）。マスタデータだけ別環境と共有したい時にお使いください。読み込むと現在のマスタデータは上書きされます。</p>
       <div class="detail-actions">
         <button id="btn-export-master-data" class="btn btn-ghost">📤 マスタデータ書き出し</button>
         <label class="btn btn-ghost">
@@ -696,6 +708,7 @@
   <script src="./js/abilities.js"></script>
   <script src="./js/detachments.js"></script>
   <script src="./js/masterdata.js"></script>
+  <script src="./js/backup.js"></script>
   <script src="./js/roster.js"></script>
   <script src="./js/tracker.js"></script>
   <script src="./js/rules.js"></script>
