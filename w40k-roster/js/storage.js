@@ -77,6 +77,16 @@ W40K.serializeWeapons = (weapons) =>
     })
     .join("\n");
 
+// Checks whether a unit qualifies for an enhancement's `restrict`/`exclude` keyword(s), matched by
+// substring against the unit's name and keywords. No restrict means unrestricted (open to any CHARACTER).
+W40K.unitMatchesRestriction = (unit, restrict, exclude) => {
+  const haystack = `${unit.name || ""} ${unit.keywords || ""}`;
+  if (exclude && haystack.includes(exclude)) return false;
+  const candidates = Array.isArray(restrict) ? restrict : restrict ? [restrict] : [];
+  if (candidates.length === 0) return true;
+  return candidates.some((r) => haystack.includes(r));
+};
+
 // Applies a roster's always-on army buffs (matched by keyword / unit name / enhancement) to one unit,
 // plus (in the tracker) the army-wide Doctrina Imperative currently active for the battle round.
 // Shared by the roster screen (unit cards) and the battle tracker (unit rows) so both show identical numbers.
