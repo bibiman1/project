@@ -301,6 +301,10 @@ main {
   font-size: 1rem;
 }
 
+.warlord-star {
+  font-size: 0.9em;
+}
+
 .unit-models {
   color: var(--text-dim);
   font-weight: 400;

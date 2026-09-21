@@ -23,6 +23,7 @@
         if (!a.category) a.category = "unit";
       });
       if (u.group === undefined) u.group = "";
+      if (u.isWarlord === undefined) u.isWarlord = false;
     });
     return roster;
   };
@@ -168,6 +169,9 @@
     els.unitList.querySelectorAll("[data-duplicate-unit]").forEach((btn) => {
       btn.addEventListener("click", () => duplicateUnit(btn.dataset.duplicateUnit));
     });
+    els.unitList.querySelectorAll("[data-toggle-warlord]").forEach((btn) => {
+      btn.addEventListener("click", () => toggleWarlord(btn.dataset.toggleWarlord));
+    });
     els.unitList.querySelectorAll("[data-delete-unit]").forEach((btn) => {
       btn.addEventListener("click", () => deleteUnit(btn.dataset.deleteUnit));
     });
@@ -229,7 +233,7 @@
       : "";
     row.innerHTML = `
       <div class="unit-main">
-        <h4>${escapeHtml(unit.name)} <span class="unit-models">×${unit.models}</span></h4>
+        <h4>${unit.isWarlord ? '<span class="warlord-star" title="ウォーロード">⭐</span> ' : ""}${escapeHtml(unit.name)} <span class="unit-models">×${unit.models}</span></h4>
         ${profileHtml}
         ${weaponsHtml}
         ${tagAbilitiesHtml}
@@ -241,6 +245,7 @@
       <div class="unit-side">
         <span class="unit-points">${unitTotal} pts</span>
         <div class="unit-actions">
+          <button class="btn btn-ghost btn-sm" data-toggle-warlord="${unit.id}">${unit.isWarlord ? "★ 解除" : "☆ ウォーロード"}</button>
           <button class="btn btn-ghost btn-sm" data-edit-unit="${unit.id}">編集</button>
           <button class="btn btn-ghost btn-sm" data-duplicate-unit="${unit.id}">複製</button>
           <button class="btn btn-danger btn-sm" data-delete-unit="${unit.id}">削除</button>
@@ -376,7 +381,7 @@
     "name", "models", "points", "keywords", "notes",
     "enh_name", "enh_points",
     "move", "toughness", "save", "inv_save", "wounds", "leadership", "oc",
-    "weapons", "abilities", "group",
+    "weapons", "abilities", "group", "is_warlord",
   ];
 
   const csvEscapeField = (value) => {
@@ -444,10 +449,11 @@
     serializeWeapons(u.weapons),
     serializeAbilities(u.abilities),
     u.group || "",
+    u.isWarlord ? "TRUE" : "",
   ];
 
   const csvRowToUnit = (cols) => {
-    const [name, models, points, keywords, notes, enhName, enhPoints, move, toughness, save, invSave, wounds, leadership, oc, weaponsText, abilitiesText, group] = cols;
+    const [name, models, points, keywords, notes, enhName, enhPoints, move, toughness, save, invSave, wounds, leadership, oc, weaponsText, abilitiesText, group, isWarlord] = cols;
     return {
       id: W40K.uid(),
       name: name || "無名ユニット",
@@ -456,6 +462,7 @@
       keywords: keywords || "",
       notes: notes || "",
       group: group || "",
+      isWarlord: /^(true|1|yes)$/i.test((isWarlord || "").trim()),
       enhancement: enhName ? { name: enhName, points: Number(enhPoints) || 0 } : null,
       profile: {
         move: move || "",
@@ -529,12 +536,27 @@
     const copy = {
       ...unit,
       id: W40K.uid(),
+      isWarlord: false,
       enhancement: unit.enhancement ? { ...unit.enhancement } : null,
       profile: { ...unit.profile },
       weapons: unit.weapons.map((w) => ({ ...w, id: W40K.uid() })),
       abilities: unit.abilities.map((a) => ({ ...a, id: W40K.uid() })),
     };
     roster.units.splice(index + 1, 0, copy);
+    persist();
+    render();
+  };
+
+  const toggleWarlord = (unitId) => {
+    const roster = getById(state.selectedRosterId);
+    if (!roster) return;
+    const unit = roster.units.find((u) => u.id === unitId);
+    if (!unit) return;
+    const makeWarlord = !unit.isWarlord;
+    roster.units.forEach((u) => {
+      u.isWarlord = false;
+    });
+    unit.isWarlord = makeWarlord;
     persist();
     render();
   };
@@ -644,6 +666,7 @@
             keywords: u.keywords || "",
             notes: u.notes || "",
             group: u.group || "",
+            isWarlord: !!u.isWarlord,
             enhancement: u.enhancement ? { name: u.enhancement.name || "", points: Number(u.enhancement.points) || 0 } : null,
             profile: {
               move: u.profile?.move || "",
