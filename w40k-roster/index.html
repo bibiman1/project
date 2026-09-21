@@ -60,7 +60,10 @@
             <div class="detachment-section">
               <div class="pane-heading">
                 <h3>デタッチメント</h3>
-                <button id="btn-edit-detachment" class="btn btn-ghost btn-sm">編集</button>
+                <div class="detail-actions">
+                  <button id="btn-edit-detachments" class="btn btn-ghost btn-sm">📚 マスタ編集</button>
+                  <button id="btn-edit-detachment" class="btn btn-ghost btn-sm">編集</button>
+                </div>
               </div>
               <p id="detachment-name" class="detachment-name"></p>
               <p id="detachment-rule" class="detachment-rule"></p>
@@ -341,6 +344,11 @@
       <label>合流グループ名
         <input id="unit-form-group" type="text" placeholder="例: データスミス部隊（同じ名前を付けたユニット同士がまとめて表示されます）">
       </label>
+      <label>マスタから選択（現在のデタッチメントの強化・任意）
+        <select id="enhancement-master-picker">
+          <option value="">選択しない（手入力）</option>
+        </select>
+      </label>
       <label>強化名
         <input id="unit-form-enh-name" type="text" placeholder="例: 修理の達人">
       </label>
@@ -373,6 +381,11 @@
   <dialog id="modal-detachment" class="modal">
     <form id="form-detachment" method="dialog" class="form-grid">
       <h3>デタッチメント編集</h3>
+      <label>マスタから選択（任意）
+        <select id="detachment-master-picker">
+          <option value="">選択しない（手入力）</option>
+        </select>
+      </label>
       <label>デタッチメント名
         <input id="detachment-form-name" type="text" placeholder="例: グラディウス任務部隊">
       </label>
@@ -386,10 +399,39 @@
     </form>
   </dialog>
 
+  <!-- Detachment master data edit modal -->
+  <dialog id="modal-detachments" class="modal modal-wide">
+    <form id="form-detachments" method="dialog" class="form-grid">
+      <h3>デタッチメントマスタ編集</h3>
+      <p class="hint">デタッチメント・強化・策略のマスタデータです。正式名称が分かったものから随時書き換えてください。</p>
+      <label>デタッチメント基本情報
+        <p class="hint">1行1デタッチメント。「デタッチメント名, 陣形タイプ, DP, ルール概要」の順。</p>
+        <textarea id="detachments-basics-input" rows="6"></textarea>
+      </label>
+      <label>強化一覧
+        <p class="hint">1行1強化。「デタッチメント名, 強化名, ポイント, 説明」の順。デタッチメント名は上の基本情報と一致させてください。</p>
+        <textarea id="detachments-enhancements-input" rows="8"></textarea>
+      </label>
+      <label>策略一覧
+        <p class="hint">1行1策略。「デタッチメント名, 策略名, CP, タイミング, 効果」の順。</p>
+        <textarea id="detachments-stratagems-input" rows="8"></textarea>
+      </label>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" data-close-modal>キャンセル</button>
+        <button type="submit" class="btn btn-primary">保存</button>
+      </div>
+    </form>
+  </dialog>
+
   <!-- Stratagem form modal -->
   <dialog id="modal-stratagem" class="modal modal-wide">
     <form id="form-stratagem" method="dialog" class="form-grid">
       <h3 id="modal-stratagem-title">ストラタジム追加</h3>
+      <label>マスタから選択（現在のデタッチメントの策略・任意）
+        <select id="stratagem-master-picker">
+          <option value="">選択しない（手入力）</option>
+        </select>
+      </label>
       <label>ストラタジム名
         <input id="stratagem-form-name" type="text" required>
       </label>
@@ -496,6 +538,7 @@
   <script src="./js/storage.js"></script>
   <script src="./js/armory.js"></script>
   <script src="./js/keywords.js"></script>
+  <script src="./js/detachments.js"></script>
   <script src="./js/roster.js"></script>
   <script src="./js/tracker.js"></script>
   <script src="./js/rules.js"></script>
