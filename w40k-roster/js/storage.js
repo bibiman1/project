@@ -68,12 +68,12 @@ W40K.parseWeapons = (text) =>
         id: W40K.uid(),
         type: type === "白兵" ? "melee" : "ranged",
         name: name || "無名武器",
-        range: range || "",
-        attacks: attacks || "",
-        skill: skill || "",
-        strength: strength || "",
-        ap: ap || "",
-        damage: damage || "",
+        range: W40K.toHalfWidthDigits(range || ""),
+        attacks: W40K.toHalfWidthDigits(attacks || ""),
+        skill: W40K.toHalfWidthDigits(skill || ""),
+        strength: W40K.toHalfWidthDigits(strength || ""),
+        ap: W40K.toHalfWidthDigits(ap || ""),
+        damage: W40K.toHalfWidthDigits(damage || ""),
         abilities: abilities || "",
       };
     });

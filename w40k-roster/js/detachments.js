@@ -333,7 +333,7 @@
       .filter(Boolean)
       .map((line) => {
         const [name, forceType, dp, rule] = line.split(/\t|,/).map((p) => p.trim());
-        return { name: name || "無名デタッチメント", forceType: forceType || "", dp: Number(dp) || 0, rule: rule || "" };
+        return { name: name || "無名デタッチメント", forceType: forceType || "", dp: Number(W40K.toHalfWidthDigits(dp)) || 0, rule: rule || "" };
       });
 
   const serializeBasics = (list) => (list || []).map((d) => [d.name, d.forceType, d.dp, d.rule].join(", ")).join("\n");
@@ -350,7 +350,7 @@
         const [detachment, name, points, text2, restrictText, exclude] = line.split(/\t|,/).map((p) => p.trim());
         const restrictParts = (restrictText || "").split("/").map((p) => p.trim()).filter(Boolean);
         const restrict = restrictParts.length > 1 ? restrictParts : restrictParts[0] || "";
-        return { detachment, name: name || "無名強化", points: Number(points) || 0, text: text2 || "", restrict, exclude: exclude || "" };
+        return { detachment, name: name || "無名強化", points: Number(W40K.toHalfWidthDigits(points)) || 0, text: text2 || "", restrict, exclude: exclude || "" };
       });
 
   const serializeEnhancements = (list) =>
@@ -373,7 +373,7 @@
       .filter(Boolean)
       .map((line) => {
         const [detachment, name, cost, phase, text2] = line.split(/\t|,/).map((p) => p.trim());
-        return { detachment, name: name || "無名策略", cost: Number(cost) || 1, phase: phase || "", text: text2 || "" };
+        return { detachment, name: name || "無名策略", cost: Number(W40K.toHalfWidthDigits(cost)) || 1, phase: phase || "", text: text2 || "" };
       });
 
   const serializeStratagems = (list) =>
@@ -388,7 +388,7 @@
       .filter(Boolean)
       .map((line) => {
         const [name, cost, phase, text2] = line.split(/\t|,/).map((p) => p.trim());
-        return { id: uid(), name: name || "無名策略", cost: Number(cost) || 1, phase: phase || "", text: text2 || "" };
+        return { id: uid(), name: name || "無名策略", cost: Number(W40K.toHalfWidthDigits(cost)) || 1, phase: phase || "", text: text2 || "" };
       });
 
   const serializeCoreStratagems = (list) => (list || []).map((s) => [s.name, s.cost, s.phase, s.text].join(", ")).join("\n");
