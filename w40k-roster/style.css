@@ -327,6 +327,12 @@ main {
   font-size: 0.85rem;
 }
 
+.unit-buff-notes {
+  margin: 0.3rem 0 0;
+  color: var(--gold-bright);
+  font-size: 0.8rem;
+}
+
 .unit-profile {
   margin: 0.4rem 0 0;
   display: flex;

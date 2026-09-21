@@ -73,6 +73,13 @@
             <div id="stratagem-list" class="stratagem-list"></div>
 
             <div class="pane-heading">
+              <h3>常時バフ（陣営アビリティ・強化）</h3>
+              <button id="btn-edit-army-buffs" class="btn btn-primary btn-sm">編集</button>
+            </div>
+            <p class="hint">キーワードや強化の有無で自動適用される、常時有効なバフ。ユニット一覧に自動反映されます。</p>
+            <div id="army-buff-list" class="group-buff-list"></div>
+
+            <div class="pane-heading">
               <h3>合流バフ</h3>
               <button id="btn-edit-group-buffs" class="btn btn-primary btn-sm">編集</button>
             </div>
@@ -384,6 +391,20 @@
       <label>効果
         <textarea id="stratagem-form-text" rows="3"></textarea>
       </label>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" data-close-modal>キャンセル</button>
+        <button type="submit" class="btn btn-primary">保存</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Army-wide (always-on) buff form modal -->
+  <dialog id="modal-army-buffs" class="modal modal-wide">
+    <form id="form-army-buffs" method="dialog" class="form-grid">
+      <h3>常時バフ編集</h3>
+      <p class="hint">1行1修正。「バフ名, 対象タイプ(キーワード/ユニット/強化), 対象値, 種類(数値/キーワード/メモ), 対象範囲(プロフィール/射撃/白兵), 項目, 値」の順（数値以外は空欄可）。対象値は、対象タイプがキーワードならユニットのキーワードに含まれる文字列、ユニットならユニット名、強化なら強化名と一致させます。同じバフ名の行はまとめて1つのバフになります。</p>
+      <textarea id="army-buffs-input" rows="8" placeholder="レギオ・サイバネティカ強化, キーワード, レギオ・サイバネティカ, 数値, プロフィール, 移動, 2
+修理の達人, 強化, 修理の達人, 数値, プロフィール, 耐久, 1"></textarea>
       <div class="modal-actions">
         <button type="button" class="btn btn-ghost" data-close-modal>キャンセル</button>
         <button type="submit" class="btn btn-primary">保存</button>
