@@ -21,6 +21,7 @@
 
   document.addEventListener("DOMContentLoaded", () => {
     initTabs();
+    W40K.Armory.init();
     W40K.Roster.init();
     W40K.Tracker.init();
     W40K.Rules.init();

@@ -49,6 +49,8 @@
   const escapeHtml = (str) =>
     String(str ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
+  const defaultUnitStatus = () => ({ destroyed: false, notes: "", battleShock: false });
+
   const refreshRosterOptions = () => {
     const rosters = W40K.Roster.getAll();
     els.rosterSelect.innerHTML = rosters
@@ -79,13 +81,17 @@
     els.unitList.innerHTML = "";
     if (roster && roster.units.length) {
       roster.units.forEach((unit) => {
-        const status = game.unitStatus[unit.id] || { destroyed: false, notes: "" };
+        const status = game.unitStatus[unit.id] || defaultUnitStatus();
         const row = document.createElement("article");
         row.className = "tracker-unit-row" + (status.destroyed ? " is-destroyed" : "");
         row.innerHTML = `
           <label class="unit-destroyed-toggle">
             <input type="checkbox" data-unit-toggle="${unit.id}" ${status.destroyed ? "checked" : ""}>
             <span>${escapeHtml(unit.name)}${unit.group ? ` <span class="unit-group-badge">🔗${escapeHtml(unit.group)}</span>` : ""}</span>
+          </label>
+          <label class="unit-battleshock-toggle">
+            <input type="checkbox" data-unit-battleshock="${unit.id}" ${status.battleShock ? "checked" : ""}>
+            <span>戦闘ショック</span>
           </label>
           <input type="text" class="unit-status-notes" data-unit-notes="${unit.id}" placeholder="ダメージ・状態メモ" value="${escapeHtml(status.notes)}">
         `;
@@ -95,8 +101,17 @@
       els.unitList.querySelectorAll("[data-unit-toggle]").forEach((cb) => {
         cb.addEventListener("change", () => {
           const id = cb.dataset.unitToggle;
-          game.unitStatus[id] = game.unitStatus[id] || { destroyed: false, notes: "" };
+          game.unitStatus[id] = game.unitStatus[id] || defaultUnitStatus();
           game.unitStatus[id].destroyed = cb.checked;
+          persist();
+          render();
+        });
+      });
+      els.unitList.querySelectorAll("[data-unit-battleshock]").forEach((cb) => {
+        cb.addEventListener("change", () => {
+          const id = cb.dataset.unitBattleshock;
+          game.unitStatus[id] = game.unitStatus[id] || defaultUnitStatus();
+          game.unitStatus[id].battleShock = cb.checked;
           persist();
           render();
         });
@@ -104,7 +119,7 @@
       els.unitList.querySelectorAll("[data-unit-notes]").forEach((input) => {
         input.addEventListener("change", () => {
           const id = input.dataset.unitNotes;
-          game.unitStatus[id] = game.unitStatus[id] || { destroyed: false, notes: "" };
+          game.unitStatus[id] = game.unitStatus[id] || defaultUnitStatus();
           game.unitStatus[id].notes = input.value;
           persist();
         });
@@ -212,6 +227,30 @@
         return `${escapeHtml(w.name)} ${fieldLabel}: ${escapeHtml(base)} → <strong>${escapeHtml(newVal)}</strong>`;
       })
       .join("<br>");
+  };
+
+  const describeModifierEffectText = (unit, m) => {
+    if (m.kind === "note") return `📝 ${m.value}`;
+    if (m.kind === "keyword") {
+      const scopeLabel = m.scope === "melee" ? "白兵武器" : "射撃武器";
+      return `🔖 追加キーワード（${scopeLabel}）: ${m.value}`;
+    }
+    const delta = Number(m.value) || 0;
+    const fieldLabel = m.scope === "profile" ? W40K.PROFILE_FIELD_LABELS[m.field] || m.field : W40K.WEAPON_FIELD_LABELS[m.field] || m.field;
+    if (m.scope === "profile") {
+      const base = unit?.profile?.[m.field] || "-";
+      const newVal = W40K.applyStatDelta(base, delta);
+      return `${fieldLabel}: ${base} → ${newVal}`;
+    }
+    const weapons = (unit?.weapons || []).filter((w) => w.type === m.scope);
+    if (weapons.length === 0) return `${fieldLabel}${delta >= 0 ? "+" : ""}${delta}（対象武器が見つかりません）`;
+    return weapons
+      .map((w) => {
+        const base = w[m.field] || "-";
+        const newVal = W40K.applyStatDelta(base, delta);
+        return `${w.name} ${fieldLabel}: ${base} → ${newVal}`;
+      })
+      .join(" / ");
   };
 
   const renderPhaseChecklist = () => {
@@ -372,8 +411,25 @@
       const roster = W40K.Roster.getById(game.rosterId);
       const stratagem = roster?.stratagems.find((s) => s.id === els.stratagemSelect.value);
       if (!stratagem) return;
-      game.cp.me = Math.max(0, game.cp.me - stratagem.cost);
+      if (game.cp.me < stratagem.cost) {
+        alert(`CPが不足しています（必要CP${stratagem.cost} / 保有CP${game.cp.me}）`);
+        return;
+      }
+      game.cp.me -= stratagem.cost;
       game.log.push({ id: W40K.uid(), text: `ストラタジム使用: ${stratagem.name} (CP${stratagem.cost})`, round: game.round, ts: Date.now() });
+      (stratagem.modifiers || []).forEach((m) => {
+        const unit = roster.units.find((u) => u.name === m.targetUnit);
+        if (!unit) {
+          game.log.push({ id: W40K.uid(), text: `└ ${m.targetUnit || "(未指定)"}: 対象ユニットが見つかりません`, round: game.round, ts: Date.now() });
+          return;
+        }
+        const status = game.unitStatus[unit.id];
+        if (status?.battleShock) {
+          game.log.push({ id: W40K.uid(), text: `└ ${unit.name}: 戦闘ショック状態のため効果は適用されません`, round: game.round, ts: Date.now() });
+          return;
+        }
+        game.log.push({ id: W40K.uid(), text: `└ ${unit.name}: ${describeModifierEffectText(unit, m)}`, round: game.round, ts: Date.now() });
+      });
       persist();
       render();
     });

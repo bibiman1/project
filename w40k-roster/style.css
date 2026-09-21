@@ -40,7 +40,7 @@ a {
 }
 
 .header-inner {
-  max-width: 1100px;
+  max-width: 1600px;
   margin: 0 auto;
 }
 
@@ -65,7 +65,7 @@ a {
 }
 
 .tab-nav {
-  max-width: 1100px;
+  max-width: 1600px;
   margin: 0 auto;
   display: flex;
   gap: 0.25rem;
@@ -89,7 +89,7 @@ a {
 /* ---- layout ---- */
 
 main {
-  max-width: 1100px;
+  max-width: 1600px;
   margin: 0 auto;
   padding: 1.5rem;
 }
@@ -296,6 +296,11 @@ main {
   padding: 0.7rem 0.9rem;
 }
 
+.unit-main {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
 .unit-card h4 {
   margin: 0;
   font-size: 1rem;
@@ -320,6 +325,12 @@ main {
   margin: 0.3rem 0 0;
   color: var(--gold-bright);
   font-size: 0.85rem;
+}
+
+.unit-buff-notes {
+  margin: 0.3rem 0 0;
+  color: var(--gold-bright);
+  font-size: 0.8rem;
 }
 
 .unit-profile {
@@ -359,6 +370,13 @@ main {
 .weapon-table th:first-child,
 .weapon-table td:first-child {
   text-align: left;
+  width: 40%;
+  white-space: nowrap;
+}
+
+.weapon-table th:not(:first-child),
+.weapon-table td:not(:first-child) {
+  white-space: nowrap;
 }
 
 .weapon-table th {
@@ -642,6 +660,7 @@ main {
 .tracker-unit-row {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 0.7rem;
   background: var(--bg-card);
   border: 1px solid var(--border);
@@ -662,6 +681,15 @@ main {
   align-items: center;
   gap: 0.4rem;
   flex-shrink: 0;
+}
+
+.unit-battleshock-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  flex-shrink: 0;
+  color: var(--text-dim);
+  font-size: 0.8rem;
 }
 
 .unit-status-notes {
@@ -838,6 +866,16 @@ textarea:focus {
   color: var(--gold-bright);
   font-size: 0.85rem;
   font-weight: 600;
+}
+
+.weapon-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.weapon-picker select {
+  width: 100%;
 }
 
 .profile-grid {

@@ -12,7 +12,11 @@
   const normalizeRoster = (roster) => {
     if (!roster.detachment) roster.detachment = { name: "", rule: "" };
     if (!roster.stratagems) roster.stratagems = [];
+    roster.stratagems.forEach((s) => {
+      if (!s.modifiers) s.modifiers = [];
+    });
     if (!roster.groupBuffs) roster.groupBuffs = [];
+    if (!roster.armyBuffs) roster.armyBuffs = [];
     roster.units.forEach((u) => {
       if (u.enhancement === undefined) u.enhancement = null;
       if (!u.profile) u.profile = { move: "", toughness: "", save: "", invSave: "", wounds: "", leadership: "", oc: "" };
@@ -50,6 +54,7 @@
     els.detachmentRule = document.getElementById("detachment-rule");
     els.stratagemList = document.getElementById("stratagem-list");
     els.groupBuffList = document.getElementById("group-buff-list");
+    els.armyBuffList = document.getElementById("army-buff-list");
   };
 
   const renderList = () => {
@@ -118,6 +123,21 @@
       });
     }
 
+    els.armyBuffList.innerHTML = "";
+    if (roster.armyBuffs.length === 0) {
+      els.armyBuffList.innerHTML = '<p class="empty-state">常時バフが未登録です。</p>';
+    } else {
+      els.armyBuffList.innerHTML = `
+        <ul class="ability-list">
+          ${roster.armyBuffs
+            .map(
+              (buff) =>
+                `<li><strong>${escapeHtml(buff.name)}</strong> <span class="tag">${escapeHtml(TARGET_TYPE_TAGS[buff.targetType])}: ${escapeHtml(buff.targetValue)}</span>: ${buff.modifiers.map(summarizeArmyModifier).join(" / ")}</li>`
+            )
+            .join("")}
+        </ul>`;
+    }
+
     els.groupBuffList.innerHTML = "";
     if (roster.groupBuffs.length === 0) {
       els.groupBuffList.innerHTML = '<p class="empty-state">合流バフが未登録です。</p>';
@@ -155,11 +175,11 @@
         const wrapper = document.createElement("div");
         wrapper.className = "unit-group";
         wrapper.innerHTML = `<div class="unit-group-header">🔗 ${escapeHtml(unit.group)}（合流ユニット・計${groupTotal}pts）</div>`;
-        groupUnits.forEach((u) => wrapper.appendChild(buildUnitCard(u)));
+        groupUnits.forEach((u) => wrapper.appendChild(buildUnitCard(u, roster)));
         els.unitList.appendChild(wrapper);
       } else {
         rendered.add(unit.id);
-        els.unitList.appendChild(buildUnitCard(unit));
+        els.unitList.appendChild(buildUnitCard(unit, roster));
       }
     });
 
@@ -177,37 +197,85 @@
     });
   };
 
-  const buildUnitCard = (unit) => {
+  // Cell shows "base→new" (new bolded) when a buff changed it, otherwise just the value.
+  const buffCell = (base, changed) => (changed !== undefined ? `${escapeHtml(base || "-")}→<strong>${escapeHtml(changed)}</strong>` : escapeHtml(base || "-"));
+
+  const buildUnitCard = (unit, roster) => {
     const row = document.createElement("article");
     row.className = "unit-card";
     const unitTotal = unit.points + (unit.enhancement ? unit.enhancement.points : 0);
-    const p = unit.profile;
-    const hasProfile = p && (p.move || p.toughness || p.save || p.invSave || p.wounds || p.leadership || p.oc);
+
+    const applicableBuffs = getApplicableArmyBuffs(roster, unit);
+    const profile = { ...unit.profile };
+    const profileChanges = {};
+    const buffNotes = [];
+    const weapons = unit.weapons.map((w) => ({ ...w, _changed: {} }));
+
+    applicableBuffs.forEach((buff) => {
+      buff.modifiers.forEach((m) => {
+        if (m.kind === "note") {
+          buffNotes.push(`${buff.name}: ${m.value}`);
+          return;
+        }
+        if (m.scope === "profile") {
+          if (m.kind === "numeric") {
+            const base = profile[m.field];
+            const newVal = W40K.applyStatDelta(base, Number(m.value) || 0);
+            if (newVal !== base) {
+              profile[m.field] = newVal;
+              profileChanges[m.field] = base;
+            }
+          } else if (m.kind === "keyword") {
+            buffNotes.push(`${buff.name}: [${m.value}]`);
+          }
+          return;
+        }
+        weapons.forEach((w) => {
+          if (w.type !== m.scope) return;
+          if (m.kind === "numeric") {
+            const base = w[m.field];
+            const newVal = W40K.applyStatDelta(base, Number(m.value) || 0);
+            if (newVal !== base) {
+              w._changed[m.field] = base;
+              w[m.field] = newVal;
+            }
+          } else if (m.kind === "keyword") {
+            w.abilities = [w.abilities, m.value].filter(Boolean).join("、");
+          }
+        });
+      });
+    });
+
+    const hasProfile = profile && (profile.move || profile.toughness || profile.save || profile.invSave || profile.wounds || profile.leadership || profile.oc);
+    const profileCell = (field) => buffCell(profileChanges[field] ?? profile[field], profileChanges[field] !== undefined ? profile[field] : undefined);
     const profileHtml = hasProfile
       ? `<p class="unit-profile">
-          <span>移動<strong>${escapeHtml(p.move || "-")}</strong></span>
-          <span>耐久<strong>${escapeHtml(p.toughness || "-")}</strong></span>
-          <span>防御<strong>${escapeHtml(p.save || "-")}</strong></span>
-          ${p.invSave ? `<span>特防<strong>${escapeHtml(p.invSave)}</strong></span>` : ""}
-          <span>傷<strong>${escapeHtml(p.wounds || "-")}</strong></span>
-          <span>統率<strong>${escapeHtml(p.leadership || "-")}</strong></span>
-          <span>確保<strong>${escapeHtml(p.oc || "-")}</strong></span>
+          <span>移動${profileCell("move")}</span>
+          <span>耐久${profileCell("toughness")}</span>
+          <span>防御${profileCell("save")}</span>
+          ${profile.invSave || profileChanges.invSave ? `<span>特防${profileCell("invSave")}</span>` : ""}
+          <span>傷${profileCell("wounds")}</span>
+          <span>統率${profileCell("leadership")}</span>
+          <span>確保${profileCell("oc")}</span>
         </p>`
       : "";
-    const weaponsHtml = unit.weapons.length
+    const buffNotesHtml = buffNotes.length
+      ? `<p class="unit-buff-notes">${buffNotes.map((n) => `🔺${escapeHtml(n)}`).join("<br>")}</p>`
+      : "";
+    const weaponsHtml = weapons.length
       ? `<table class="weapon-table">
           <thead><tr><th>武器</th><th>射程</th><th>攻</th><th>技</th><th>攻撃力</th><th>貫通</th><th>ダメ</th></tr></thead>
           <tbody>
-            ${unit.weapons
+            ${weapons
               .map(
                 (w) => `<tr>
                   <td>${w.type === "melee" ? "⚔" : "🔫"} ${escapeHtml(w.name)}${w.abilities ? ` <span class="weapon-ability">[${escapeHtml(w.abilities)}]</span>` : ""}</td>
                   <td>${escapeHtml(w.range)}</td>
-                  <td>${escapeHtml(w.attacks)}</td>
-                  <td>${escapeHtml(w.skill)}</td>
-                  <td>${escapeHtml(w.strength)}</td>
-                  <td>${escapeHtml(w.ap)}</td>
-                  <td>${escapeHtml(w.damage)}</td>
+                  <td>${buffCell(w._changed.attacks ?? w.attacks, w._changed.attacks !== undefined ? w.attacks : undefined)}</td>
+                  <td>${buffCell(w._changed.skill ?? w.skill, w._changed.skill !== undefined ? w.skill : undefined)}</td>
+                  <td>${buffCell(w._changed.strength ?? w.strength, w._changed.strength !== undefined ? w.strength : undefined)}</td>
+                  <td>${buffCell(w._changed.ap ?? w.ap, w._changed.ap !== undefined ? w.ap : undefined)}</td>
+                  <td>${buffCell(w._changed.damage ?? w.damage, w._changed.damage !== undefined ? w.damage : undefined)}</td>
                 </tr>`
               )
               .join("")}
@@ -235,6 +303,7 @@
       <div class="unit-main">
         <h4>${unit.isWarlord ? '<span class="warlord-star" title="ウォーロード">⭐</span> ' : ""}${escapeHtml(unit.name)} <span class="unit-models">×${unit.models}</span></h4>
         ${profileHtml}
+        ${buffNotesHtml}
         ${weaponsHtml}
         ${tagAbilitiesHtml}
         ${listAbilitiesHtml}
@@ -265,36 +334,6 @@
     String(str ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
   // Each line: "種別(射撃/白兵), 武器名, 射程, 攻撃回数, 技能, 攻撃力, 貫通値, ダメージ[, アビリティ]"
-  const parseWeapons = (text) =>
-    text
-      .split("\n")
-      .map((line) => line.trim())
-      .filter((line) => line.length > 0)
-      .map((line) => {
-        const [type, name, range, attacks, skill, strength, ap, damage, abilities] = line.split(/\t|,/).map((p) => p.trim());
-        return {
-          id: W40K.uid(),
-          type: type === "白兵" ? "melee" : "ranged",
-          name: name || "無名武器",
-          range: range || "",
-          attacks: attacks || "",
-          skill: skill || "",
-          strength: strength || "",
-          ap: ap || "",
-          damage: damage || "",
-          abilities: abilities || "",
-        };
-      });
-
-  const serializeWeapons = (weapons) =>
-    (weapons || [])
-      .map((w) => {
-        const fields = [w.type === "melee" ? "白兵" : "射撃", w.name, w.range, w.attacks, w.skill, w.strength, w.ap, w.damage];
-        if (w.abilities) fields.push(w.abilities);
-        return fields.join(", ");
-      })
-      .join("\n");
-
   // Each line: "アビリティ名: 説明"（説明は省略可）
   const ABILITY_CATEGORY_TAGS = { core: "コア", faction: "陣営", detachment: "デタッチメント" };
 
@@ -330,6 +369,31 @@
 
   // Each line: "グループ名, オプション名, 種類(数値/キーワード/メモ), 対象ユニット, 対象範囲(プロフィール/射撃/白兵), 項目, 値"
   // Lines sharing the same group+option name are merged into one option with multiple modifiers.
+  // Each line: "対象ユニット, 種類(数値/キーワード/メモ), 対象範囲(プロフィール/射撃/白兵), 項目, 値"
+  const parseStratagemModifiers = (text) =>
+    text
+      .split("\n")
+      .map((line) => line.trim())
+      .filter((line) => line.length > 0)
+      .map((line) => {
+        const [targetUnit, kindLabel, scopeLabel, fieldLabel, value] = line.split(/\t|,/).map((p) => p.trim());
+        const kind = kindLabel === "キーワード" ? "keyword" : kindLabel === "メモ" ? "note" : "numeric";
+        const scope = scopeLabel === "射撃" ? "ranged" : scopeLabel === "白兵" ? "melee" : "profile";
+        const field = scope === "profile" ? W40K.PROFILE_FIELD_MAP[fieldLabel] || fieldLabel : W40K.WEAPON_FIELD_MAP[fieldLabel] || fieldLabel;
+        return { id: W40K.uid(), targetUnit: targetUnit || "", kind, scope, field, value: value || "" };
+      });
+
+  const serializeStratagemModifiers = (modifiers) =>
+    (modifiers || [])
+      .map((m) => {
+        const kindLabel = m.kind === "keyword" ? "キーワード" : m.kind === "note" ? "メモ" : "数値";
+        const scopeLabel = m.scope === "ranged" ? "射撃" : m.scope === "melee" ? "白兵" : "プロフィール";
+        const fieldLabel =
+          m.kind === "note" ? "" : m.scope === "profile" ? W40K.PROFILE_FIELD_LABELS[m.field] || m.field : W40K.WEAPON_FIELD_LABELS[m.field] || m.field;
+        return [m.targetUnit, kindLabel, m.kind === "note" ? "" : scopeLabel, fieldLabel, m.value].join(", ");
+      })
+      .join("\n");
+
   const parseGroupBuffs = (text) => {
     const optionsByKey = new Map();
     text
@@ -374,6 +438,66 @@
     const sign = Number(m.value) >= 0 ? "+" : "";
     return `${escapeHtml(m.targetUnit)}の${scopeLabel}${fieldLabel || m.field}${sign}${escapeHtml(m.value)}`;
   };
+
+  const TARGET_TYPE_TAGS = { keyword: "キーワード", unit: "ユニット", enhancement: "強化" };
+
+  // Same as summarizeModifier but without a per-modifier target prefix (the buff's target is shown once, via a tag).
+  const summarizeArmyModifier = (m) => {
+    if (m.kind === "note") return `📝${escapeHtml(m.value)}`;
+    if (m.kind === "keyword") {
+      const scopeLabel = m.scope === "melee" ? "白兵武器" : "射撃武器";
+      return `${scopeLabel}に[${escapeHtml(m.value)}]追加`;
+    }
+    const scopeLabel = m.scope === "profile" ? "" : m.scope === "melee" ? "白兵武器の" : "射撃武器の";
+    const fieldLabel = m.scope === "profile" ? W40K.PROFILE_FIELD_LABELS[m.field] : W40K.WEAPON_FIELD_LABELS[m.field];
+    const sign = Number(m.value) >= 0 ? "+" : "";
+    return `${scopeLabel}${fieldLabel || m.field}${sign}${escapeHtml(m.value)}`;
+  };
+
+  // Each line: "バフ名, 対象タイプ(キーワード/ユニット/強化), 対象値, 種類(数値/キーワード/メモ), 対象範囲(プロフィール/射撃/白兵), 項目, 値"
+  const parseArmyBuffs = (text) => {
+    const buffsByName = new Map();
+    text
+      .split("\n")
+      .map((line) => line.trim())
+      .filter((line) => line.length > 0)
+      .forEach((line) => {
+        const [name, targetTypeLabel, targetValue, kindLabel, scopeLabel, fieldLabel, value] = line.split(/\t|,/).map((p) => p.trim());
+        if (!name) return;
+        if (!buffsByName.has(name)) {
+          const targetType = targetTypeLabel === "ユニット" ? "unit" : targetTypeLabel === "強化" ? "enhancement" : "keyword";
+          buffsByName.set(name, { id: W40K.uid(), name, targetType, targetValue: targetValue || "", modifiers: [] });
+        }
+        const kind = kindLabel === "キーワード" ? "keyword" : kindLabel === "メモ" ? "note" : "numeric";
+        const scope = scopeLabel === "射撃" ? "ranged" : scopeLabel === "白兵" ? "melee" : "profile";
+        const field = scope === "profile" ? W40K.PROFILE_FIELD_MAP[fieldLabel] || fieldLabel : W40K.WEAPON_FIELD_MAP[fieldLabel] || fieldLabel;
+        buffsByName.get(name).modifiers.push({ id: W40K.uid(), kind, scope, field, value: value || "" });
+      });
+    return Array.from(buffsByName.values());
+  };
+
+  const serializeArmyBuffs = (armyBuffs) =>
+    (armyBuffs || [])
+      .flatMap((buff) =>
+        buff.modifiers.map((m) => {
+          const kindLabel = m.kind === "keyword" ? "キーワード" : m.kind === "note" ? "メモ" : "数値";
+          const scopeLabel = m.scope === "ranged" ? "射撃" : m.scope === "melee" ? "白兵" : "プロフィール";
+          const fieldLabel =
+            m.kind === "note" ? "" : m.scope === "profile" ? W40K.PROFILE_FIELD_LABELS[m.field] || m.field : W40K.WEAPON_FIELD_LABELS[m.field] || m.field;
+          return [buff.name, TARGET_TYPE_TAGS[buff.targetType], buff.targetValue, kindLabel, m.kind === "note" ? "" : scopeLabel, fieldLabel, m.value].join(
+            ", "
+          );
+        })
+      )
+      .join("\n");
+
+  // Which army buffs currently apply to this unit, based on keyword / exact unit name / equipped enhancement name.
+  const getApplicableArmyBuffs = (roster, unit) =>
+    (roster.armyBuffs || []).filter((buff) => {
+      if (buff.targetType === "unit") return unit.name === buff.targetValue;
+      if (buff.targetType === "enhancement") return unit.enhancement && unit.enhancement.name === buff.targetValue;
+      return (unit.keywords || "").includes(buff.targetValue);
+    });
 
   // ---- CSV backup (units) ----
 
@@ -446,7 +570,7 @@
     u.profile?.wounds || "",
     u.profile?.leadership || "",
     u.profile?.oc || "",
-    serializeWeapons(u.weapons),
+    W40K.serializeWeapons(u.weapons),
     serializeAbilities(u.abilities),
     u.group || "",
     u.isWarlord ? "TRUE" : "",
@@ -473,7 +597,7 @@
         leadership: leadership || "",
         oc: oc || "",
       },
-      weapons: parseWeapons(weaponsText || ""),
+      weapons: W40K.parseWeapons(weaponsText || ""),
       abilities: parseAbilities(abilitiesText || ""),
     };
   };
@@ -501,8 +625,9 @@
       id: W40K.uid(),
       name: `${roster.name} (コピー)`,
       detachment: { ...roster.detachment },
-      stratagems: roster.stratagems.map((s) => ({ ...s, id: W40K.uid() })),
+      stratagems: roster.stratagems.map((s) => ({ ...s, id: W40K.uid(), modifiers: (s.modifiers || []).map((m) => ({ ...m, id: W40K.uid() })) })),
       groupBuffs: roster.groupBuffs.map((opt) => ({ ...opt, id: W40K.uid(), modifiers: opt.modifiers.map((m) => ({ ...m, id: W40K.uid() })) })),
+      armyBuffs: roster.armyBuffs.map((buff) => ({ ...buff, id: W40K.uid(), modifiers: buff.modifiers.map((m) => ({ ...m, id: W40K.uid() })) })),
       units: roster.units.map((u) => ({
         ...u,
         id: W40K.uid(),
@@ -639,6 +764,16 @@
                 cost: Number(s.cost) || 0,
                 phase: s.phase || "",
                 text: s.text || "",
+                modifiers: Array.isArray(s.modifiers)
+                  ? s.modifiers.map((m) => ({
+                      id: W40K.uid(),
+                      targetUnit: m.targetUnit || "",
+                      kind: m.kind || "numeric",
+                      scope: m.scope || "profile",
+                      field: m.field || "",
+                      value: m.value || "",
+                    }))
+                  : [],
               }))
             : [],
           groupBuffs: Array.isArray(data.groupBuffs)
@@ -651,6 +786,23 @@
                       id: W40K.uid(),
                       kind: m.kind || "numeric",
                       targetUnit: m.targetUnit || "",
+                      scope: m.scope || "profile",
+                      field: m.field || "",
+                      value: m.value || "",
+                    }))
+                  : [],
+              }))
+            : [],
+          armyBuffs: Array.isArray(data.armyBuffs)
+            ? data.armyBuffs.map((buff) => ({
+                id: W40K.uid(),
+                name: buff.name || "無名バフ",
+                targetType: buff.targetType || "keyword",
+                targetValue: buff.targetValue || "",
+                modifiers: Array.isArray(buff.modifiers)
+                  ? buff.modifiers.map((m) => ({
+                      id: W40K.uid(),
+                      kind: m.kind || "numeric",
                       scope: m.scope || "profile",
                       field: m.field || "",
                       value: m.value || "",
@@ -743,6 +895,7 @@
         detachment: { name: "", rule: "" },
         stratagems: [],
         groupBuffs: [],
+        armyBuffs: [],
         units: [],
       };
       state.rosters.push(roster);
@@ -791,6 +944,7 @@
     document.getElementById("stratagem-form-cost").value = strat?.cost ?? 1;
     document.getElementById("stratagem-form-phase").value = strat?.phase || "";
     document.getElementById("stratagem-form-text").value = strat?.text || "";
+    document.getElementById("stratagem-form-modifiers").value = serializeStratagemModifiers(strat?.modifiers);
     stratagemModal.showModal();
   };
 
@@ -803,6 +957,7 @@
       cost: Number(document.getElementById("stratagem-form-cost").value) || 0,
       phase: document.getElementById("stratagem-form-phase").value.trim(),
       text: document.getElementById("stratagem-form-text").value.trim(),
+      modifiers: parseStratagemModifiers(document.getElementById("stratagem-form-modifiers").value),
     };
     if (editingStratagemId) {
       const strat = roster.stratagems.find((s) => s.id === editingStratagemId);
@@ -835,6 +990,26 @@
     groupBuffsModal.close();
   });
 
+  const armyBuffsModal = document.getElementById("modal-army-buffs");
+  const armyBuffsForm = document.getElementById("form-army-buffs");
+
+  const openArmyBuffsModal = () => {
+    const roster = getById(state.selectedRosterId);
+    if (!roster) return;
+    document.getElementById("army-buffs-input").value = serializeArmyBuffs(roster.armyBuffs);
+    armyBuffsModal.showModal();
+  };
+
+  armyBuffsForm.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const roster = getById(state.selectedRosterId);
+    if (!roster) return;
+    roster.armyBuffs = parseArmyBuffs(document.getElementById("army-buffs-input").value);
+    persist();
+    render();
+    armyBuffsModal.close();
+  });
+
   const unitModal = document.getElementById("modal-unit");
   const unitForm = document.getElementById("form-unit");
 
@@ -859,9 +1034,22 @@
     document.getElementById("unit-form-wounds").value = unit?.profile?.wounds || "";
     document.getElementById("unit-form-leadership").value = unit?.profile?.leadership || "";
     document.getElementById("unit-form-oc").value = unit?.profile?.oc || "";
-    document.getElementById("unit-form-weapons").value = serializeWeapons(unit?.weapons);
+    document.getElementById("unit-form-weapons").value = W40K.serializeWeapons(unit?.weapons);
     document.getElementById("unit-form-abilities").value = serializeAbilities(unit?.abilities);
+    refreshWeaponPicker();
     unitModal.showModal();
+  };
+
+  const refreshWeaponPicker = () => {
+    const picker = document.getElementById("unit-form-weapon-picker");
+    const library = W40K.Armory.getAll();
+    if (library.length === 0) {
+      picker.innerHTML = '<option value="" disabled>武器庫が空です（武器庫タブから登録）</option>';
+      return;
+    }
+    picker.innerHTML = library
+      .map((w) => `<option value="${w.id}">${w.type === "melee" ? "⚔" : "🔫"} ${escapeHtml(w.name)} (${escapeHtml(w.range || "白兵")})</option>`)
+      .join("");
   };
 
   unitForm.addEventListener("submit", (e) => {
@@ -886,7 +1074,7 @@
         leadership: document.getElementById("unit-form-leadership").value.trim(),
         oc: document.getElementById("unit-form-oc").value.trim(),
       },
-      weapons: parseWeapons(document.getElementById("unit-form-weapons").value),
+      weapons: W40K.parseWeapons(document.getElementById("unit-form-weapons").value),
       abilities: parseAbilities(document.getElementById("unit-form-abilities").value),
     };
     if (state.editingUnitId) {
@@ -954,6 +1142,20 @@
     document.getElementById("btn-new-unit").addEventListener("click", () => openUnitModal());
     document.getElementById("btn-bulk-units").addEventListener("click", () => bulkUnitsModal.showModal());
 
+    document.getElementById("btn-add-picked-weapons").addEventListener("click", () => {
+      const picker = document.getElementById("unit-form-weapon-picker");
+      const library = W40K.Armory.getAll();
+      const picked = Array.from(picker.selectedOptions)
+        .map((opt) => library.find((w) => w.id === opt.value))
+        .filter(Boolean);
+      if (picked.length === 0) return;
+      const textarea = document.getElementById("unit-form-weapons");
+      const existing = textarea.value.trim();
+      const addedLines = W40K.serializeWeapons(picked);
+      textarea.value = existing ? `${existing}\n${addedLines}` : addedLines;
+      Array.from(picker.options).forEach((opt) => (opt.selected = false));
+    });
+
     document.getElementById("units-csv-import-input").addEventListener("change", (e) => {
       const file = e.target.files[0];
       if (file) importUnitsCsv(file);
@@ -962,6 +1164,7 @@
     document.getElementById("btn-edit-detachment").addEventListener("click", () => openDetachmentModal());
     document.getElementById("btn-new-stratagem").addEventListener("click", () => openStratagemModal());
     document.getElementById("btn-edit-group-buffs").addEventListener("click", () => openGroupBuffsModal());
+    document.getElementById("btn-edit-army-buffs").addEventListener("click", () => openArmyBuffsModal());
 
     document.getElementById("roster-import-input").addEventListener("change", (e) => {
       const file = e.target.files[0];

@@ -6,6 +6,7 @@ W40K.KEYS = {
   GAME: "w40k_active_game",
   NOTES: "w40k_rules_notes",
   PHASE_CHECKLIST: "w40k_phase_checklist_template",
+  WEAPON_LIBRARY: "w40k_weapon_library",
 };
 
 W40K.uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
@@ -40,3 +41,35 @@ W40K.applyStatDelta = (str, delta) => {
   if (!match) return str;
   return `${Number(match[1]) + delta}${match[2] || ""}`;
 };
+
+// Shared weapon bulk-text format (used by unit weapon lists and the weapon armory).
+// Each line: "種別(射撃/白兵), 武器名, 射程, 攻撃回数, 技能, 攻撃力, 貫通値, ダメージ[, アビリティ]"
+W40K.parseWeapons = (text) =>
+  text
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0)
+    .map((line) => {
+      const [type, name, range, attacks, skill, strength, ap, damage, abilities] = line.split(/\t|,/).map((p) => p.trim());
+      return {
+        id: W40K.uid(),
+        type: type === "白兵" ? "melee" : "ranged",
+        name: name || "無名武器",
+        range: range || "",
+        attacks: attacks || "",
+        skill: skill || "",
+        strength: strength || "",
+        ap: ap || "",
+        damage: damage || "",
+        abilities: abilities || "",
+      };
+    });
+
+W40K.serializeWeapons = (weapons) =>
+  (weapons || [])
+    .map((w) => {
+      const fields = [w.type === "melee" ? "白兵" : "射撃", w.name, w.range, w.attacks, w.skill, w.strength, w.ap, w.damage];
+      if (w.abilities) fields.push(w.abilities);
+      return fields.join(", ");
+    })
+    .join("\n");
