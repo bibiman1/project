@@ -205,46 +205,7 @@
     row.className = "unit-card";
     const unitTotal = unit.points + (unit.enhancement ? unit.enhancement.points : 0);
 
-    const applicableBuffs = getApplicableArmyBuffs(roster, unit);
-    const profile = { ...unit.profile };
-    const profileChanges = {};
-    const buffNotes = [];
-    const weapons = unit.weapons.map((w) => ({ ...w, _changed: {} }));
-
-    applicableBuffs.forEach((buff) => {
-      buff.modifiers.forEach((m) => {
-        if (m.kind === "note") {
-          buffNotes.push(`${buff.name}: ${m.value}`);
-          return;
-        }
-        if (m.scope === "profile") {
-          if (m.kind === "numeric") {
-            const base = profile[m.field];
-            const newVal = W40K.applyStatDelta(base, Number(m.value) || 0);
-            if (newVal !== base) {
-              profile[m.field] = newVal;
-              profileChanges[m.field] = base;
-            }
-          } else if (m.kind === "keyword") {
-            buffNotes.push(`${buff.name}: [${m.value}]`);
-          }
-          return;
-        }
-        weapons.forEach((w) => {
-          if (w.type !== m.scope) return;
-          if (m.kind === "numeric") {
-            const base = w[m.field];
-            const newVal = W40K.applyStatDelta(base, Number(m.value) || 0);
-            if (newVal !== base) {
-              w._changed[m.field] = base;
-              w[m.field] = newVal;
-            }
-          } else if (m.kind === "keyword") {
-            w.abilities = [w.abilities, m.value].filter(Boolean).join("、");
-          }
-        });
-      });
-    });
+    const { profile, profileChanges, weapons, buffNotes } = W40K.computeUnitBuffs(roster, unit);
 
     const hasProfile = profile && (profile.move || profile.toughness || profile.save || profile.invSave || profile.wounds || profile.leadership || profile.oc);
     const profileCell = (field) => buffCell(profileChanges[field] ?? profile[field], profileChanges[field] !== undefined ? profile[field] : undefined);
@@ -490,14 +451,6 @@
         })
       )
       .join("\n");
-
-  // Which army buffs currently apply to this unit, based on keyword / exact unit name / equipped enhancement name.
-  const getApplicableArmyBuffs = (roster, unit) =>
-    (roster.armyBuffs || []).filter((buff) => {
-      if (buff.targetType === "unit") return unit.name === buff.targetValue;
-      if (buff.targetType === "enhancement") return unit.enhancement && unit.enhancement.name === buff.targetValue;
-      return (unit.keywords || "").includes(buff.targetValue);
-    });
 
   // ---- CSV backup (units) ----
 
@@ -1037,6 +990,7 @@
     document.getElementById("unit-form-weapons").value = W40K.serializeWeapons(unit?.weapons);
     document.getElementById("unit-form-abilities").value = serializeAbilities(unit?.abilities);
     refreshWeaponPicker();
+    refreshKeywordPicker();
     unitModal.showModal();
   };
 
@@ -1050,6 +1004,29 @@
     picker.innerHTML = library
       .map((w) => `<option value="${w.id}">${w.type === "melee" ? "⚔" : "🔫"} ${escapeHtml(w.name)} (${escapeHtml(w.range || "白兵")})</option>`)
       .join("");
+  };
+
+  const refreshKeywordPicker = () => {
+    const picker = document.getElementById("unit-form-keyword-picker");
+    const library = W40K.Keywords.getAll();
+    if (library.length === 0) {
+      picker.innerHTML = '<option value="" disabled>キーワード帳が空です</option>';
+      return;
+    }
+    picker.innerHTML = library.map((k) => `<option value="${escapeHtml(k)}">${escapeHtml(k)}</option>`).join("");
+  };
+
+  // Appends keywords not already present in the comma-separated keyword field.
+  const appendKeywords = (keywords) => {
+    const field = document.getElementById("unit-form-keywords");
+    const existing = field.value
+      .split(",")
+      .map((k) => k.trim())
+      .filter(Boolean);
+    keywords.forEach((k) => {
+      if (!existing.includes(k)) existing.push(k);
+    });
+    field.value = existing.join(", ");
   };
 
   unitForm.addEventListener("submit", (e) => {
@@ -1155,6 +1132,26 @@
       textarea.value = existing ? `${existing}\n${addedLines}` : addedLines;
       Array.from(picker.options).forEach((opt) => (opt.selected = false));
     });
+
+    document.getElementById("btn-add-picked-keywords").addEventListener("click", () => {
+      const picker = document.getElementById("unit-form-keyword-picker");
+      const picked = Array.from(picker.selectedOptions).map((opt) => opt.value);
+      if (picked.length === 0) return;
+      appendKeywords(picked);
+      Array.from(picker.options).forEach((opt) => (opt.selected = false));
+    });
+
+    document.getElementById("btn-add-new-keyword").addEventListener("click", () => {
+      const input = document.getElementById("unit-form-new-keyword");
+      const value = input.value.trim();
+      if (!value) return;
+      W40K.Keywords.addKeyword(value);
+      appendKeywords([value]);
+      refreshKeywordPicker();
+      input.value = "";
+    });
+
+    document.addEventListener("w40k:keywords-changed", () => refreshKeywordPicker());
 
     document.getElementById("units-csv-import-input").addEventListener("change", (e) => {
       const file = e.target.files[0];

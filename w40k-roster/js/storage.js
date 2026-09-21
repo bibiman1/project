@@ -7,6 +7,7 @@ W40K.KEYS = {
   NOTES: "w40k_rules_notes",
   PHASE_CHECKLIST: "w40k_phase_checklist_template",
   WEAPON_LIBRARY: "w40k_weapon_library",
+  KEYWORD_LIBRARY: "w40k_keyword_library",
 };
 
 W40K.uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
@@ -73,3 +74,56 @@ W40K.serializeWeapons = (weapons) =>
       return fields.join(", ");
     })
     .join("\n");
+
+// Applies a roster's always-on army buffs (matched by keyword / unit name / enhancement) to one unit.
+// Shared by the roster screen (unit cards) and the battle tracker (unit rows) so both show identical numbers.
+// Returns { profile, profileChanges, weapons (each carrying `_changed`), buffNotes }.
+W40K.computeUnitBuffs = (roster, unit) => {
+  const applicableBuffs = (roster.armyBuffs || []).filter((buff) => {
+    if (buff.targetType === "unit") return unit.name === buff.targetValue;
+    if (buff.targetType === "enhancement") return unit.enhancement && unit.enhancement.name === buff.targetValue;
+    return (unit.keywords || "").includes(buff.targetValue);
+  });
+
+  const profile = { ...unit.profile };
+  const profileChanges = {};
+  const buffNotes = [];
+  const weapons = (unit.weapons || []).map((w) => ({ ...w, _changed: {} }));
+
+  applicableBuffs.forEach((buff) => {
+    buff.modifiers.forEach((m) => {
+      if (m.kind === "note") {
+        buffNotes.push(`${buff.name}: ${m.value}`);
+        return;
+      }
+      if (m.scope === "profile") {
+        if (m.kind === "numeric") {
+          const base = profile[m.field];
+          const newVal = W40K.applyStatDelta(base, Number(m.value) || 0);
+          if (newVal !== base) {
+            profile[m.field] = newVal;
+            profileChanges[m.field] = base;
+          }
+        } else if (m.kind === "keyword") {
+          buffNotes.push(`${buff.name}: [${m.value}]`);
+        }
+        return;
+      }
+      weapons.forEach((w) => {
+        if (w.type !== m.scope) return;
+        if (m.kind === "numeric") {
+          const base = w[m.field];
+          const newVal = W40K.applyStatDelta(base, Number(m.value) || 0);
+          if (newVal !== base) {
+            w._changed[m.field] = base;
+            w[m.field] = newVal;
+          }
+        } else if (m.kind === "keyword") {
+          w.abilities = [w.abilities, m.value].filter(Boolean).join("、");
+        }
+      });
+    });
+  });
+
+  return { profile, profileChanges, weapons, buffNotes };
+};

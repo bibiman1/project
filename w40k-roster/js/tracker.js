@@ -51,6 +51,9 @@
 
   const defaultUnitStatus = () => ({ destroyed: false, notes: "", battleShock: false });
 
+  // Cell shows "base→new" (new bolded) when a buff changed it, otherwise just the value. Mirrors roster.js's buffCell.
+  const buffCell = (base, changed) => (changed !== undefined ? `${escapeHtml(base || "-")}→<strong>${escapeHtml(changed)}</strong>` : escapeHtml(base || "-"));
+
   const refreshRosterOptions = () => {
     const rosters = W40K.Roster.getAll();
     els.rosterSelect.innerHTML = rosters
@@ -84,16 +87,43 @@
         const status = game.unitStatus[unit.id] || defaultUnitStatus();
         const row = document.createElement("article");
         row.className = "tracker-unit-row" + (status.destroyed ? " is-destroyed" : "");
+
+        const { profile, profileChanges, buffNotes } = W40K.computeUnitBuffs(roster, unit);
+        const hasProfile = profile && (profile.move || profile.toughness || profile.save || profile.invSave || profile.wounds || profile.leadership || profile.oc);
+        const profileCell = (field) => buffCell(profileChanges[field] ?? profile[field], profileChanges[field] !== undefined ? profile[field] : undefined);
+        const statsHtml =
+          hasProfile || buffNotes.length
+            ? `<div class="tracker-unit-row-stats">
+                ${
+                  hasProfile
+                    ? `<p class="unit-profile">
+                        <span>移動${profileCell("move")}</span>
+                        <span>耐久${profileCell("toughness")}</span>
+                        <span>防御${profileCell("save")}</span>
+                        ${profile.invSave || profileChanges.invSave ? `<span>特防${profileCell("invSave")}</span>` : ""}
+                        <span>傷${profileCell("wounds")}</span>
+                        <span>統率${profileCell("leadership")}</span>
+                        <span>確保${profileCell("oc")}</span>
+                      </p>`
+                    : ""
+                }
+                ${buffNotes.length ? `<p class="unit-buff-notes">${buffNotes.map((n) => `🔺${escapeHtml(n)}`).join("<br>")}</p>` : ""}
+              </div>`
+            : "";
+
         row.innerHTML = `
-          <label class="unit-destroyed-toggle">
-            <input type="checkbox" data-unit-toggle="${unit.id}" ${status.destroyed ? "checked" : ""}>
-            <span>${escapeHtml(unit.name)}${unit.group ? ` <span class="unit-group-badge">🔗${escapeHtml(unit.group)}</span>` : ""}</span>
-          </label>
-          <label class="unit-battleshock-toggle">
-            <input type="checkbox" data-unit-battleshock="${unit.id}" ${status.battleShock ? "checked" : ""}>
-            <span>戦闘ショック</span>
-          </label>
-          <input type="text" class="unit-status-notes" data-unit-notes="${unit.id}" placeholder="ダメージ・状態メモ" value="${escapeHtml(status.notes)}">
+          <div class="tracker-unit-row-main">
+            <label class="unit-destroyed-toggle">
+              <input type="checkbox" data-unit-toggle="${unit.id}" ${status.destroyed ? "checked" : ""}>
+              <span>${escapeHtml(unit.name)}${unit.group ? ` <span class="unit-group-badge">🔗${escapeHtml(unit.group)}</span>` : ""}</span>
+            </label>
+            <label class="unit-battleshock-toggle">
+              <input type="checkbox" data-unit-battleshock="${unit.id}" ${status.battleShock ? "checked" : ""}>
+              <span>戦闘ショック</span>
+            </label>
+            <input type="text" class="unit-status-notes" data-unit-notes="${unit.id}" placeholder="ダメージ・状態メモ" value="${escapeHtml(status.notes)}">
+          </div>
+          ${statsHtml}
         `;
         els.unitList.appendChild(row);
       });

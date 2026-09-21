@@ -659,13 +659,23 @@ main {
 
 .tracker-unit-row {
   display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 0.7rem;
+  flex-direction: column;
+  gap: 0.35rem;
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 0.5rem 0.7rem;
+}
+
+.tracker-unit-row-main {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+}
+
+.tracker-unit-row-stats {
+  padding-left: 0.2rem;
 }
 
 .tracker-unit-row.is-destroyed {
@@ -875,6 +885,16 @@ textarea:focus {
 }
 
 .weapon-picker select {
+  width: 100%;
+}
+
+.keyword-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.keyword-picker select {
   width: 100%;
 }
 
