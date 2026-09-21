@@ -14,7 +14,8 @@
     if (!roster.stratagems) roster.stratagems = [];
     roster.units.forEach((u) => {
       if (u.enhancement === undefined) u.enhancement = null;
-      if (!u.profile) u.profile = { move: "", toughness: "", save: "", wounds: "", leadership: "", oc: "" };
+      if (!u.profile) u.profile = { move: "", toughness: "", save: "", invSave: "", wounds: "", leadership: "", oc: "" };
+      if (u.profile.invSave === undefined) u.profile.invSave = "";
       if (!u.weapons) u.weapons = [];
       if (!u.abilities) u.abilities = [];
     });
@@ -120,12 +121,13 @@
       row.className = "unit-card";
       const unitTotal = unit.points + (unit.enhancement ? unit.enhancement.points : 0);
       const p = unit.profile;
-      const hasProfile = p && (p.move || p.toughness || p.save || p.wounds || p.leadership || p.oc);
+      const hasProfile = p && (p.move || p.toughness || p.save || p.invSave || p.wounds || p.leadership || p.oc);
       const profileHtml = hasProfile
         ? `<p class="unit-profile">
             <span>移動<strong>${escapeHtml(p.move || "-")}</strong></span>
             <span>耐久<strong>${escapeHtml(p.toughness || "-")}</strong></span>
             <span>防御<strong>${escapeHtml(p.save || "-")}</strong></span>
+            ${p.invSave ? `<span>特防<strong>${escapeHtml(p.invSave)}</strong></span>` : ""}
             <span>傷<strong>${escapeHtml(p.wounds || "-")}</strong></span>
             <span>統率<strong>${escapeHtml(p.leadership || "-")}</strong></span>
             <span>確保<strong>${escapeHtml(p.oc || "-")}</strong></span>
@@ -245,7 +247,7 @@
   const CSV_HEADER = [
     "name", "models", "points", "keywords", "notes",
     "enh_name", "enh_points",
-    "move", "toughness", "save", "wounds", "leadership", "oc",
+    "move", "toughness", "save", "inv_save", "wounds", "leadership", "oc",
     "weapons", "abilities",
   ];
 
@@ -307,6 +309,7 @@
     u.profile?.move || "",
     u.profile?.toughness || "",
     u.profile?.save || "",
+    u.profile?.invSave || "",
     u.profile?.wounds || "",
     u.profile?.leadership || "",
     u.profile?.oc || "",
@@ -315,7 +318,7 @@
   ];
 
   const csvRowToUnit = (cols) => {
-    const [name, models, points, keywords, notes, enhName, enhPoints, move, toughness, save, wounds, leadership, oc, weaponsText, abilitiesText] = cols;
+    const [name, models, points, keywords, notes, enhName, enhPoints, move, toughness, save, invSave, wounds, leadership, oc, weaponsText, abilitiesText] = cols;
     return {
       id: W40K.uid(),
       name: name || "無名ユニット",
@@ -328,6 +331,7 @@
         move: move || "",
         toughness: toughness || "",
         save: save || "",
+        invSave: invSave || "",
         wounds: wounds || "",
         leadership: leadership || "",
         oc: oc || "",
@@ -477,6 +481,7 @@
               move: u.profile?.move || "",
               toughness: u.profile?.toughness || "",
               save: u.profile?.save || "",
+              invSave: u.profile?.invSave || "",
               wounds: u.profile?.wounds || "",
               leadership: u.profile?.leadership || "",
               oc: u.profile?.oc || "",
@@ -637,6 +642,7 @@
     document.getElementById("unit-form-move").value = unit?.profile?.move || "";
     document.getElementById("unit-form-toughness").value = unit?.profile?.toughness || "";
     document.getElementById("unit-form-save").value = unit?.profile?.save || "";
+    document.getElementById("unit-form-invsave").value = unit?.profile?.invSave || "";
     document.getElementById("unit-form-wounds").value = unit?.profile?.wounds || "";
     document.getElementById("unit-form-leadership").value = unit?.profile?.leadership || "";
     document.getElementById("unit-form-oc").value = unit?.profile?.oc || "";
@@ -661,6 +667,7 @@
         move: document.getElementById("unit-form-move").value.trim(),
         toughness: document.getElementById("unit-form-toughness").value.trim(),
         save: document.getElementById("unit-form-save").value.trim(),
+        invSave: document.getElementById("unit-form-invsave").value.trim(),
         wounds: document.getElementById("unit-form-wounds").value.trim(),
         leadership: document.getElementById("unit-form-leadership").value.trim(),
         oc: document.getElementById("unit-form-oc").value.trim(),
@@ -698,7 +705,7 @@
           keywords: keywords || "",
           notes: notes || "",
           enhancement: null,
-          profile: { move: "", toughness: "", save: "", wounds: "", leadership: "", oc: "" },
+          profile: { move: "", toughness: "", save: "", invSave: "", wounds: "", leadership: "", oc: "" },
           weapons: [],
           abilities: [],
         };

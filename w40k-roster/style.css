@@ -543,6 +543,12 @@ main {
   }
 }
 
+@media (max-width: 560px) {
+  .profile-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
 .tracker-unit-list {
   display: flex;
   flex-direction: column;
@@ -752,7 +758,7 @@ textarea:focus {
 
 .profile-grid {
   display: grid;
-  grid-template-columns: repeat(6, 1fr);
+  grid-template-columns: repeat(7, 1fr);
   gap: 0.5rem;
 }
 
