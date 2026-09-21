@@ -18,6 +18,9 @@
       if (u.profile.invSave === undefined) u.profile.invSave = "";
       if (!u.weapons) u.weapons = [];
       if (!u.abilities) u.abilities = [];
+      u.abilities.forEach((a) => {
+        if (!a.category) a.category = "unit";
+      });
       if (u.group === undefined) u.group = "";
     });
     return roster;
@@ -184,9 +187,21 @@
           </tbody>
         </table>`
       : "";
-    const abilitiesHtml = unit.abilities.length
+    const tagAbilities = unit.abilities.filter((a) => a.category === "core" || a.category === "faction");
+    const listAbilities = unit.abilities.filter((a) => a.category === "detachment" || a.category === "unit");
+    const tagAbilitiesHtml = tagAbilities.length
+      ? `<p class="rule-tags">
+          ${tagAbilities.map((a) => `<span class="tag">${escapeHtml(ABILITY_CATEGORY_TAGS[a.category])}: ${escapeHtml(a.name)}</span>`).join("")}
+        </p>`
+      : "";
+    const listAbilitiesHtml = listAbilities.length
       ? `<ul class="ability-list">
-          ${unit.abilities.map((a) => `<li><strong>${escapeHtml(a.name)}</strong>${a.text ? `: ${escapeHtml(a.text)}` : ""}</li>`).join("")}
+          ${listAbilities
+            .map(
+              (a) =>
+                `<li>${a.category === "detachment" ? `<span class="tag">デタッチメント</span> ` : ""}<strong>${escapeHtml(a.name)}</strong>${a.text ? `: ${escapeHtml(a.text)}` : ""}</li>`
+            )
+            .join("")}
         </ul>`
       : "";
     row.innerHTML = `
@@ -194,7 +209,8 @@
         <h4>${escapeHtml(unit.name)} <span class="unit-models">×${unit.models}</span></h4>
         ${profileHtml}
         ${weaponsHtml}
-        ${abilitiesHtml}
+        ${tagAbilitiesHtml}
+        ${listAbilitiesHtml}
         <p class="meta-line">${escapeHtml(unit.keywords || "")}</p>
         ${unit.notes ? `<p class="unit-notes">${escapeHtml(unit.notes)}</p>` : ""}
         ${unit.enhancement ? `<p class="unit-enhancement">✦ ${escapeHtml(unit.enhancement.name)} (+${unit.enhancement.points}pts)</p>` : ""}
@@ -252,19 +268,35 @@
       .join("\n");
 
   // Each line: "アビリティ名: 説明"（説明は省略可）
+  const ABILITY_CATEGORY_TAGS = { core: "コア", faction: "陣営", detachment: "デタッチメント" };
+
   const parseAbilities = (text) =>
     text
       .split("\n")
       .map((line) => line.trim())
       .filter((line) => line.length > 0)
       .map((line) => {
+        let category = "unit";
+        const tagMatch = line.match(/^\[(.+?)\]\s*/);
+        if (tagMatch) {
+          const tag = tagMatch[1];
+          if (tag.includes("コア")) category = "core";
+          else if (tag.includes("陣営")) category = "faction";
+          else if (tag.includes("デタッチメント")) category = "detachment";
+          line = line.slice(tagMatch[0].length);
+        }
         const sepIndex = [line.indexOf(":"), line.indexOf("：")].filter((i) => i >= 0).sort((a, b) => a - b)[0];
-        if (sepIndex === undefined) return { id: W40K.uid(), name: line, text: "" };
-        return { id: W40K.uid(), name: line.slice(0, sepIndex).trim(), text: line.slice(sepIndex + 1).trim() };
+        if (sepIndex === undefined) return { id: W40K.uid(), category, name: line, text: "" };
+        return { id: W40K.uid(), category, name: line.slice(0, sepIndex).trim(), text: line.slice(sepIndex + 1).trim() };
       });
 
   const serializeAbilities = (abilities) =>
-    (abilities || []).map((a) => (a.text ? `${a.name}: ${a.text}` : a.name)).join("\n");
+    (abilities || [])
+      .map((a) => {
+        const prefix = ABILITY_CATEGORY_TAGS[a.category] ? `[${ABILITY_CATEGORY_TAGS[a.category]}] ` : "";
+        return a.text ? `${prefix}${a.name}: ${a.text}` : `${prefix}${a.name}`;
+      })
+      .join("\n");
 
   // ---- CSV backup (units) ----
 
@@ -547,7 +579,7 @@
                 }))
               : [],
             abilities: Array.isArray(u.abilities)
-              ? u.abilities.map((a) => ({ id: W40K.uid(), name: a.name || "", text: a.text || "" }))
+              ? u.abilities.map((a) => ({ id: W40K.uid(), category: a.category || "unit", name: a.name || "", text: a.text || "" }))
               : [],
           })),
         };
