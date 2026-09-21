@@ -85,7 +85,20 @@
 
     els.unitList.innerHTML = "";
     if (roster && roster.units.length) {
-      roster.units.forEach((unit) => {
+      // Group joined units (same `group`) next to each other instead of listing them in whatever
+      // order they were added to the roster, so a joined character/squad reads as one block. Each
+      // group is placed at its first member's original position; ungrouped units and the relative
+      // order within a group are otherwise unchanged.
+      const groupFirstIndex = {};
+      roster.units.forEach((u, i) => {
+        if (u.group && !(u.group in groupFirstIndex)) groupFirstIndex[u.group] = i;
+      });
+      const orderedUnits = roster.units
+        .map((u, i) => ({ u, sortKey: u.group ? groupFirstIndex[u.group] : i, i }))
+        .sort((a, b) => a.sortKey - b.sortKey || a.i - b.i)
+        .map((x) => x.u);
+
+      orderedUnits.forEach((unit) => {
         const status = game.unitStatus[unit.id] || defaultUnitStatus(unit);
         const row = document.createElement("article");
         row.className = "tracker-unit-row" + (status.destroyed ? " is-destroyed" : "");
