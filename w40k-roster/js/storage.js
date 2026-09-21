@@ -77,10 +77,11 @@ W40K.serializeWeapons = (weapons) =>
     })
     .join("\n");
 
-// Applies a roster's always-on army buffs (matched by keyword / unit name / enhancement) to one unit.
+// Applies a roster's always-on army buffs (matched by keyword / unit name / enhancement) to one unit,
+// plus (in the tracker) the army-wide Doctrina Imperative currently active for the battle round.
 // Shared by the roster screen (unit cards) and the battle tracker (unit rows) so both show identical numbers.
 // Returns { profile, profileChanges, weapons (each carrying `_changed`), buffNotes }.
-W40K.computeUnitBuffs = (roster, unit) => {
+W40K.computeUnitBuffs = (roster, unit, options) => {
   const applicableBuffs = (roster.armyBuffs || []).filter((buff) => {
     if (buff.targetType === "unit") return unit.name === buff.targetValue;
     if (buff.targetType === "enhancement") return unit.enhancement && unit.enhancement.name === buff.targetValue;
@@ -92,40 +93,55 @@ W40K.computeUnitBuffs = (roster, unit) => {
   const buffNotes = [];
   const weapons = (unit.weapons || []).map((w) => ({ ...w, _changed: {} }));
 
-  applicableBuffs.forEach((buff) => {
-    buff.modifiers.forEach((m) => {
-      if (m.kind === "note") {
-        buffNotes.push(`${buff.name}: ${m.value}`);
-        return;
-      }
-      if (m.scope === "profile") {
-        if (m.kind === "numeric") {
-          const base = profile[m.field];
-          const newVal = W40K.applyStatDelta(base, Number(m.value) || 0);
-          if (newVal !== base) {
-            profile[m.field] = newVal;
-            profileChanges[m.field] = base;
-          }
-        } else if (m.kind === "keyword") {
-          buffNotes.push(`${buff.name}: [${m.value}]`);
+  const applyModifier = (label, m) => {
+    if (m.kind === "note") {
+      buffNotes.push(`${label}: ${m.value}`);
+      return;
+    }
+    if (m.scope === "profile") {
+      if (m.kind === "numeric") {
+        const base = profile[m.field];
+        const newVal = W40K.applyStatDelta(base, Number(m.value) || 0);
+        if (newVal !== base) {
+          profile[m.field] = newVal;
+          profileChanges[m.field] = base;
         }
-        return;
+      } else if (m.kind === "keyword") {
+        buffNotes.push(`${label}: [${m.value}]`);
       }
-      weapons.forEach((w) => {
-        if (w.type !== m.scope) return;
-        if (m.kind === "numeric") {
-          const base = w[m.field];
-          const newVal = W40K.applyStatDelta(base, Number(m.value) || 0);
-          if (newVal !== base) {
-            w._changed[m.field] = base;
-            w[m.field] = newVal;
-          }
-        } else if (m.kind === "keyword") {
-          w.abilities = [w.abilities, m.value].filter(Boolean).join("、");
+      return;
+    }
+    weapons.forEach((w) => {
+      if (w.type !== m.scope) return;
+      if (m.kind === "numeric") {
+        const base = w[m.field];
+        const newVal = W40K.applyStatDelta(base, Number(m.value) || 0);
+        if (newVal !== base) {
+          w._changed[m.field] = base;
+          w[m.field] = newVal;
         }
-      });
+      } else if (m.kind === "keyword") {
+        w.abilities = [w.abilities, m.value].filter(Boolean).join("、");
+      }
     });
-  });
+  };
+
+  applicableBuffs.forEach((buff) => buff.modifiers.forEach((m) => applyModifier(buff.name, m)));
+
+  // 命令教条 (Doctrina Imperatives): chosen per battle round, active for any unit whose ability text names it.
+  // Improving a Skill characteristic means a *lower* number, hence delta -1.
+  const doctrinaImperative = options && options.doctrinaImperative;
+  if (doctrinaImperative && (unit.abilities || []).some((a) => (a.name || "").includes("命令教条"))) {
+    if (doctrinaImperative === "protector") {
+      applyModifier("迎撃命令", { kind: "numeric", scope: "ranged", field: "skill", value: -1 });
+      applyModifier("迎撃命令", { kind: "keyword", scope: "ranged", value: "ヘヴィ" });
+      buffNotes.push("迎撃命令: 射撃武器の技能+1、[ヘヴィ]を得る");
+    } else if (doctrinaImperative === "conqueror") {
+      applyModifier("征服命令", { kind: "numeric", scope: "melee", field: "skill", value: -1 });
+      applyModifier("征服命令", { kind: "keyword", scope: "melee", value: "アサルト" });
+      buffNotes.push("征服命令: 白兵武器の技能+1、[アサルト]を得る");
+    }
+  }
 
   return { profile, profileChanges, weapons, buffNotes };
 };
