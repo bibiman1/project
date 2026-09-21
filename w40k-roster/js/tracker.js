@@ -179,7 +179,7 @@
 
     const stratagems = roster ? roster.stratagems : [];
     if (stratagems.length === 0) {
-      els.stratagemSelect.innerHTML = '<option value="">ストラタジム未登録</option>';
+      els.stratagemSelect.innerHTML = '<option value="">策略未登録</option>';
       els.stratagemSelect.disabled = true;
     } else {
       els.stratagemSelect.disabled = false;
@@ -464,7 +464,7 @@
         return;
       }
       game.cp.me -= stratagem.cost;
-      game.log.push({ id: W40K.uid(), text: `ストラタジム使用: ${stratagem.name} (CP${stratagem.cost})`, round: game.round, ts: Date.now() });
+      game.log.push({ id: W40K.uid(), text: `策略使用: ${stratagem.name} (CP${stratagem.cost})`, round: game.round, ts: Date.now() });
       (stratagem.modifiers || []).forEach((m) => {
         const unit = roster.units.find((u) => u.name === m.targetUnit);
         if (!unit) {

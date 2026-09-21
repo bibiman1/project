@@ -97,7 +97,7 @@
 
     els.stratagemList.innerHTML = "";
     if (roster.stratagems.length === 0) {
-      els.stratagemList.innerHTML = '<p class="empty-state">ストラタジムが未登録です。</p>';
+      els.stratagemList.innerHTML = '<p class="empty-state">策略が未登録です。</p>';
     } else {
       roster.stratagems.forEach((strat) => {
         const row = document.createElement("article");
@@ -602,7 +602,7 @@
   const deleteStratagem = (stratagemId) => {
     const roster = getById(state.selectedRosterId);
     if (!roster) return;
-    if (!confirm("このストラタジムを削除しますか？")) return;
+    if (!confirm("この策略を削除しますか？")) return;
     roster.stratagems = roster.stratagems.filter((s) => s.id !== stratagemId);
     persist();
     render();
@@ -716,7 +716,7 @@
           stratagems: Array.isArray(data.stratagems)
             ? data.stratagems.map((s) => ({
                 id: W40K.uid(),
-                name: s.name || "無名ストラタジム",
+                name: s.name || "無名策略",
                 cost: Number(s.cost) || 0,
                 phase: s.phase || "",
                 text: s.text || "",
@@ -918,7 +918,7 @@
     if (!roster) return;
     editingStratagemId = stratagemId || null;
     const strat = stratagemId ? roster.stratagems.find((s) => s.id === stratagemId) : null;
-    document.getElementById("modal-stratagem-title").textContent = strat ? "ストラタジム編集" : "ストラタジム追加";
+    document.getElementById("modal-stratagem-title").textContent = strat ? "策略編集" : "策略追加";
     document.getElementById("stratagem-form-name").value = strat?.name || "";
     document.getElementById("stratagem-form-cost").value = strat?.cost ?? 1;
     document.getElementById("stratagem-form-phase").value = strat?.phase || "";
@@ -933,7 +933,7 @@
     const roster = getById(state.selectedRosterId);
     if (!roster) return;
     const data = {
-      name: document.getElementById("stratagem-form-name").value.trim() || "無名ストラタジム",
+      name: document.getElementById("stratagem-form-name").value.trim() || "無名策略",
       cost: Number(document.getElementById("stratagem-form-cost").value) || 0,
       phase: document.getElementById("stratagem-form-phase").value.trim(),
       text: document.getElementById("stratagem-form-text").value.trim(),
