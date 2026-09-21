@@ -139,6 +139,9 @@
     els.unitList.querySelectorAll("[data-edit-unit]").forEach((btn) => {
       btn.addEventListener("click", () => openUnitModal(btn.dataset.editUnit));
     });
+    els.unitList.querySelectorAll("[data-duplicate-unit]").forEach((btn) => {
+      btn.addEventListener("click", () => duplicateUnit(btn.dataset.duplicateUnit));
+    });
     els.unitList.querySelectorAll("[data-delete-unit]").forEach((btn) => {
       btn.addEventListener("click", () => deleteUnit(btn.dataset.deleteUnit));
     });
@@ -189,17 +192,18 @@
     row.innerHTML = `
       <div class="unit-main">
         <h4>${escapeHtml(unit.name)} <span class="unit-models">×${unit.models}</span></h4>
-        <p class="meta-line">${escapeHtml(unit.keywords || "")}</p>
-        ${unit.notes ? `<p class="unit-notes">${escapeHtml(unit.notes)}</p>` : ""}
-        ${unit.enhancement ? `<p class="unit-enhancement">✦ ${escapeHtml(unit.enhancement.name)} (+${unit.enhancement.points}pts)</p>` : ""}
         ${profileHtml}
         ${weaponsHtml}
         ${abilitiesHtml}
+        <p class="meta-line">${escapeHtml(unit.keywords || "")}</p>
+        ${unit.notes ? `<p class="unit-notes">${escapeHtml(unit.notes)}</p>` : ""}
+        ${unit.enhancement ? `<p class="unit-enhancement">✦ ${escapeHtml(unit.enhancement.name)} (+${unit.enhancement.points}pts)</p>` : ""}
       </div>
       <div class="unit-side">
         <span class="unit-points">${unitTotal} pts</span>
         <div class="unit-actions">
           <button class="btn btn-ghost btn-sm" data-edit-unit="${unit.id}">編集</button>
+          <button class="btn btn-ghost btn-sm" data-duplicate-unit="${unit.id}">複製</button>
           <button class="btn btn-danger btn-sm" data-delete-unit="${unit.id}">削除</button>
         </div>
       </div>
@@ -407,6 +411,25 @@
     if (!roster) return;
     if (!confirm("このストラタジムを削除しますか？")) return;
     roster.stratagems = roster.stratagems.filter((s) => s.id !== stratagemId);
+    persist();
+    render();
+  };
+
+  const duplicateUnit = (unitId) => {
+    const roster = getById(state.selectedRosterId);
+    if (!roster) return;
+    const unit = roster.units.find((u) => u.id === unitId);
+    if (!unit) return;
+    const index = roster.units.indexOf(unit);
+    const copy = {
+      ...unit,
+      id: W40K.uid(),
+      enhancement: unit.enhancement ? { ...unit.enhancement } : null,
+      profile: { ...unit.profile },
+      weapons: unit.weapons.map((w) => ({ ...w, id: W40K.uid() })),
+      abilities: unit.abilities.map((a) => ({ ...a, id: W40K.uid() })),
+    };
+    roster.units.splice(index + 1, 0, copy);
     persist();
     render();
   };
