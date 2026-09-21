@@ -1092,6 +1092,22 @@ details.notes-details > .unit-buff-notes {
   gap: 0.4rem;
 }
 
+.unit-master-picker {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.unit-master-picker label {
+  flex: 1;
+  min-width: 200px;
+}
+
+.unit-master-picker select {
+  width: 100%;
+}
+
 .keyword-picker select {
   width: 100%;
 }

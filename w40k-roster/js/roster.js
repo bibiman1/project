@@ -252,7 +252,7 @@
     const listAbilities = unit.abilities.filter((a) => a.category === "detachment" || a.category === "unit");
     const tagAbilitiesHtml = tagAbilities.length
       ? `<p class="rule-tags">
-          ${tagAbilities.map((a) => `<span class="tag">${escapeHtml(ABILITY_CATEGORY_TAGS[a.category])}: ${escapeHtml(a.name)}</span>`).join("")}
+          ${tagAbilities.map((a) => `<span class="tag">${escapeHtml(W40K.ABILITY_CATEGORY_TAGS[a.category])}: ${escapeHtml(a.name)}</span>`).join("")}
         </p>`
       : "";
     const listAbilitiesHtml = listAbilities.length
@@ -299,37 +299,11 @@
   const escapeHtml = (str) =>
     String(str ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
-  // Each line: "種別(射撃/白兵), 武器名, 射程, 攻撃回数, 技能, 攻撃力, 貫通値, ダメージ[, アビリティ]"
-  // Each line: "アビリティ名: 説明"（説明は省略可）
-  const ABILITY_CATEGORY_TAGS = { core: "コア", faction: "陣営", detachment: "デタッチメント" };
-
-  const parseAbilities = (text) =>
-    text
-      .split("\n")
-      .map((line) => line.trim())
-      .filter((line) => line.length > 0)
-      .map((line) => {
-        let category = "unit";
-        const tagMatch = line.match(/^\[(.+?)\]\s*/);
-        if (tagMatch) {
-          const tag = tagMatch[1];
-          if (tag.includes("コア")) category = "core";
-          else if (tag.includes("陣営")) category = "faction";
-          else if (tag.includes("デタッチメント")) category = "detachment";
-          line = line.slice(tagMatch[0].length);
-        }
-        const sepIndex = [line.indexOf(":"), line.indexOf("：")].filter((i) => i >= 0).sort((a, b) => a - b)[0];
-        if (sepIndex === undefined) return { id: W40K.uid(), category, name: line, text: "" };
-        return { id: W40K.uid(), category, name: line.slice(0, sepIndex).trim(), text: line.slice(sepIndex + 1).trim() };
-      });
-
-  const serializeAbilities = (abilities) =>
-    (abilities || [])
-      .map((a) => {
-        const prefix = ABILITY_CATEGORY_TAGS[a.category] ? `[${ABILITY_CATEGORY_TAGS[a.category]}] ` : "";
-        return a.text ? `${prefix}${a.name}: ${a.text}` : `${prefix}${a.name}`;
-      })
-      .join("\n");
+  // Ability bulk-text parsing/serializing (format: "[コア/陣営/デタッチメント] アビリティ名: 説明")
+  // now lives in storage.js as W40K.parseAbilities/serializeAbilities, shared with the unit
+  // datasheet library.
+  const parseAbilities = W40K.parseAbilities;
+  const serializeAbilities = W40K.serializeAbilities;
 
   // ---- group buffs (合流バフ) ----
 
@@ -1108,9 +1082,11 @@
     document.getElementById("unit-form-oc").value = unit?.profile?.oc || "";
     document.getElementById("unit-form-weapons").value = W40K.serializeWeapons(unit?.weapons);
     document.getElementById("unit-form-abilities").value = serializeAbilities(unit?.abilities);
+    document.getElementById("unit-form-master-picker").value = "";
     refreshWeaponPicker();
     refreshKeywordPicker();
     refreshAbilityPicker();
+    refreshUnitMasterPicker();
     refreshEnhancementMasterPicker(roster);
     unitModal.showModal();
   };
@@ -1145,6 +1121,32 @@
       return;
     }
     picker.innerHTML = library.map((line) => `<option value="${escapeHtml(line)}">${escapeHtml(line)}</option>`).join("");
+  };
+
+  const refreshUnitMasterPicker = () => {
+    const picker = document.getElementById("unit-form-master-picker");
+    const library = W40K.UnitLibrary.getAll();
+    picker.innerHTML =
+      '<option value="">選択しない（手入力）</option>' + library.map((u) => `<option value="${u.id}">${escapeHtml(u.name)}（${u.points}pt）</option>`).join("");
+  };
+
+  // Fills the unit form's fields from a unit datasheet library entry (profile/weapons/abilities/
+  // keywords/points) - the roster's own unit stays an independent copy from this point on, same as
+  // picking a weapon from the armory or an ability from the ability library.
+  const fillUnitFormFromMaster = (masterUnit) => {
+    document.getElementById("unit-form-name").value = masterUnit.name;
+    document.getElementById("unit-form-models").value = masterUnit.models;
+    document.getElementById("unit-form-points").value = masterUnit.points;
+    document.getElementById("unit-form-keywords").value = masterUnit.keywords || "";
+    document.getElementById("unit-form-move").value = masterUnit.profile?.move || "";
+    document.getElementById("unit-form-toughness").value = masterUnit.profile?.toughness || "";
+    document.getElementById("unit-form-save").value = masterUnit.profile?.save || "";
+    document.getElementById("unit-form-invsave").value = masterUnit.profile?.invSave || "";
+    document.getElementById("unit-form-wounds").value = masterUnit.profile?.wounds || "";
+    document.getElementById("unit-form-leadership").value = masterUnit.profile?.leadership || "";
+    document.getElementById("unit-form-oc").value = masterUnit.profile?.oc || "";
+    document.getElementById("unit-form-weapons").value = W40K.serializeWeapons(masterUnit.weapons);
+    document.getElementById("unit-form-abilities").value = serializeAbilities(masterUnit.abilities);
   };
 
   // Filters the current detachment's enhancements to ones this (possibly unsaved) unit actually qualifies
@@ -1345,6 +1347,16 @@
     });
 
     document.addEventListener("w40k:abilities-changed", () => refreshAbilityPicker());
+
+    document.getElementById("unit-form-master-picker").addEventListener("change", (e) => {
+      const masterUnit = W40K.UnitLibrary.getAll().find((u) => u.id === e.target.value);
+      if (!masterUnit) return;
+      fillUnitFormFromMaster(masterUnit);
+      const roster = getById(state.selectedRosterId);
+      if (roster) refreshEnhancementMasterPicker(roster);
+    });
+
+    document.addEventListener("w40k:unitlibrary-changed", () => refreshUnitMasterPicker());
 
     document.getElementById("detachment-master-picker").addEventListener("change", (e) => {
       const detachment = W40K.Detachments.getByName(e.target.value);
