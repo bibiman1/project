@@ -40,6 +40,8 @@
     els.phaseTabs = document.getElementById("phase-tabs");
     els.phaseItems = document.getElementById("phase-checklist-items");
     els.stratagemSelect = document.getElementById("stratagem-use-select");
+    els.groupBuffCard = document.getElementById("group-buff-card");
+    els.groupBuffTrackerList = document.getElementById("group-buff-tracker-list");
   };
 
   const persist = () => W40K.save(W40K.KEYS.GAME, game);
@@ -83,7 +85,7 @@
         row.innerHTML = `
           <label class="unit-destroyed-toggle">
             <input type="checkbox" data-unit-toggle="${unit.id}" ${status.destroyed ? "checked" : ""}>
-            <span>${escapeHtml(unit.name)}</span>
+            <span>${escapeHtml(unit.name)}${unit.group ? ` <span class="unit-group-badge">🔗${escapeHtml(unit.group)}</span>` : ""}</span>
           </label>
           <input type="text" class="unit-status-notes" data-unit-notes="${unit.id}" placeholder="ダメージ・状態メモ" value="${escapeHtml(status.notes)}">
         `;
@@ -130,6 +132,86 @@
     }
 
     renderPhaseChecklist();
+    renderGroupBuffs(roster);
+  };
+
+  const renderGroupBuffs = (roster) => {
+    if (!roster) {
+      els.groupBuffCard.hidden = true;
+      return;
+    }
+    const groups = [...new Set(roster.units.filter((u) => u.group).map((u) => u.group))];
+    if (groups.length === 0) {
+      els.groupBuffCard.hidden = true;
+      return;
+    }
+    els.groupBuffCard.hidden = false;
+    if (!game.groupBuffSelections) game.groupBuffSelections = {};
+
+    els.groupBuffTrackerList.innerHTML = groups
+      .map((group) => {
+        const options = roster.groupBuffs.filter((o) => o.group === group);
+        const selectedId = game.groupBuffSelections[group] || "";
+        const selectHtml = `<select data-buff-group="${escapeHtml(group)}" ${options.length === 0 ? "disabled" : ""}>
+          <option value="">${options.length === 0 ? "バフ未登録" : "なし"}</option>
+          ${options.map((o) => `<option value="${o.id}" ${o.id === selectedId ? "selected" : ""}>${escapeHtml(o.name)}</option>`).join("")}
+        </select>`;
+        const selectedOption = options.find((o) => o.id === selectedId);
+        const effectsHtml = selectedOption ? renderBuffEffects(roster, selectedOption) : "";
+        return `<div class="group-buff-row">
+          <div class="group-buff-row-head">🔗 <strong>${escapeHtml(group)}</strong> ${selectHtml}</div>
+          ${effectsHtml}
+        </div>`;
+      })
+      .join("");
+
+    els.groupBuffTrackerList.querySelectorAll("[data-buff-group]").forEach((sel) => {
+      sel.addEventListener("change", () => {
+        game.groupBuffSelections[sel.dataset.buffGroup] = sel.value;
+        persist();
+        render();
+      });
+    });
+  };
+
+  const renderBuffEffects = (roster, option) => {
+    const byUnit = {};
+    option.modifiers.forEach((m) => {
+      (byUnit[m.targetUnit] = byUnit[m.targetUnit] || []).push(m);
+    });
+    return `<ul class="group-buff-effects">
+      ${Object.entries(byUnit)
+        .map(([unitName, mods]) => {
+          const unit = roster.units.find((u) => u.name === unitName);
+          const lines = mods.map((m) => describeModifierEffect(unit, m));
+          return `<li><strong>${escapeHtml(unitName)}</strong><ul>${lines.map((l) => `<li>${l}</li>`).join("")}</ul></li>`;
+        })
+        .join("")}
+    </ul>`;
+  };
+
+  const describeModifierEffect = (unit, m) => {
+    if (m.kind === "note") return `📝 ${escapeHtml(m.value)}`;
+    if (m.kind === "keyword") {
+      const scopeLabel = m.scope === "melee" ? "白兵武器" : "射撃武器";
+      return `🔖 追加キーワード（${scopeLabel}）: ${escapeHtml(m.value)}`;
+    }
+    const delta = Number(m.value) || 0;
+    const fieldLabel = m.scope === "profile" ? W40K.PROFILE_FIELD_LABELS[m.field] || m.field : W40K.WEAPON_FIELD_LABELS[m.field] || m.field;
+    if (m.scope === "profile") {
+      const base = unit?.profile?.[m.field] || "-";
+      const newVal = W40K.applyStatDelta(base, delta);
+      return `${fieldLabel}: ${escapeHtml(base)} → <strong>${escapeHtml(newVal)}</strong>`;
+    }
+    const weapons = (unit?.weapons || []).filter((w) => w.type === m.scope);
+    if (weapons.length === 0) return `${fieldLabel}${delta >= 0 ? "+" : ""}${delta}（対象武器が見つかりません）`;
+    return weapons
+      .map((w) => {
+        const base = w[m.field] || "-";
+        const newVal = W40K.applyStatDelta(base, delta);
+        return `${escapeHtml(w.name)} ${fieldLabel}: ${escapeHtml(base)} → <strong>${escapeHtml(newVal)}</strong>`;
+      })
+      .join("<br>");
   };
 
   const renderPhaseChecklist = () => {
@@ -203,6 +285,7 @@
       log: [],
       currentPhase: PHASES[0],
       checkedItems: {},
+      groupBuffSelections: {},
     };
     persist();
     render();

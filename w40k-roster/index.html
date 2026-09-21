@@ -72,6 +72,12 @@
             <div id="stratagem-list" class="stratagem-list"></div>
 
             <div class="pane-heading">
+              <h3>合流バフ</h3>
+              <button id="btn-edit-group-buffs" class="btn btn-primary btn-sm">編集</button>
+            </div>
+            <div id="group-buff-list" class="group-buff-list"></div>
+
+            <div class="pane-heading">
               <h3>ユニット</h3>
               <div class="detail-actions">
                 <label class="btn btn-ghost">
@@ -192,6 +198,11 @@
           </form>
         </div>
 
+        <div class="tracker-card group-buff-card" id="group-buff-card" hidden>
+          <h3>合流バフ</h3>
+          <div id="group-buff-tracker-list"></div>
+        </div>
+
         <div class="tracker-columns">
           <div class="tracker-column">
             <h3>ユニット状態</h3>
@@ -257,18 +268,6 @@
       <label>合計ポイント（コデックスに書かれている値をそのまま）
         <input id="unit-form-points" type="number" min="0" step="1" value="0">
       </label>
-      <label>キーワード
-        <input id="unit-form-keywords" type="text" placeholder="例: INFANTRY, CHARACTER">
-      </label>
-      <label>ワーギア・備考
-        <textarea id="unit-form-notes" rows="3"></textarea>
-      </label>
-      <label>エンハンスメント名（任意）
-        <input id="unit-form-enh-name" type="text" placeholder="例: 修理の達人">
-      </label>
-      <label>エンハンスメント追加ポイント
-        <input id="unit-form-enh-points" type="number" min="0" step="1" value="0">
-      </label>
 
       <div class="form-section-label">プロフィール（任意）</div>
       <div class="profile-grid">
@@ -288,8 +287,29 @@
       </label>
 
       <label>アビリティ（一括入力・任意）
-        <p class="hint">1行1アビリティ。「アビリティ名: 説明」の形式（説明は省略可）。</p>
-        <textarea id="unit-form-abilities" rows="3" placeholder="オブジェクティブ・セキュアード: 作戦目標の確保判定でこのユニットの兵を2体分として数える"></textarea>
+        <p class="hint">1行1アビリティ。「アビリティ名: 説明」の形式（説明は省略可）。行頭に「[コア]」「[陣営]」「[デタッチメント]」を付けるとカテゴリ分けして表示されます（タグなしはユニット固有アビリティ扱い）。</p>
+        <textarea id="unit-form-abilities" rows="4" placeholder="[コア] 支援
+[陣営] 命令教条
+[デタッチメント] 戦闘プロトコル: バトル開始時に...
+オブジェクティブ・セキュアード: 作戦目標の確保判定でこのユニットの兵を2体分として数える"></textarea>
+      </label>
+
+      <label>キーワード
+        <input id="unit-form-keywords" type="text" placeholder="例: INFANTRY, CHARACTER">
+      </label>
+
+      <div class="form-section-label">その他（任意）</div>
+      <label>ワーギア・備考
+        <textarea id="unit-form-notes" rows="3"></textarea>
+      </label>
+      <label>合流グループ名
+        <input id="unit-form-group" type="text" placeholder="例: データスミス部隊（同じ名前を付けたユニット同士がまとめて表示されます）">
+      </label>
+      <label>強化名
+        <input id="unit-form-enh-name" type="text" placeholder="例: 修理の達人">
+      </label>
+      <label>強化の追加ポイント
+        <input id="unit-form-enh-points" type="number" min="0" step="1" value="0">
       </label>
 
       <div class="modal-actions">
@@ -346,6 +366,22 @@
       <label>効果
         <textarea id="stratagem-form-text" rows="3"></textarea>
       </label>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" data-close-modal>キャンセル</button>
+        <button type="submit" class="btn btn-primary">保存</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Group buff form modal -->
+  <dialog id="modal-group-buffs" class="modal modal-wide">
+    <form id="form-group-buffs" method="dialog" class="form-grid">
+      <h3>合流バフ編集</h3>
+      <p class="hint">1行1修正。「グループ名, オプション名, 種類(数値/キーワード/メモ), 対象ユニット名, 対象範囲(プロフィール/射撃/白兵), 項目, 値」の順（数値以外は空欄可）。同じグループ名＋オプション名の行はまとめて1つの選択肢になります。</p>
+      <textarea id="group-buffs-input" rows="8" placeholder="データスミス部隊, 生存プロトコル, 数値, カステラン・ロボット, プロフィール, 耐久, 1
+データスミス部隊, 迎撃プロトコル, 数値, カステラン・ロボット, 射撃, 攻撃回数, 2
+データスミス部隊, 迎撃プロトコル, キーワード, カステラン・ロボット, 射撃, , 連続命中1
+データスミス部隊, 征服プロトコル, メモ, カステラン・ロボット, , , ヒットロールの出目1をリロールする"></textarea>
       <div class="modal-actions">
         <button type="button" class="btn btn-ghost" data-close-modal>キャンセル</button>
         <button type="submit" class="btn btn-primary">保存</button>

@@ -12,12 +12,18 @@
   const normalizeRoster = (roster) => {
     if (!roster.detachment) roster.detachment = { name: "", rule: "" };
     if (!roster.stratagems) roster.stratagems = [];
+    if (!roster.groupBuffs) roster.groupBuffs = [];
     roster.units.forEach((u) => {
       if (u.enhancement === undefined) u.enhancement = null;
       if (!u.profile) u.profile = { move: "", toughness: "", save: "", invSave: "", wounds: "", leadership: "", oc: "" };
       if (u.profile.invSave === undefined) u.profile.invSave = "";
       if (!u.weapons) u.weapons = [];
       if (!u.abilities) u.abilities = [];
+      u.abilities.forEach((a) => {
+        if (!a.category) a.category = "unit";
+      });
+      if (u.group === undefined) u.group = "";
+      if (u.isWarlord === undefined) u.isWarlord = false;
     });
     return roster;
   };
@@ -43,6 +49,7 @@
     els.detachmentName = document.getElementById("detachment-name");
     els.detachmentRule = document.getElementById("detachment-rule");
     els.stratagemList = document.getElementById("stratagem-list");
+    els.groupBuffList = document.getElementById("group-buff-list");
   };
 
   const renderList = () => {
@@ -111,80 +118,141 @@
       });
     }
 
+    els.groupBuffList.innerHTML = "";
+    if (roster.groupBuffs.length === 0) {
+      els.groupBuffList.innerHTML = '<p class="empty-state">合流バフが未登録です。</p>';
+    } else {
+      const byGroup = {};
+      roster.groupBuffs.forEach((opt) => {
+        (byGroup[opt.group] = byGroup[opt.group] || []).push(opt);
+      });
+      Object.entries(byGroup).forEach(([group, options]) => {
+        const section = document.createElement("div");
+        section.className = "group-buff-group";
+        section.innerHTML = `
+          <p class="meta-line">🔗 ${escapeHtml(group)}</p>
+          <ul class="ability-list">
+            ${options.map((opt) => `<li><strong>${escapeHtml(opt.name)}</strong>: ${opt.modifiers.map(summarizeModifier).join(" / ")}</li>`).join("")}
+          </ul>
+        `;
+        els.groupBuffList.appendChild(section);
+      });
+    }
+
     els.unitList.innerHTML = "";
     if (roster.units.length === 0) {
       els.unitList.innerHTML = '<p class="empty-state">ユニットが未登録です。</p>';
       return;
     }
+
+    const rendered = new Set();
     roster.units.forEach((unit) => {
-      const row = document.createElement("article");
-      row.className = "unit-card";
-      const unitTotal = unit.points + (unit.enhancement ? unit.enhancement.points : 0);
-      const p = unit.profile;
-      const hasProfile = p && (p.move || p.toughness || p.save || p.invSave || p.wounds || p.leadership || p.oc);
-      const profileHtml = hasProfile
-        ? `<p class="unit-profile">
-            <span>移動<strong>${escapeHtml(p.move || "-")}</strong></span>
-            <span>耐久<strong>${escapeHtml(p.toughness || "-")}</strong></span>
-            <span>防御<strong>${escapeHtml(p.save || "-")}</strong></span>
-            ${p.invSave ? `<span>特防<strong>${escapeHtml(p.invSave)}</strong></span>` : ""}
-            <span>傷<strong>${escapeHtml(p.wounds || "-")}</strong></span>
-            <span>統率<strong>${escapeHtml(p.leadership || "-")}</strong></span>
-            <span>確保<strong>${escapeHtml(p.oc || "-")}</strong></span>
-          </p>`
-        : "";
-      const weaponsHtml = unit.weapons.length
-        ? `<table class="weapon-table">
-            <thead><tr><th>武器</th><th>射程</th><th>攻</th><th>技</th><th>攻撃力</th><th>貫通</th><th>ダメ</th></tr></thead>
-            <tbody>
-              ${unit.weapons
-                .map(
-                  (w) => `<tr>
-                    <td>${w.type === "melee" ? "⚔" : "🔫"} ${escapeHtml(w.name)}${w.abilities ? ` <span class="weapon-ability">[${escapeHtml(w.abilities)}]</span>` : ""}</td>
-                    <td>${escapeHtml(w.range)}</td>
-                    <td>${escapeHtml(w.attacks)}</td>
-                    <td>${escapeHtml(w.skill)}</td>
-                    <td>${escapeHtml(w.strength)}</td>
-                    <td>${escapeHtml(w.ap)}</td>
-                    <td>${escapeHtml(w.damage)}</td>
-                  </tr>`
-                )
-                .join("")}
-            </tbody>
-          </table>`
-        : "";
-      const abilitiesHtml = unit.abilities.length
-        ? `<ul class="ability-list">
-            ${unit.abilities.map((a) => `<li><strong>${escapeHtml(a.name)}</strong>${a.text ? `: ${escapeHtml(a.text)}` : ""}</li>`).join("")}
-          </ul>`
-        : "";
-      row.innerHTML = `
-        <div class="unit-main">
-          <h4>${escapeHtml(unit.name)} <span class="unit-models">×${unit.models}</span></h4>
-          <p class="meta-line">${escapeHtml(unit.keywords || "")}</p>
-          ${unit.notes ? `<p class="unit-notes">${escapeHtml(unit.notes)}</p>` : ""}
-          ${unit.enhancement ? `<p class="unit-enhancement">✦ ${escapeHtml(unit.enhancement.name)} (+${unit.enhancement.points}pts)</p>` : ""}
-          ${profileHtml}
-          ${weaponsHtml}
-          ${abilitiesHtml}
-        </div>
-        <div class="unit-side">
-          <span class="unit-points">${unitTotal} pts</span>
-          <div class="unit-actions">
-            <button class="btn btn-ghost btn-sm" data-edit-unit="${unit.id}">編集</button>
-            <button class="btn btn-danger btn-sm" data-delete-unit="${unit.id}">削除</button>
-          </div>
-        </div>
-      `;
-      els.unitList.appendChild(row);
+      if (rendered.has(unit.id)) return;
+      if (unit.group) {
+        const groupUnits = roster.units.filter((u) => u.group === unit.group);
+        groupUnits.forEach((u) => rendered.add(u.id));
+        const groupTotal = groupUnits.reduce((sum, u) => sum + u.points + (u.enhancement ? u.enhancement.points : 0), 0);
+        const wrapper = document.createElement("div");
+        wrapper.className = "unit-group";
+        wrapper.innerHTML = `<div class="unit-group-header">🔗 ${escapeHtml(unit.group)}（合流ユニット・計${groupTotal}pts）</div>`;
+        groupUnits.forEach((u) => wrapper.appendChild(buildUnitCard(u)));
+        els.unitList.appendChild(wrapper);
+      } else {
+        rendered.add(unit.id);
+        els.unitList.appendChild(buildUnitCard(unit));
+      }
     });
 
     els.unitList.querySelectorAll("[data-edit-unit]").forEach((btn) => {
       btn.addEventListener("click", () => openUnitModal(btn.dataset.editUnit));
     });
+    els.unitList.querySelectorAll("[data-duplicate-unit]").forEach((btn) => {
+      btn.addEventListener("click", () => duplicateUnit(btn.dataset.duplicateUnit));
+    });
+    els.unitList.querySelectorAll("[data-toggle-warlord]").forEach((btn) => {
+      btn.addEventListener("click", () => toggleWarlord(btn.dataset.toggleWarlord));
+    });
     els.unitList.querySelectorAll("[data-delete-unit]").forEach((btn) => {
       btn.addEventListener("click", () => deleteUnit(btn.dataset.deleteUnit));
     });
+  };
+
+  const buildUnitCard = (unit) => {
+    const row = document.createElement("article");
+    row.className = "unit-card";
+    const unitTotal = unit.points + (unit.enhancement ? unit.enhancement.points : 0);
+    const p = unit.profile;
+    const hasProfile = p && (p.move || p.toughness || p.save || p.invSave || p.wounds || p.leadership || p.oc);
+    const profileHtml = hasProfile
+      ? `<p class="unit-profile">
+          <span>移動<strong>${escapeHtml(p.move || "-")}</strong></span>
+          <span>耐久<strong>${escapeHtml(p.toughness || "-")}</strong></span>
+          <span>防御<strong>${escapeHtml(p.save || "-")}</strong></span>
+          ${p.invSave ? `<span>特防<strong>${escapeHtml(p.invSave)}</strong></span>` : ""}
+          <span>傷<strong>${escapeHtml(p.wounds || "-")}</strong></span>
+          <span>統率<strong>${escapeHtml(p.leadership || "-")}</strong></span>
+          <span>確保<strong>${escapeHtml(p.oc || "-")}</strong></span>
+        </p>`
+      : "";
+    const weaponsHtml = unit.weapons.length
+      ? `<table class="weapon-table">
+          <thead><tr><th>武器</th><th>射程</th><th>攻</th><th>技</th><th>攻撃力</th><th>貫通</th><th>ダメ</th></tr></thead>
+          <tbody>
+            ${unit.weapons
+              .map(
+                (w) => `<tr>
+                  <td>${w.type === "melee" ? "⚔" : "🔫"} ${escapeHtml(w.name)}${w.abilities ? ` <span class="weapon-ability">[${escapeHtml(w.abilities)}]</span>` : ""}</td>
+                  <td>${escapeHtml(w.range)}</td>
+                  <td>${escapeHtml(w.attacks)}</td>
+                  <td>${escapeHtml(w.skill)}</td>
+                  <td>${escapeHtml(w.strength)}</td>
+                  <td>${escapeHtml(w.ap)}</td>
+                  <td>${escapeHtml(w.damage)}</td>
+                </tr>`
+              )
+              .join("")}
+          </tbody>
+        </table>`
+      : "";
+    const tagAbilities = unit.abilities.filter((a) => a.category === "core" || a.category === "faction");
+    const listAbilities = unit.abilities.filter((a) => a.category === "detachment" || a.category === "unit");
+    const tagAbilitiesHtml = tagAbilities.length
+      ? `<p class="rule-tags">
+          ${tagAbilities.map((a) => `<span class="tag">${escapeHtml(ABILITY_CATEGORY_TAGS[a.category])}: ${escapeHtml(a.name)}</span>`).join("")}
+        </p>`
+      : "";
+    const listAbilitiesHtml = listAbilities.length
+      ? `<ul class="ability-list">
+          ${listAbilities
+            .map(
+              (a) =>
+                `<li>${a.category === "detachment" ? `<span class="tag">デタッチメント</span> ` : ""}<strong>${escapeHtml(a.name)}</strong>${a.text ? `: ${escapeHtml(a.text)}` : ""}</li>`
+            )
+            .join("")}
+        </ul>`
+      : "";
+    row.innerHTML = `
+      <div class="unit-main">
+        <h4>${unit.isWarlord ? '<span class="warlord-star" title="ウォーロード">⭐</span> ' : ""}${escapeHtml(unit.name)} <span class="unit-models">×${unit.models}</span></h4>
+        ${profileHtml}
+        ${weaponsHtml}
+        ${tagAbilitiesHtml}
+        ${listAbilitiesHtml}
+        <p class="meta-line">${escapeHtml(unit.keywords || "")}</p>
+        ${unit.notes ? `<p class="unit-notes">${escapeHtml(unit.notes)}</p>` : ""}
+        ${unit.enhancement ? `<p class="unit-enhancement">✦ ${escapeHtml(unit.enhancement.name)} (+${unit.enhancement.points}pts)</p>` : ""}
+      </div>
+      <div class="unit-side">
+        <span class="unit-points">${unitTotal} pts</span>
+        <div class="unit-actions">
+          <button class="btn btn-ghost btn-sm" data-toggle-warlord="${unit.id}">${unit.isWarlord ? "★ 解除" : "☆ ウォーロード"}</button>
+          <button class="btn btn-ghost btn-sm" data-edit-unit="${unit.id}">編集</button>
+          <button class="btn btn-ghost btn-sm" data-duplicate-unit="${unit.id}">複製</button>
+          <button class="btn btn-danger btn-sm" data-delete-unit="${unit.id}">削除</button>
+        </div>
+      </div>
+    `;
+    return row;
   };
 
   const render = () => {
@@ -228,19 +296,84 @@
       .join("\n");
 
   // Each line: "アビリティ名: 説明"（説明は省略可）
+  const ABILITY_CATEGORY_TAGS = { core: "コア", faction: "陣営", detachment: "デタッチメント" };
+
   const parseAbilities = (text) =>
     text
       .split("\n")
       .map((line) => line.trim())
       .filter((line) => line.length > 0)
       .map((line) => {
+        let category = "unit";
+        const tagMatch = line.match(/^\[(.+?)\]\s*/);
+        if (tagMatch) {
+          const tag = tagMatch[1];
+          if (tag.includes("コア")) category = "core";
+          else if (tag.includes("陣営")) category = "faction";
+          else if (tag.includes("デタッチメント")) category = "detachment";
+          line = line.slice(tagMatch[0].length);
+        }
         const sepIndex = [line.indexOf(":"), line.indexOf("：")].filter((i) => i >= 0).sort((a, b) => a - b)[0];
-        if (sepIndex === undefined) return { id: W40K.uid(), name: line, text: "" };
-        return { id: W40K.uid(), name: line.slice(0, sepIndex).trim(), text: line.slice(sepIndex + 1).trim() };
+        if (sepIndex === undefined) return { id: W40K.uid(), category, name: line, text: "" };
+        return { id: W40K.uid(), category, name: line.slice(0, sepIndex).trim(), text: line.slice(sepIndex + 1).trim() };
       });
 
   const serializeAbilities = (abilities) =>
-    (abilities || []).map((a) => (a.text ? `${a.name}: ${a.text}` : a.name)).join("\n");
+    (abilities || [])
+      .map((a) => {
+        const prefix = ABILITY_CATEGORY_TAGS[a.category] ? `[${ABILITY_CATEGORY_TAGS[a.category]}] ` : "";
+        return a.text ? `${prefix}${a.name}: ${a.text}` : `${prefix}${a.name}`;
+      })
+      .join("\n");
+
+  // ---- group buffs (合流バフ) ----
+
+  // Each line: "グループ名, オプション名, 種類(数値/キーワード/メモ), 対象ユニット, 対象範囲(プロフィール/射撃/白兵), 項目, 値"
+  // Lines sharing the same group+option name are merged into one option with multiple modifiers.
+  const parseGroupBuffs = (text) => {
+    const optionsByKey = new Map();
+    text
+      .split("\n")
+      .map((line) => line.trim())
+      .filter((line) => line.length > 0)
+      .forEach((line) => {
+        const [group, name, kindLabel, targetUnit, scopeLabel, fieldLabel, value] = line.split(/\t|,/).map((p) => p.trim());
+        if (!group || !name) return;
+        const key = `${group}\u0000${name}`;
+        if (!optionsByKey.has(key)) optionsByKey.set(key, { id: W40K.uid(), group, name, modifiers: [] });
+        const kind = kindLabel === "キーワード" ? "keyword" : kindLabel === "メモ" ? "note" : "numeric";
+        const scope = scopeLabel === "射撃" ? "ranged" : scopeLabel === "白兵" ? "melee" : "profile";
+        const field = scope === "profile" ? W40K.PROFILE_FIELD_MAP[fieldLabel] || fieldLabel : W40K.WEAPON_FIELD_MAP[fieldLabel] || fieldLabel;
+        optionsByKey.get(key).modifiers.push({ id: W40K.uid(), kind, targetUnit: targetUnit || "", scope, field, value: value || "" });
+      });
+    return Array.from(optionsByKey.values());
+  };
+
+  const serializeGroupBuffs = (groupBuffs) =>
+    (groupBuffs || [])
+      .flatMap((opt) =>
+        opt.modifiers.map((m) => {
+          const kindLabel = m.kind === "keyword" ? "キーワード" : m.kind === "note" ? "メモ" : "数値";
+          const scopeLabel = m.scope === "ranged" ? "射撃" : m.scope === "melee" ? "白兵" : "プロフィール";
+          const fieldLabel =
+            m.kind === "note" ? "" : m.scope === "profile" ? W40K.PROFILE_FIELD_LABELS[m.field] || m.field : W40K.WEAPON_FIELD_LABELS[m.field] || m.field;
+          return [opt.group, opt.name, kindLabel, m.targetUnit, m.kind === "note" ? "" : scopeLabel, fieldLabel, m.value].join(", ");
+        })
+      )
+      .join("\n");
+
+  // Static (non-computed) description of a modifier, for the roster-side summary list.
+  const summarizeModifier = (m) => {
+    if (m.kind === "note") return `📝${escapeHtml(m.value)}`;
+    if (m.kind === "keyword") {
+      const scopeLabel = m.scope === "melee" ? "白兵武器" : "射撃武器";
+      return `${escapeHtml(m.targetUnit)}の${scopeLabel}に[${escapeHtml(m.value)}]追加`;
+    }
+    const scopeLabel = m.scope === "profile" ? "" : m.scope === "melee" ? "白兵武器の" : "射撃武器の";
+    const fieldLabel = m.scope === "profile" ? W40K.PROFILE_FIELD_LABELS[m.field] : W40K.WEAPON_FIELD_LABELS[m.field];
+    const sign = Number(m.value) >= 0 ? "+" : "";
+    return `${escapeHtml(m.targetUnit)}の${scopeLabel}${fieldLabel || m.field}${sign}${escapeHtml(m.value)}`;
+  };
 
   // ---- CSV backup (units) ----
 
@@ -248,7 +381,7 @@
     "name", "models", "points", "keywords", "notes",
     "enh_name", "enh_points",
     "move", "toughness", "save", "inv_save", "wounds", "leadership", "oc",
-    "weapons", "abilities",
+    "weapons", "abilities", "group", "is_warlord",
   ];
 
   const csvEscapeField = (value) => {
@@ -315,10 +448,12 @@
     u.profile?.oc || "",
     serializeWeapons(u.weapons),
     serializeAbilities(u.abilities),
+    u.group || "",
+    u.isWarlord ? "TRUE" : "",
   ];
 
   const csvRowToUnit = (cols) => {
-    const [name, models, points, keywords, notes, enhName, enhPoints, move, toughness, save, invSave, wounds, leadership, oc, weaponsText, abilitiesText] = cols;
+    const [name, models, points, keywords, notes, enhName, enhPoints, move, toughness, save, invSave, wounds, leadership, oc, weaponsText, abilitiesText, group, isWarlord] = cols;
     return {
       id: W40K.uid(),
       name: name || "無名ユニット",
@@ -326,6 +461,8 @@
       points: Number(points) || 0,
       keywords: keywords || "",
       notes: notes || "",
+      group: group || "",
+      isWarlord: /^(true|1|yes)$/i.test((isWarlord || "").trim()),
       enhancement: enhName ? { name: enhName, points: Number(enhPoints) || 0 } : null,
       profile: {
         move: move || "",
@@ -365,6 +502,7 @@
       name: `${roster.name} (コピー)`,
       detachment: { ...roster.detachment },
       stratagems: roster.stratagems.map((s) => ({ ...s, id: W40K.uid() })),
+      groupBuffs: roster.groupBuffs.map((opt) => ({ ...opt, id: W40K.uid(), modifiers: opt.modifiers.map((m) => ({ ...m, id: W40K.uid() })) })),
       units: roster.units.map((u) => ({
         ...u,
         id: W40K.uid(),
@@ -385,6 +523,40 @@
     if (!roster) return;
     if (!confirm("このストラタジムを削除しますか？")) return;
     roster.stratagems = roster.stratagems.filter((s) => s.id !== stratagemId);
+    persist();
+    render();
+  };
+
+  const duplicateUnit = (unitId) => {
+    const roster = getById(state.selectedRosterId);
+    if (!roster) return;
+    const unit = roster.units.find((u) => u.id === unitId);
+    if (!unit) return;
+    const index = roster.units.indexOf(unit);
+    const copy = {
+      ...unit,
+      id: W40K.uid(),
+      isWarlord: false,
+      enhancement: unit.enhancement ? { ...unit.enhancement } : null,
+      profile: { ...unit.profile },
+      weapons: unit.weapons.map((w) => ({ ...w, id: W40K.uid() })),
+      abilities: unit.abilities.map((a) => ({ ...a, id: W40K.uid() })),
+    };
+    roster.units.splice(index + 1, 0, copy);
+    persist();
+    render();
+  };
+
+  const toggleWarlord = (unitId) => {
+    const roster = getById(state.selectedRosterId);
+    if (!roster) return;
+    const unit = roster.units.find((u) => u.id === unitId);
+    if (!unit) return;
+    const makeWarlord = !unit.isWarlord;
+    roster.units.forEach((u) => {
+      u.isWarlord = false;
+    });
+    unit.isWarlord = makeWarlord;
     persist();
     render();
   };
@@ -469,6 +641,23 @@
                 text: s.text || "",
               }))
             : [],
+          groupBuffs: Array.isArray(data.groupBuffs)
+            ? data.groupBuffs.map((opt) => ({
+                id: W40K.uid(),
+                group: opt.group || "",
+                name: opt.name || "無名オプション",
+                modifiers: Array.isArray(opt.modifiers)
+                  ? opt.modifiers.map((m) => ({
+                      id: W40K.uid(),
+                      kind: m.kind || "numeric",
+                      targetUnit: m.targetUnit || "",
+                      scope: m.scope || "profile",
+                      field: m.field || "",
+                      value: m.value || "",
+                    }))
+                  : [],
+              }))
+            : [],
           units: data.units.map((u) => ({
             id: W40K.uid(),
             name: u.name || "無名ユニット",
@@ -476,6 +665,8 @@
             points: Number(u.points) || 0,
             keywords: u.keywords || "",
             notes: u.notes || "",
+            group: u.group || "",
+            isWarlord: !!u.isWarlord,
             enhancement: u.enhancement ? { name: u.enhancement.name || "", points: Number(u.enhancement.points) || 0 } : null,
             profile: {
               move: u.profile?.move || "",
@@ -501,7 +692,7 @@
                 }))
               : [],
             abilities: Array.isArray(u.abilities)
-              ? u.abilities.map((a) => ({ id: W40K.uid(), name: a.name || "", text: a.text || "" }))
+              ? u.abilities.map((a) => ({ id: W40K.uid(), category: a.category || "unit", name: a.name || "", text: a.text || "" }))
               : [],
           })),
         };
@@ -551,6 +742,7 @@
         pointsLimit,
         detachment: { name: "", rule: "" },
         stratagems: [],
+        groupBuffs: [],
         units: [],
       };
       state.rosters.push(roster);
@@ -623,6 +815,26 @@
     stratagemModal.close();
   });
 
+  const groupBuffsModal = document.getElementById("modal-group-buffs");
+  const groupBuffsForm = document.getElementById("form-group-buffs");
+
+  const openGroupBuffsModal = () => {
+    const roster = getById(state.selectedRosterId);
+    if (!roster) return;
+    document.getElementById("group-buffs-input").value = serializeGroupBuffs(roster.groupBuffs);
+    groupBuffsModal.showModal();
+  };
+
+  groupBuffsForm.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const roster = getById(state.selectedRosterId);
+    if (!roster) return;
+    roster.groupBuffs = parseGroupBuffs(document.getElementById("group-buffs-input").value);
+    persist();
+    render();
+    groupBuffsModal.close();
+  });
+
   const unitModal = document.getElementById("modal-unit");
   const unitForm = document.getElementById("form-unit");
 
@@ -637,6 +849,7 @@
     document.getElementById("unit-form-points").value = unit?.points ?? 0;
     document.getElementById("unit-form-keywords").value = unit?.keywords || "";
     document.getElementById("unit-form-notes").value = unit?.notes || "";
+    document.getElementById("unit-form-group").value = unit?.group || "";
     document.getElementById("unit-form-enh-name").value = unit?.enhancement?.name || "";
     document.getElementById("unit-form-enh-points").value = unit?.enhancement?.points ?? 0;
     document.getElementById("unit-form-move").value = unit?.profile?.move || "";
@@ -662,6 +875,7 @@
       points: Number(document.getElementById("unit-form-points").value) || 0,
       keywords: document.getElementById("unit-form-keywords").value.trim(),
       notes: document.getElementById("unit-form-notes").value.trim(),
+      group: document.getElementById("unit-form-group").value.trim(),
       enhancement: enhName ? { name: enhName, points: Number(document.getElementById("unit-form-enh-points").value) || 0 } : null,
       profile: {
         move: document.getElementById("unit-form-move").value.trim(),
@@ -704,6 +918,7 @@
           points: Number(points) || 0,
           keywords: keywords || "",
           notes: notes || "",
+          group: "",
           enhancement: null,
           profile: { move: "", toughness: "", save: "", invSave: "", wounds: "", leadership: "", oc: "" },
           weapons: [],
@@ -746,6 +961,7 @@
     });
     document.getElementById("btn-edit-detachment").addEventListener("click", () => openDetachmentModal());
     document.getElementById("btn-new-stratagem").addEventListener("click", () => openStratagemModal());
+    document.getElementById("btn-edit-group-buffs").addEventListener("click", () => openGroupBuffsModal());
 
     document.getElementById("roster-import-input").addEventListener("change", (e) => {
       const file = e.target.files[0];

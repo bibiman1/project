@@ -259,6 +259,33 @@ main {
   gap: 0.6rem;
 }
 
+.unit-group {
+  border: 1px solid var(--gold);
+  border-radius: var(--radius);
+  padding: 0.6rem;
+  background: rgba(201, 162, 75, 0.06);
+}
+
+.unit-group-header {
+  color: var(--gold-bright);
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 0.6rem;
+}
+
+.unit-group .unit-card {
+  margin-bottom: 0.6rem;
+}
+
+.unit-group .unit-card:last-child {
+  margin-bottom: 0;
+}
+
+.unit-group-badge {
+  color: var(--gold-bright);
+  font-size: 0.75rem;
+}
+
 .unit-card {
   display: flex;
   justify-content: space-between;
@@ -272,6 +299,10 @@ main {
 .unit-card h4 {
   margin: 0;
   font-size: 1rem;
+}
+
+.warlord-star {
+  font-size: 0.9em;
 }
 
 .unit-models {
@@ -373,6 +404,59 @@ main {
   flex-direction: column;
   gap: 0.6rem;
   margin-bottom: 1.2rem;
+}
+
+.group-buff-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  margin-bottom: 1.2rem;
+}
+
+.group-buff-group {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.6rem 0.9rem;
+}
+
+.group-buff-row + .group-buff-row {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+}
+
+.group-buff-row-head {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.5rem;
+}
+
+.group-buff-row-head select {
+  flex: 1;
+  min-width: 160px;
+}
+
+.group-buff-effects {
+  margin: 0;
+  padding-left: 1.1rem;
+  font-size: 0.85rem;
+  color: var(--text-dim);
+}
+
+.group-buff-effects > li {
+  margin-bottom: 0.4rem;
+}
+
+.group-buff-effects strong {
+  color: var(--text);
+}
+
+.group-buff-effects ul {
+  margin: 0.2rem 0 0;
+  padding-left: 1.1rem;
 }
 
 .stratagem-card {
