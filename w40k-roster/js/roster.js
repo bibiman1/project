@@ -12,6 +12,7 @@
   const normalizeRoster = (roster) => {
     if (!roster.detachment) roster.detachment = { name: "", rule: "" };
     if (!roster.stratagems) roster.stratagems = [];
+    if (!roster.groupBuffs) roster.groupBuffs = [];
     roster.units.forEach((u) => {
       if (u.enhancement === undefined) u.enhancement = null;
       if (!u.profile) u.profile = { move: "", toughness: "", save: "", invSave: "", wounds: "", leadership: "", oc: "" };
@@ -47,6 +48,7 @@
     els.detachmentName = document.getElementById("detachment-name");
     els.detachmentRule = document.getElementById("detachment-rule");
     els.stratagemList = document.getElementById("stratagem-list");
+    els.groupBuffList = document.getElementById("group-buff-list");
   };
 
   const renderList = () => {
@@ -112,6 +114,27 @@
       });
       els.stratagemList.querySelectorAll("[data-delete-stratagem]").forEach((btn) => {
         btn.addEventListener("click", () => deleteStratagem(btn.dataset.deleteStratagem));
+      });
+    }
+
+    els.groupBuffList.innerHTML = "";
+    if (roster.groupBuffs.length === 0) {
+      els.groupBuffList.innerHTML = '<p class="empty-state">合流バフが未登録です。</p>';
+    } else {
+      const byGroup = {};
+      roster.groupBuffs.forEach((opt) => {
+        (byGroup[opt.group] = byGroup[opt.group] || []).push(opt);
+      });
+      Object.entries(byGroup).forEach(([group, options]) => {
+        const section = document.createElement("div");
+        section.className = "group-buff-group";
+        section.innerHTML = `
+          <p class="meta-line">🔗 ${escapeHtml(group)}</p>
+          <ul class="ability-list">
+            ${options.map((opt) => `<li><strong>${escapeHtml(opt.name)}</strong>: ${opt.modifiers.map(summarizeModifier).join(" / ")}</li>`).join("")}
+          </ul>
+        `;
+        els.groupBuffList.appendChild(section);
       });
     }
 
@@ -298,6 +321,55 @@
       })
       .join("\n");
 
+  // ---- group buffs (合流バフ) ----
+
+  // Each line: "グループ名, オプション名, 種類(数値/キーワード/メモ), 対象ユニット, 対象範囲(プロフィール/射撃/白兵), 項目, 値"
+  // Lines sharing the same group+option name are merged into one option with multiple modifiers.
+  const parseGroupBuffs = (text) => {
+    const optionsByKey = new Map();
+    text
+      .split("\n")
+      .map((line) => line.trim())
+      .filter((line) => line.length > 0)
+      .forEach((line) => {
+        const [group, name, kindLabel, targetUnit, scopeLabel, fieldLabel, value] = line.split(/\t|,/).map((p) => p.trim());
+        if (!group || !name) return;
+        const key = `${group}\u0000${name}`;
+        if (!optionsByKey.has(key)) optionsByKey.set(key, { id: W40K.uid(), group, name, modifiers: [] });
+        const kind = kindLabel === "キーワード" ? "keyword" : kindLabel === "メモ" ? "note" : "numeric";
+        const scope = scopeLabel === "射撃" ? "ranged" : scopeLabel === "白兵" ? "melee" : "profile";
+        const field = scope === "profile" ? W40K.PROFILE_FIELD_MAP[fieldLabel] || fieldLabel : W40K.WEAPON_FIELD_MAP[fieldLabel] || fieldLabel;
+        optionsByKey.get(key).modifiers.push({ id: W40K.uid(), kind, targetUnit: targetUnit || "", scope, field, value: value || "" });
+      });
+    return Array.from(optionsByKey.values());
+  };
+
+  const serializeGroupBuffs = (groupBuffs) =>
+    (groupBuffs || [])
+      .flatMap((opt) =>
+        opt.modifiers.map((m) => {
+          const kindLabel = m.kind === "keyword" ? "キーワード" : m.kind === "note" ? "メモ" : "数値";
+          const scopeLabel = m.scope === "ranged" ? "射撃" : m.scope === "melee" ? "白兵" : "プロフィール";
+          const fieldLabel =
+            m.kind === "note" ? "" : m.scope === "profile" ? W40K.PROFILE_FIELD_LABELS[m.field] || m.field : W40K.WEAPON_FIELD_LABELS[m.field] || m.field;
+          return [opt.group, opt.name, kindLabel, m.targetUnit, m.kind === "note" ? "" : scopeLabel, fieldLabel, m.value].join(", ");
+        })
+      )
+      .join("\n");
+
+  // Static (non-computed) description of a modifier, for the roster-side summary list.
+  const summarizeModifier = (m) => {
+    if (m.kind === "note") return `📝${escapeHtml(m.value)}`;
+    if (m.kind === "keyword") {
+      const scopeLabel = m.scope === "melee" ? "白兵武器" : "射撃武器";
+      return `${escapeHtml(m.targetUnit)}の${scopeLabel}に[${escapeHtml(m.value)}]追加`;
+    }
+    const scopeLabel = m.scope === "profile" ? "" : m.scope === "melee" ? "白兵武器の" : "射撃武器の";
+    const fieldLabel = m.scope === "profile" ? W40K.PROFILE_FIELD_LABELS[m.field] : W40K.WEAPON_FIELD_LABELS[m.field];
+    const sign = Number(m.value) >= 0 ? "+" : "";
+    return `${escapeHtml(m.targetUnit)}の${scopeLabel}${fieldLabel || m.field}${sign}${escapeHtml(m.value)}`;
+  };
+
   // ---- CSV backup (units) ----
 
   const CSV_HEADER = [
@@ -423,6 +495,7 @@
       name: `${roster.name} (コピー)`,
       detachment: { ...roster.detachment },
       stratagems: roster.stratagems.map((s) => ({ ...s, id: W40K.uid() })),
+      groupBuffs: roster.groupBuffs.map((opt) => ({ ...opt, id: W40K.uid(), modifiers: opt.modifiers.map((m) => ({ ...m, id: W40K.uid() })) })),
       units: roster.units.map((u) => ({
         ...u,
         id: W40K.uid(),
@@ -546,6 +619,23 @@
                 text: s.text || "",
               }))
             : [],
+          groupBuffs: Array.isArray(data.groupBuffs)
+            ? data.groupBuffs.map((opt) => ({
+                id: W40K.uid(),
+                group: opt.group || "",
+                name: opt.name || "無名オプション",
+                modifiers: Array.isArray(opt.modifiers)
+                  ? opt.modifiers.map((m) => ({
+                      id: W40K.uid(),
+                      kind: m.kind || "numeric",
+                      targetUnit: m.targetUnit || "",
+                      scope: m.scope || "profile",
+                      field: m.field || "",
+                      value: m.value || "",
+                    }))
+                  : [],
+              }))
+            : [],
           units: data.units.map((u) => ({
             id: W40K.uid(),
             name: u.name || "無名ユニット",
@@ -629,6 +719,7 @@
         pointsLimit,
         detachment: { name: "", rule: "" },
         stratagems: [],
+        groupBuffs: [],
         units: [],
       };
       state.rosters.push(roster);
@@ -699,6 +790,26 @@
     persist();
     render();
     stratagemModal.close();
+  });
+
+  const groupBuffsModal = document.getElementById("modal-group-buffs");
+  const groupBuffsForm = document.getElementById("form-group-buffs");
+
+  const openGroupBuffsModal = () => {
+    const roster = getById(state.selectedRosterId);
+    if (!roster) return;
+    document.getElementById("group-buffs-input").value = serializeGroupBuffs(roster.groupBuffs);
+    groupBuffsModal.showModal();
+  };
+
+  groupBuffsForm.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const roster = getById(state.selectedRosterId);
+    if (!roster) return;
+    roster.groupBuffs = parseGroupBuffs(document.getElementById("group-buffs-input").value);
+    persist();
+    render();
+    groupBuffsModal.close();
   });
 
   const unitModal = document.getElementById("modal-unit");
@@ -827,6 +938,7 @@
     });
     document.getElementById("btn-edit-detachment").addEventListener("click", () => openDetachmentModal());
     document.getElementById("btn-new-stratagem").addEventListener("click", () => openStratagemModal());
+    document.getElementById("btn-edit-group-buffs").addEventListener("click", () => openGroupBuffsModal());
 
     document.getElementById("roster-import-input").addEventListener("change", (e) => {
       const file = e.target.files[0];
