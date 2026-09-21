@@ -146,6 +146,16 @@
           </div>
 
           <div class="tracker-card">
+            <h3>命令教条</h3>
+            <select id="doctrina-imperative-select">
+              <option value="">未選択</option>
+              <option value="protector">迎撃命令</option>
+              <option value="conqueror">征服命令</option>
+            </select>
+            <p class="hint">ラウンドが進むと未選択に戻ります。命令教条アビリティを持つユニットに自動反映されます。</p>
+          </div>
+
+          <div class="tracker-card">
             <h3>コマンドポイント (CP)</h3>
             <div class="counter-pair">
               <div class="counter-item">
@@ -409,7 +419,7 @@
         <textarea id="detachments-basics-input" rows="6"></textarea>
       </label>
       <label>強化一覧
-        <p class="hint">1行1強化。「デタッチメント名, 強化名, ポイント, 説明」の順。デタッチメント名は上の基本情報と一致させてください。</p>
+        <p class="hint">1行1強化。「デタッチメント名, 強化名, ポイント, 説明, 対象制限[, 除外]」の順。デタッチメント名は上の基本情報と一致させてください。対象制限はユニット名またはキーワードと部分一致で判定されます（例: 「テックプリースト」「スキタリ・マーシャル」）。「A/B」で「AまたはB」の意味になります。空欄なら制限なし。除外を指定すると、そのキーワードを持つユニットだけ対象外になります（例: 「帝国技術局」の除外「データスミス」）。</p>
         <textarea id="detachments-enhancements-input" rows="8"></textarea>
       </label>
       <label>策略一覧

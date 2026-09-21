@@ -42,6 +42,7 @@
     els.stratagemSelect = document.getElementById("stratagem-use-select");
     els.groupBuffCard = document.getElementById("group-buff-card");
     els.groupBuffTrackerList = document.getElementById("group-buff-tracker-list");
+    els.doctrinaSelect = document.getElementById("doctrina-imperative-select");
   };
 
   const persist = () => W40K.save(W40K.KEYS.GAME, game);
@@ -76,6 +77,7 @@
     els.meta.textContent = `${game.missionName || "ミッション未設定"} ・ ${game.pointsLimit || "?"} pts`;
 
     els.roundValue.textContent = game.round;
+    els.doctrinaSelect.value = game.doctrinaImperative || "";
     els.cpMe.textContent = game.cp.me;
     els.cpOpponent.textContent = game.cp.opponent;
     els.vpMe.textContent = game.vp.me;
@@ -88,7 +90,7 @@
         const row = document.createElement("article");
         row.className = "tracker-unit-row" + (status.destroyed ? " is-destroyed" : "");
 
-        const { profile, profileChanges, buffNotes } = W40K.computeUnitBuffs(roster, unit);
+        const { profile, profileChanges, buffNotes } = W40K.computeUnitBuffs(roster, unit, { doctrinaImperative: game.doctrinaImperative });
         const hasProfile = profile && (profile.move || profile.toughness || profile.save || profile.invSave || profile.wounds || profile.leadership || profile.oc);
         const profileCell = (field) => buffCell(profileChanges[field] ?? profile[field], profileChanges[field] !== undefined ? profile[field] : undefined);
 
@@ -366,6 +368,7 @@
       missionName,
       pointsLimit,
       round: 1,
+      doctrinaImperative: null,
       cp: { me: 0, opponent: 0 },
       vp: { me: 0, opponent: 0 },
       unitStatus: {},
@@ -410,6 +413,7 @@
       if (!game || game.round <= 1) return;
       game.round -= 1;
       game.checkedItems = {};
+      game.doctrinaImperative = null;
       persist();
       render();
     });
@@ -417,6 +421,14 @@
       if (!game) return;
       game.round += 1;
       game.checkedItems = {};
+      game.doctrinaImperative = null;
+      persist();
+      render();
+    });
+
+    els.doctrinaSelect.addEventListener("change", () => {
+      if (!game) return;
+      game.doctrinaImperative = els.doctrinaSelect.value || null;
       persist();
       render();
     });

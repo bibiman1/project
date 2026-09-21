@@ -1047,15 +1047,28 @@
     picker.innerHTML = library.map((k) => `<option value="${escapeHtml(k)}">${escapeHtml(k)}</option>`).join("");
   };
 
+  // Filters the current detachment's enhancements to ones this (possibly unsaved) unit actually qualifies
+  // for: Enhancements are CHARACTER-only in the core rules, plus each enhancement's own restrict/exclude
+  // keyword match against the unit's name/keywords as currently typed in the form.
   const refreshEnhancementMasterPicker = (roster) => {
     const picker = document.getElementById("enhancement-master-picker");
     const detachment = W40K.Detachments.getByName(roster.detachment.name);
-    const enhancements = detachment ? detachment.enhancements : [];
+    const allEnhancements = detachment ? detachment.enhancements : [];
+    const draftUnit = {
+      name: document.getElementById("unit-form-name").value,
+      keywords: document.getElementById("unit-form-keywords").value,
+    };
+    const isCharacter = draftUnit.keywords.includes("キャラクター");
+    const eligible = isCharacter ? allEnhancements.filter((e) => W40K.unitMatchesRestriction(draftUnit, e.restrict, e.exclude)) : [];
     picker.innerHTML =
       '<option value="">選択しない（手入力）</option>' +
-      (enhancements.length === 0
+      (!detachment
         ? '<option value="" disabled>現在のデタッチメント名と一致するマスタがありません</option>'
-        : enhancements.map((e) => `<option value="${e.id}">${escapeHtml(e.name)}（${e.points}pt）</option>`).join(""));
+        : !isCharacter
+        ? '<option value="" disabled>キャラクターのみ強化を装備できます（キーワードに「キャラクター」の追加が必要）</option>'
+        : eligible.length === 0
+        ? '<option value="" disabled>このユニットが対象の強化はありません</option>'
+        : eligible.map((e) => `<option value="${e.id}">${escapeHtml(e.name)}（${e.points}pt）</option>`).join(""));
     picker.value = "";
   };
 
@@ -1070,6 +1083,8 @@
       if (!existing.includes(k)) existing.push(k);
     });
     field.value = existing.join(", ");
+    const roster = getById(state.selectedRosterId);
+    if (roster) refreshEnhancementMasterPicker(roster);
   };
 
   unitForm.addEventListener("submit", (e) => {
@@ -1214,6 +1229,13 @@
       document.getElementById("stratagem-form-cost").value = strat.cost;
       document.getElementById("stratagem-form-phase").value = strat.phase;
       document.getElementById("stratagem-form-text").value = strat.text;
+    });
+
+    ["unit-form-name", "unit-form-keywords"].forEach((id) => {
+      document.getElementById(id).addEventListener("input", () => {
+        const roster = getById(state.selectedRosterId);
+        if (roster) refreshEnhancementMasterPicker(roster);
+      });
     });
 
     document.getElementById("enhancement-master-picker").addEventListener("change", (e) => {

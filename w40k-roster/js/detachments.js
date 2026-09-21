@@ -13,8 +13,8 @@
       dp: 1,
       rule: "味方プテラクシィ/インフィルトレイター/レンジャー/セルベリス・レイダー/セルベリス・サルファーハウンド・ユニットは偵察占術機を持つ。偵察占術機ユニットは、自軍側射撃フェイズ中12mv以内の視認可能な敵1体を分析状態にし、その敵への発見範囲+3mvの強化占術機アビリティを得る。",
       enhancements: [
-        { name: "探索者の特典", points: 20, text: "スキタリ・マーシャルのみ。このユニットは潜入を得る。" },
-        { name: "ステルス投影サイバー犬", points: 15, text: "セルベリス・レイダーのみ。単独工作員15\"を得る。" },
+        { name: "探索者の特典", points: 20, text: "スキタリ・マーシャルのみ。このユニットは潜入を得る。", restrict: "スキタリ・マーシャル" },
+        { name: "ステルス投影サイバー犬", points: 15, text: "セルベリス・レイダーのみ。単独工作員15\"を得る。", restrict: "セルベリス・レイダー" },
       ],
       stratagems: [
         { name: "欠陥精査", cost: 1, phase: "自軍側射撃フェイズ", text: "味方帝国技術局ユニットが射撃宣言時。味方偵察占術機ユニットの12mv以内の視認可能な敵1体を選択、その敵は遮蔽無効の対象になる。" },
@@ -28,8 +28,8 @@
       dp: 1,
       rule: "味方テックプリースト・兵は特防4+、痛みを知らぬもの5+を持つ。加えて自軍側射撃フェイズに射撃宣言した非戦闘ショック状態のユニットは、D6を1回ロールし、2+で12mv以内の敵ビークルに-1修正の戦闘ショックロールを強制、+2でその隠密状態を解除しない。",
       enhancements: [
-        { name: "アルデブラク・ヴィーンの力織チップ", points: 25, text: "サイバネティカ・データスミスのみ。第1バトルラウンド開始時、合流ユニットであればバトル終了まで高機動を持つ。" },
-        { name: "TL-4Ø9", points: 30, text: "テックプリーストのみ。専用武器を得る（射程24\"・攻撃回数3・技能2+・攻撃力11・貫通-2・ダメージD3+2、会心ウーンズ／危険物）。" },
+        { name: "アルデブラク・ヴィーンの力織チップ", points: 25, text: "サイバネティカ・データスミスのみ。第1バトルラウンド開始時、合流ユニットであればバトル終了まで高機動を持つ。", restrict: "サイバネティカ・データスミス" },
+        { name: "TL-4Ø9", points: 30, text: "テックプリーストのみ。専用武器を得る（射程24\"・攻撃回数3・技能2+・攻撃力11・貫通-2・ダメージD3+2、会心ウーンズ／危険物）。", restrict: "テックプリースト" },
       ],
       stratagems: [
         { name: "聖典予測", cost: 1, phase: "敵軍射撃/白兵フェイズ", text: "作戦目標の確保範囲内にいる味方テックプリーストユニットが攻撃対象に選ばれた時、その敵の攻撃に-1ヒット修正。" },
@@ -43,8 +43,8 @@
       dp: 1,
       rule: "味方コーパスカリ・ユニットの射撃攻撃は会心ヒットを持つ。味方フルグライト・ユニットが白兵を行った時、そのユニットは負傷限界をD3ポイント回復する。（データ詩編タグの他デタッチメントとは併用不可）",
       enhancements: [
-        { name: "ヴォルターガイストの聖遺物", points: 15, text: "テックプリーストのみ。敵ユニットは即応射撃でこのユニットを対象にできない。" },
-        { name: "電磁瘴気香炉", points: 10, text: "テックプリーストのみ。このユニットは隠密能力を持つ。" },
+        { name: "ヴォルターガイストの聖遺物", points: 15, text: "テックプリーストのみ。敵ユニットは即応射撃でこのユニットを対象にできない。", restrict: "テックプリースト" },
+        { name: "電磁瘴気香炉", points: 10, text: "テックプリーストのみ。このユニットは隠密能力を持つ。", restrict: "テックプリースト" },
       ],
       stratagems: [
         { name: "導管の戦の残響", cost: 1, phase: "自軍側射撃/白兵フェイズ", text: "味方エレクトロ・プリースト・ユニットが攻撃対象を作戦目標範囲内にしている場合、ヒットロールまたはウーンズロールの出目1をリロールできる。" },
@@ -58,10 +58,10 @@
       dp: 3,
       rule: "自軍側スキタリ・ユニットが行なう攻撃は、迎撃命令適用時にヒットロール出目1をリロール、征服命令適用時にウーンズロール出目1をリロールできる。",
       enhancements: [
-        { name: "万算機", points: 25, text: "スキタリ・マーシャルのみ。装備者のユニットに迎撃命令と征服命令が両方有効になる。" },
-        { name: "戦闘印章増幅器", points: 15, text: "テックプリーストのみ。装備者のユニット内の兵はスキタリのキーワードを得る。" },
-        { name: "ベリコサ級蓄電フィン", points: 25, text: "帝国技術局のみ。装備者のユニットの射撃武器は射程+6mv、攻撃力+1。" },
-        { name: "万機神の激情", points: 10, text: "スキタリ・マーシャルのみ。装備者の白兵戦武器は攻撃回数+2、貫通値とダメージ量+1。" },
+        { name: "万算機", points: 25, text: "スキタリ・マーシャルのみ。装備者のユニットに迎撃命令と征服命令が両方有効になる。", restrict: "スキタリ・マーシャル" },
+        { name: "戦闘印章増幅器", points: 15, text: "テックプリーストのみ。装備者のユニット内の兵はスキタリのキーワードを得る。", restrict: "テックプリースト" },
+        { name: "ベリコサ級蓄電フィン", points: 25, text: "帝国技術局のみ。装備者のユニットの射撃武器は射程+6mv、攻撃力+1。", restrict: "帝国技術局" },
+        { name: "万機神の激情", points: 10, text: "スキタリ・マーシャルのみ。装備者の白兵戦武器は攻撃回数+2、貫通値とダメージ量+1。", restrict: "スキタリ・マーシャル" },
       ],
       stratagems: [
         { name: "サーボ駆動突撃", cost: 1, phase: "白兵戦フェイズ", text: "まだ白兵戦を宣言していない味方帝国技術局ユニット1個。そのフェイズ終了時まで白兵戦武器はランスを得る。" },
@@ -78,10 +78,10 @@
       dp: 3,
       rule: "思考転移：自軍側指揮フェイズに帝国技術局ユニットを規模に応じた数（インカージョン1/ストライクフォース2/オンスロート3）まで選択。次の指揮フェイズ開始まで精神強制処理キーワードを得て、電動的活性化(移動+2mv)/極小防御装置作動(耐久+1)/略奪プロトコル(全力移動後も突撃宣言可)/サーボモーター静音化(隠密能力)から1つの強制処理アビリティを持つ。",
       enhancements: [
-        { name: "汎預見ダイアドチップ", points: 30, text: "サイバネティカ・データスミスのみ。カステラン・ロボットに合流時、そのユニットは精神強制処理キーワードを得る。" },
-        { name: "認知科学的増援", points: 35, text: "帝国技術局のみ（データスミスを除く）。征服命令と迎撃命令が同時に有効になる。" },
-        { name: "聖別されし砲弾", points: 10, text: "帝国技術局のみ。装備者のユニットの射撃武器は射程+6mv、暴発判定をリロールできる。" },
-        { name: "致命的破壊力、入力完了", points: 15, text: "テックプリースト・ドミヌスまたはマニプルスのみ。白兵戦武器は攻撃回数+3、ダメージ量+1。" },
+        { name: "汎預見ダイアドチップ", points: 30, text: "サイバネティカ・データスミスのみ。カステラン・ロボットに合流時、そのユニットは精神強制処理キーワードを得る。", restrict: "サイバネティカ・データスミス" },
+        { name: "認知科学的増援", points: 35, text: "帝国技術局のみ（データスミスを除く）。征服命令と迎撃命令が同時に有効になる。", restrict: "帝国技術局", exclude: "データスミス" },
+        { name: "聖別されし砲弾", points: 10, text: "帝国技術局のみ。装備者のユニットの射撃武器は射程+6mv、暴発判定をリロールできる。", restrict: "帝国技術局" },
+        { name: "致命的破壊力、入力完了", points: 15, text: "テックプリースト・ドミヌスまたはマニプルスのみ。白兵戦武器は攻撃回数+3、ダメージ量+1。", restrict: ["テックプリースト・ドミヌス", "テックプリースト・マニプルス"] },
       ],
       stratagems: [
         { name: "根絶プロトコル", cost: 1, phase: "自軍側射撃/白兵フェイズ", text: "まだ攻撃を宣言していない味方帝国技術局ユニット1個。攻撃のウーンズロール出目1をリロール（精神強制処理ユニットならヒットロールも）。" },
@@ -98,10 +98,10 @@
       dp: 2,
       rule: "自軍側レギオ・サイバネティカ・ユニットは移動+2mv。戦闘ショック状態でなければ確保+1。",
       enhancements: [
-        { name: "ネクロメカニック", points: 20, text: "テックプリーストのみ。バトルラウンド1回、12mv以内の味方レギオ・サイバネティカ/帝国技術局・ビークルのセーヴ失敗時にダメージを0にできる。" },
-        { name: "マシンの君主", points: 15, text: "テックプリーストのみ。敵射撃フェイズ開始時1回、12mv以内の敵ビークルに統率テストを課し、失敗なら射撃不可、成功でも自軍へのヒット-1。" },
-        { name: "感情なき明晰", points: 10, text: "テックプリーストのみ。12mv以内の即死アビリティ持ちレギオ・サイバネティカ/ビークルが撃破された時、致命的ダメージを自動適用に変える。" },
-        { name: "大否定者", points: 5, text: "テックプリーストのみ。装備者の射撃武器に対ビークル4+を付与。" },
+        { name: "ネクロメカニック", points: 20, text: "テックプリーストのみ。バトルラウンド1回、12mv以内の味方レギオ・サイバネティカ/帝国技術局・ビークルのセーヴ失敗時にダメージを0にできる。", restrict: "テックプリースト" },
+        { name: "マシンの君主", points: 15, text: "テックプリーストのみ。敵射撃フェイズ開始時1回、12mv以内の敵ビークルに統率テストを課し、失敗なら射撃不可、成功でも自軍へのヒット-1。", restrict: "テックプリースト" },
+        { name: "感情なき明晰", points: 10, text: "テックプリーストのみ。12mv以内の即死アビリティ持ちレギオ・サイバネティカ/ビークルが撃破された時、致命的ダメージを自動適用に変える。", restrict: "テックプリースト" },
+        { name: "大否定者", points: 5, text: "テックプリーストのみ。装備者の射撃武器に対ビークル4+を付与。", restrict: "テックプリースト" },
       ],
       stratagems: [
         { name: "起動命令", cost: 1, phase: "自軍側指揮フェイズ", text: "味方帝国技術局・ビークル・ユニット1個。次の指揮フェイズまで移動+3mv、前進・突撃ロール+1。" },
@@ -118,10 +118,10 @@
       dp: 2,
       rule: "初回バトルラウンド開始時、相手配置ゾーン内の各敵ユニットに遮蔽か踏みとどまりを選ばせD6判定（踏みとどまり3+でD3致命傷／遮蔽なら戦闘ショック、5+で追加でD3致命傷）。2ラウンド目以降の各指揮フェイズ開始時にも同様の追加判定あり。",
       enhancements: [
-        { name: "放射拡散", points: 25, text: "2ラウンド目以降、追加判定の範囲を相手配置ゾーン外6mvまで拡張する。" },
-        { name: "不協和音の呟き", points: 20, text: "装備者が率いるユニットに隠密能力を付与。" },
-        { name: "完全なる根絶者", points: 20, text: "装備者が率いるユニットの射撃武器に連続命中1を付与。" },
-        { name: "生体忌避の宣告", points: 15, text: "装備者の射撃武器に対インファントリー2+と対モンスター4+を付与。" },
+        { name: "放射拡散", points: 25, text: "帝国技術局のみ。2ラウンド目以降、追加判定の範囲を相手配置ゾーン外6mvまで拡張する。", restrict: "帝国技術局" },
+        { name: "不協和音の呟き", points: 20, text: "帝国技術局のみ。装備者が率いるユニットに隠密能力を付与。", restrict: "帝国技術局" },
+        { name: "完全なる根絶者", points: 20, text: "帝国技術局のみ。装備者が率いるユニットの射撃武器に連続命中1を付与。", restrict: "帝国技術局" },
+        { name: "生体忌避の宣告", points: 15, text: "帝国技術局のみ。装備者の射撃武器に対インファントリー2+と対モンスター4+を付与。", restrict: "帝国技術局" },
       ],
       stratagems: [
         { name: "忌まわしき後光", cost: 2, phase: "白兵フェイズ", text: "攻撃対象になった味方帝国技術局ユニット（ビークル除く）。そのフェイズ終了時まで痛みを知らぬものを得る。" },
@@ -138,10 +138,10 @@
       dp: 2,
       rule: "味方スキタリ・インファントリー/スキタリ・マウンテッド/アイアンストライダー・バリスタリ・ユニットに隠密能力を付与する。",
       enhancements: [
-        { name: "カンティック・スロールネット", points: 25, text: "スキタリ・マーシャルのみ。ラウンド開始時、12mv以内の味方スキタリ1個を選択、次のラウンド開始まで迎撃命令と征服命令を両方有効にできる。" },
-        { name: "秘匿の浸透者", points: 15, text: "スキタリのみ。潜入と偵察6\"を得る。" },
-        { name: "覆われし狩人", points: 10, text: "スキタリ・マーシャルのみ。両軍配置直後、味方スキタリ・インファントリーを最大3個まで再配置可能（戦略的予備戦力への配置も可）。" },
-        { name: "戦域アップリンク", points: 25, text: "スキタリのみ。射撃フェイズ後、非接敵なら最大6mv追加移動できる（そのターン突撃不可になる）。" },
+        { name: "カンティック・スロールネット", points: 25, text: "スキタリ・マーシャルのみ。ラウンド開始時、12mv以内の味方スキタリ1個を選択、次のラウンド開始まで迎撃命令と征服命令を両方有効にできる。", restrict: "スキタリ・マーシャル" },
+        { name: "秘匿の浸透者", points: 15, text: "スキタリのみ。潜入と偵察6\"を得る。", restrict: "スキタリ" },
+        { name: "覆われし狩人", points: 10, text: "スキタリ・マーシャルのみ。両軍配置直後、味方スキタリ・インファントリーを最大3個まで再配置可能（戦略的予備戦力への配置も可）。", restrict: "スキタリ・マーシャル" },
+        { name: "戦域アップリンク", points: 25, text: "スキタリのみ。射撃フェイズ後、非接敵なら最大6mv追加移動できる（そのターン突撃不可になる）。", restrict: "スキタリ" },
       ],
       stratagems: [
         { name: "生体的耐久性", cost: 1, phase: "敵軍射撃/白兵フェイズ", text: "攻撃対象になった味方シカリアン/プテラクシィ/シドニアン・ユニット。そのフェイズ終了時まで痛みを知らぬものを得る。" },
@@ -158,10 +158,10 @@
       dp: 2,
       rule: "初回バトルラウンド開始時、味方カルト・メカニクス・ユニットに適用するベネディクションを1つ選択（バトル終了まで）：荘厳なる行進（半径内攻撃の貫通+1）／獰猛なる称賛（突撃後の白兵攻撃力+1）。",
       enhancements: [
-        { name: "メカニクス・ロクム", points: 5, text: "テックプリーストのみ。統率6+になり、バトル中1回、戦闘ショック状態の味方カルト・メカニクス・ユニットの戦闘ショックを解除できる。" },
-        { name: "グノスティカーチの外套", points: 10, text: "テックプリーストのみ。被弾時のダメージを1に固定する。" },
-        { name: "データ祝された自動説教", points: 15, text: "テックプリーストのみ。バトル中1回、指揮フェイズにもう片方のベネディクションも自ユニットに追加で有効にできる。" },
-        { name: "テンポルコピア", points: 20, text: "テックプリーストのみ。装備者のユニットはファイトファーストを得る。" },
+        { name: "メカニクス・ロクム", points: 5, text: "テックプリーストのみ。統率6+になり、バトル中1回、戦闘ショック状態の味方カルト・メカニクス・ユニットの戦闘ショックを解除できる。", restrict: "テックプリースト" },
+        { name: "グノスティカーチの外套", points: 10, text: "テックプリーストのみ。被弾時のダメージを1に固定する。", restrict: "テックプリースト" },
+        { name: "データ祝された自動説教", points: 15, text: "テックプリーストのみ。バトル中1回、指揮フェイズにもう片方のベネディクションも自ユニットに追加で有効にできる。", restrict: "テックプリースト" },
+        { name: "テンポルコピア", points: 20, text: "テックプリーストのみ。装備者のユニットはファイトファーストを得る。", restrict: "テックプリースト" },
       ],
       stratagems: [
         { name: "鋼の魂の詠唱", cost: 1, phase: "任意のフェイズ", text: "致命的ダメージを受けた味方カルト・メカニクス・ユニット。そのフェイズ終了時まで致命的ダメージへの痛みを知らぬもの4+を得る。" },
@@ -178,10 +178,10 @@
       dp: 2,
       rule: "自軍側指揮フェイズに「取得目標マーカー」を1個選択（次の指揮フェイズまで維持）。その範囲内で行う/対象になる攻撃はウーンズロール出目1をリロールできる。",
       enhancements: [
-        { name: "マグス", points: 10, text: "テックプリーストのみ。指揮フェイズ終了時、取得目標マーカー範囲内ならD6判定4+でCP+1。" },
-        { name: "ジェネター", points: 20, text: "テックプリーストのみ。率いるユニットが取得目標マーカー範囲内にいる間、無効セーヴ4+を得る。" },
-        { name: "ロギス", points: 15, text: "テックプリーストのみ。率いるユニットが取得目標マーカー範囲内の敵を攻撃する時、ヒットロール+1。" },
-        { name: "アルチザン", points: 10, text: "テックプリーストのみ。率いるユニットが取得目標マーカー範囲内にいる間、1フェイズ1回、ヒット/ウーンズ/セーヴいずれかの出目を無修正6に変更できる。" },
+        { name: "マグス", points: 10, text: "テックプリーストのみ。指揮フェイズ終了時、取得目標マーカー範囲内ならD6判定4+でCP+1。", restrict: "テックプリースト" },
+        { name: "ジェネター", points: 20, text: "テックプリーストのみ。率いるユニットが取得目標マーカー範囲内にいる間、無効セーヴ4+を得る。", restrict: "テックプリースト" },
+        { name: "ロギス", points: 15, text: "テックプリーストのみ。率いるユニットが取得目標マーカー範囲内の敵を攻撃する時、ヒットロール+1。", restrict: "テックプリースト" },
+        { name: "アルチザン", points: 10, text: "テックプリーストのみ。率いるユニットが取得目標マーカー範囲内にいる間、1フェイズ1回、ヒット/ウーンズ/セーヴいずれかの出目を無修正6に変更できる。", restrict: "テックプリースト" },
       ],
       stratagems: [
         { name: "隠匿された獲得物", cost: 1, phase: "任意のフェイズ", text: "作戦目標範囲内で撃破された味方帝国技術局ユニットが確保していた目標マーカーを、相手が別途確保するまで自軍確保下に維持する。" },
@@ -223,6 +223,24 @@
   if (!library) {
     library = buildSeed();
     W40K.save(W40K.KEYS.DETACHMENT_LIBRARY, library);
+  } else {
+    // Backfill restrict/exclude for enhancements saved before that field existed, matching by
+    // detachment + enhancement name against the seed. Never touches an entry that already has a
+    // restrict value (even one explicitly cleared via bulk edit), so no user edits are lost.
+    let backfilled = false;
+    library.forEach((d) => {
+      const seedDetachment = SEED.find((s) => s.name === d.name);
+      if (!seedDetachment) return;
+      (d.enhancements || []).forEach((e) => {
+        if (e.restrict !== undefined) return;
+        const seedEnh = seedDetachment.enhancements.find((se) => se.name === e.name);
+        if (!seedEnh) return;
+        e.restrict = seedEnh.restrict || "";
+        e.exclude = seedEnh.exclude || "";
+        backfilled = true;
+      });
+    });
+    if (backfilled) W40K.save(W40K.KEYS.DETACHMENT_LIBRARY, library);
   }
 
   let coreStratagems = W40K.load(W40K.KEYS.CORE_STRATAGEM_LIBRARY, null);
@@ -247,19 +265,31 @@
 
   const serializeBasics = (list) => (list || []).map((d) => [d.name, d.forceType, d.dp, d.rule].join(", ")).join("\n");
 
-  // Each line: "デタッチメント名, 強化名, ポイント, 説明"
+  // Each line: "デタッチメント名, 強化名, ポイント, 説明, 対象制限[, 除外]"
+  // 対象制限 is a keyword (or "A/B" for an "either A or B" restriction) matched against the unit's
+  // name/keywords; blank means unrestricted. 除外 is an optional keyword that disqualifies a match.
   const parseEnhancements = (text) =>
     text
       .split("\n")
       .map((line) => line.trim())
       .filter(Boolean)
       .map((line) => {
-        const [detachment, name, points, text2] = line.split(/\t|,/).map((p) => p.trim());
-        return { detachment, name: name || "無名強化", points: Number(points) || 0, text: text2 || "" };
+        const [detachment, name, points, text2, restrictText, exclude] = line.split(/\t|,/).map((p) => p.trim());
+        const restrictParts = (restrictText || "").split("/").map((p) => p.trim()).filter(Boolean);
+        const restrict = restrictParts.length > 1 ? restrictParts : restrictParts[0] || "";
+        return { detachment, name: name || "無名強化", points: Number(points) || 0, text: text2 || "", restrict, exclude: exclude || "" };
       });
 
   const serializeEnhancements = (list) =>
-    (list || []).flatMap((d) => d.enhancements.map((e) => [d.name, e.name, e.points, e.text].join(", ")))
+    (list || [])
+      .flatMap((d) =>
+        d.enhancements.map((e) => {
+          const restrictText = Array.isArray(e.restrict) ? e.restrict.join("/") : e.restrict || "";
+          const fields = [d.name, e.name, e.points, e.text, restrictText];
+          if (e.exclude) fields.push(e.exclude);
+          return fields.join(", ");
+        })
+      )
       .join("\n");
 
   // Each line: "デタッチメント名, 策略名, CP, タイミング, 効果"
@@ -300,7 +330,9 @@
       forceType: b.forceType,
       dp: b.dp,
       rule: b.rule,
-      enhancements: enhancementRows.filter((e) => e.detachment === b.name).map((e) => ({ id: uid(), name: e.name, points: e.points, text: e.text })),
+      enhancements: enhancementRows
+        .filter((e) => e.detachment === b.name)
+        .map((e) => ({ id: uid(), name: e.name, points: e.points, text: e.text, restrict: e.restrict, exclude: e.exclude })),
       stratagems: stratagemRows.filter((s) => s.detachment === b.name).map((s) => ({ id: uid(), name: s.name, cost: s.cost, phase: s.phase, text: s.text })),
     }));
     persist();
