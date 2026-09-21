@@ -153,5 +153,17 @@ W40K.computeUnitBuffs = (roster, unit, options) => {
     }
   }
 
+  // Enhancement equipped on this unit: show its effect text, and apply its modifiers (only a
+  // handful of simple flat stat/weapon buffs have them; most enhancements are situational and are
+  // shown as text only) if it's found in the roster's current detachment master data.
+  if (unit.enhancement && unit.enhancement.name && roster.detachment && roster.detachment.name) {
+    const detachment = W40K.Detachments.getByName(roster.detachment.name);
+    const masterEnh = detachment ? detachment.enhancements.find((e) => e.name === unit.enhancement.name) : null;
+    if (masterEnh) {
+      (masterEnh.modifiers || []).forEach((m) => applyModifier(masterEnh.name, m));
+      if (masterEnh.text) buffNotes.push(`${masterEnh.name}: ${masterEnh.text}`);
+    }
+  }
+
   return { profile, profileChanges, weapons, buffNotes };
 };

@@ -60,8 +60,27 @@
       enhancements: [
         { name: "万算機", points: 25, text: "スキタリ・マーシャルのみ。装備者のユニットに迎撃命令と征服命令が両方有効になる。", restrict: "スキタリ・マーシャル" },
         { name: "戦闘印章増幅器", points: 15, text: "テックプリーストのみ。装備者のユニット内の兵はスキタリのキーワードを得る。", restrict: "テックプリースト" },
-        { name: "ベリコサ級蓄電フィン", points: 25, text: "帝国技術局のみ。装備者のユニットの射撃武器は射程+6mv、攻撃力+1。", restrict: "帝国技術局" },
-        { name: "万機神の激情", points: 10, text: "スキタリ・マーシャルのみ。装備者の白兵戦武器は攻撃回数+2、貫通値とダメージ量+1。", restrict: "スキタリ・マーシャル" },
+        {
+          name: "ベリコサ級蓄電フィン",
+          points: 25,
+          text: "帝国技術局のみ。装備者のユニットの射撃武器は射程+6mv、攻撃力+1。",
+          restrict: "帝国技術局",
+          modifiers: [
+            { kind: "numeric", scope: "ranged", field: "range", value: 6 },
+            { kind: "numeric", scope: "ranged", field: "strength", value: 1 },
+          ],
+        },
+        {
+          name: "万機神の激情",
+          points: 10,
+          text: "スキタリ・マーシャルのみ。装備者の白兵戦武器は攻撃回数+2、貫通値とダメージ量+1。",
+          restrict: "スキタリ・マーシャル",
+          modifiers: [
+            { kind: "numeric", scope: "melee", field: "attacks", value: 2 },
+            { kind: "numeric", scope: "melee", field: "ap", value: -1 },
+            { kind: "numeric", scope: "melee", field: "damage", value: 1 },
+          ],
+        },
       ],
       stratagems: [
         { name: "サーボ駆動突撃", cost: 1, phase: "白兵戦フェイズ", text: "まだ白兵戦を宣言していない味方帝国技術局ユニット1個。そのフェイズ終了時まで白兵戦武器はランスを得る。" },
@@ -80,8 +99,23 @@
       enhancements: [
         { name: "汎預見ダイアドチップ", points: 30, text: "サイバネティカ・データスミスのみ。カステラン・ロボットに合流時、そのユニットは精神強制処理キーワードを得る。", restrict: "サイバネティカ・データスミス" },
         { name: "認知科学的増援", points: 35, text: "帝国技術局のみ（データスミスを除く）。征服命令と迎撃命令が同時に有効になる。", restrict: "帝国技術局", exclude: "データスミス" },
-        { name: "聖別されし砲弾", points: 10, text: "帝国技術局のみ。装備者のユニットの射撃武器は射程+6mv、暴発判定をリロールできる。", restrict: "帝国技術局" },
-        { name: "致命的破壊力、入力完了", points: 15, text: "テックプリースト・ドミヌスまたはマニプルスのみ。白兵戦武器は攻撃回数+3、ダメージ量+1。", restrict: ["テックプリースト・ドミヌス", "テックプリースト・マニプルス"] },
+        {
+          name: "聖別されし砲弾",
+          points: 10,
+          text: "帝国技術局のみ。装備者のユニットの射撃武器は射程+6mv、暴発判定をリロールできる。",
+          restrict: "帝国技術局",
+          modifiers: [{ kind: "numeric", scope: "ranged", field: "range", value: 6 }],
+        },
+        {
+          name: "致命的破壊力、入力完了",
+          points: 15,
+          text: "テックプリースト・ドミヌスまたはマニプルスのみ。白兵戦武器は攻撃回数+3、ダメージ量+1。",
+          restrict: ["テックプリースト・ドミヌス", "テックプリースト・マニプルス"],
+          modifiers: [
+            { kind: "numeric", scope: "melee", field: "attacks", value: 3 },
+            { kind: "numeric", scope: "melee", field: "damage", value: 1 },
+          ],
+        },
       ],
       stratagems: [
         { name: "根絶プロトコル", cost: 1, phase: "自軍側射撃/白兵フェイズ", text: "まだ攻撃を宣言していない味方帝国技術局ユニット1個。攻撃のウーンズロール出目1をリロール（精神強制処理ユニットならヒットロールも）。" },
@@ -101,7 +135,13 @@
         { name: "ネクロメカニック", points: 20, text: "テックプリーストのみ。バトルラウンド1回、12mv以内の味方レギオ・サイバネティカ/帝国技術局・ビークルのセーヴ失敗時にダメージを0にできる。", restrict: "テックプリースト" },
         { name: "マシンの君主", points: 15, text: "テックプリーストのみ。敵射撃フェイズ開始時1回、12mv以内の敵ビークルに統率テストを課し、失敗なら射撃不可、成功でも自軍へのヒット-1。", restrict: "テックプリースト" },
         { name: "感情なき明晰", points: 10, text: "テックプリーストのみ。12mv以内の即死アビリティ持ちレギオ・サイバネティカ/ビークルが撃破された時、致命的ダメージを自動適用に変える。", restrict: "テックプリースト" },
-        { name: "大否定者", points: 5, text: "テックプリーストのみ。装備者の射撃武器に対ビークル4+を付与。", restrict: "テックプリースト" },
+        {
+          name: "大否定者",
+          points: 5,
+          text: "テックプリーストのみ。装備者の射撃武器に対ビークル4+を付与。",
+          restrict: "テックプリースト",
+          modifiers: [{ kind: "keyword", scope: "ranged", value: "対ビークル4+" }],
+        },
       ],
       stratagems: [
         { name: "起動命令", cost: 1, phase: "自軍側指揮フェイズ", text: "味方帝国技術局・ビークル・ユニット1個。次の指揮フェイズまで移動+3mv、前進・突撃ロール+1。" },
@@ -120,8 +160,23 @@
       enhancements: [
         { name: "放射拡散", points: 25, text: "帝国技術局のみ。2ラウンド目以降、追加判定の範囲を相手配置ゾーン外6mvまで拡張する。", restrict: "帝国技術局" },
         { name: "不協和音の呟き", points: 20, text: "帝国技術局のみ。装備者が率いるユニットに隠密能力を付与。", restrict: "帝国技術局" },
-        { name: "完全なる根絶者", points: 20, text: "帝国技術局のみ。装備者が率いるユニットの射撃武器に連続命中1を付与。", restrict: "帝国技術局" },
-        { name: "生体忌避の宣告", points: 15, text: "帝国技術局のみ。装備者の射撃武器に対インファントリー2+と対モンスター4+を付与。", restrict: "帝国技術局" },
+        {
+          name: "完全なる根絶者",
+          points: 20,
+          text: "帝国技術局のみ。装備者が率いるユニットの射撃武器に連続命中1を付与。",
+          restrict: "帝国技術局",
+          modifiers: [{ kind: "keyword", scope: "ranged", value: "連続命中1" }],
+        },
+        {
+          name: "生体忌避の宣告",
+          points: 15,
+          text: "帝国技術局のみ。装備者の射撃武器に対インファントリー2+と対モンスター4+を付与。",
+          restrict: "帝国技術局",
+          modifiers: [
+            { kind: "keyword", scope: "ranged", value: "対インファントリー2+" },
+            { kind: "keyword", scope: "ranged", value: "対モンスター4+" },
+          ],
+        },
       ],
       stratagems: [
         { name: "忌まわしき後光", cost: 2, phase: "白兵フェイズ", text: "攻撃対象になった味方帝国技術局ユニット（ビークル除く）。そのフェイズ終了時まで痛みを知らぬものを得る。" },
@@ -224,20 +279,26 @@
     library = buildSeed();
     W40K.save(W40K.KEYS.DETACHMENT_LIBRARY, library);
   } else {
-    // Backfill restrict/exclude for enhancements saved before that field existed, matching by
-    // detachment + enhancement name against the seed. Never touches an entry that already has a
-    // restrict value (even one explicitly cleared via bulk edit), so no user edits are lost.
+    // Backfill restrict/exclude/modifiers for enhancements saved before those fields existed,
+    // matching by detachment + enhancement name against the seed. Never touches an entry that
+    // already has the field set (even a value explicitly cleared via bulk edit), so no user edits
+    // are lost.
     let backfilled = false;
     library.forEach((d) => {
       const seedDetachment = SEED.find((s) => s.name === d.name);
       if (!seedDetachment) return;
       (d.enhancements || []).forEach((e) => {
-        if (e.restrict !== undefined) return;
         const seedEnh = seedDetachment.enhancements.find((se) => se.name === e.name);
         if (!seedEnh) return;
-        e.restrict = seedEnh.restrict || "";
-        e.exclude = seedEnh.exclude || "";
-        backfilled = true;
+        if (e.restrict === undefined) {
+          e.restrict = seedEnh.restrict || "";
+          e.exclude = seedEnh.exclude || "";
+          backfilled = true;
+        }
+        if (e.modifiers === undefined) {
+          e.modifiers = seedEnh.modifiers || [];
+          backfilled = true;
+        }
       });
     });
     if (backfilled) W40K.save(W40K.KEYS.DETACHMENT_LIBRARY, library);
@@ -332,7 +393,14 @@
       rule: b.rule,
       enhancements: enhancementRows
         .filter((e) => e.detachment === b.name)
-        .map((e) => ({ id: uid(), name: e.name, points: e.points, text: e.text, restrict: e.restrict, exclude: e.exclude })),
+        .map((e) => {
+          // Computed modifiers (for the handful of enhancements that are simple flat stat/weapon
+          // buffs) aren't part of the bulk-text format; reattach them from the seed by name so a
+          // save from this screen doesn't silently drop the auto-calculation.
+          const seedDetachment = SEED.find((s) => s.name === b.name);
+          const seedEnh = seedDetachment && seedDetachment.enhancements.find((se) => se.name === e.name);
+          return { id: uid(), name: e.name, points: e.points, text: e.text, restrict: e.restrict, exclude: e.exclude, modifiers: (seedEnh && seedEnh.modifiers) || [] };
+        }),
       stratagems: stratagemRows.filter((s) => s.detachment === b.name).map((s) => ({ id: uid(), name: s.name, cost: s.cost, phase: s.phase, text: s.text })),
     }));
     persist();
