@@ -322,6 +322,17 @@
       <label>キーワード
         <input id="unit-form-keywords" type="text" placeholder="例: INFANTRY, CHARACTER">
       </label>
+      <div class="keyword-picker">
+        <label>キーワード帳から追加
+          <select id="unit-form-keyword-picker" multiple size="4"></select>
+        </label>
+        <button type="button" id="btn-add-picked-keywords" class="btn btn-ghost btn-sm">＋ 選択したキーワードを追加</button>
+        <label>新規キーワードを登録して追加
+          <input id="unit-form-new-keyword" type="text" placeholder="例: MONSTER">
+        </label>
+        <button type="button" id="btn-add-new-keyword" class="btn btn-ghost btn-sm">＋ 登録して追加</button>
+        <button type="button" id="btn-edit-keywords" class="btn btn-ghost btn-sm">キーワード帳を編集</button>
+      </div>
 
       <div class="form-section-label">その他（任意）</div>
       <label>ワーギア・備考
@@ -445,6 +456,19 @@
     </form>
   </dialog>
 
+  <!-- Keyword library edit modal -->
+  <dialog id="modal-keywords" class="modal">
+    <form id="form-keywords" method="dialog" class="form-grid">
+      <h3>キーワード帳編集</h3>
+      <p class="hint">1行1キーワード。保存するとキーワード帳全体がこの内容で置き換わります（すでにユニットに設定済みのキーワードは変わりません）。</p>
+      <textarea id="keywords-input" rows="10"></textarea>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" data-close-modal>キャンセル</button>
+        <button type="submit" class="btn btn-primary">保存</button>
+      </div>
+    </form>
+  </dialog>
+
   <!-- Rule note form modal -->
   <dialog id="modal-note" class="modal">
     <form id="form-note" method="dialog" class="form-grid">
@@ -470,6 +494,7 @@
 
   <script src="./js/storage.js"></script>
   <script src="./js/armory.js"></script>
+  <script src="./js/keywords.js"></script>
   <script src="./js/roster.js"></script>
   <script src="./js/tracker.js"></script>
   <script src="./js/rules.js"></script>
