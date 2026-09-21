@@ -29,9 +29,13 @@
         if (!confirm("このブラウザに保存されている全データ（ロスター・進行中の対戦・ルールメモ・各種マスタ）をすべて上書きします。よろしいですか？")) return;
         // Write every key straight to localStorage rather than going through each module's own
         // in-memory state/replaceAll - simpler and can't miss a key, but means already-loaded modules
-        // won't see the new data until the page reloads.
+        // won't see the new data until the page reloads. Skip a key whose backed-up value is null
+        // (it had no data yet in the source browser, e.g. no roster ever created there) rather than
+        // writing literal null: W40K.load treats a stored "null" as a real value, not "absent", so
+        // every module that expects an array/object default (roster.js's state.rosters, in
+        // particular) would crash on the next load instead of falling back to its own empty default.
         Object.values(W40K.KEYS).forEach((key) => {
-          if (parsed.data[key] !== undefined) W40K.save(key, parsed.data[key]);
+          if (parsed.data[key] !== undefined && parsed.data[key] !== null) W40K.save(key, parsed.data[key]);
         });
         alert("全データを読み込みました。ページを再読み込みします。");
         location.reload();

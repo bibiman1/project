@@ -107,20 +107,20 @@
         const hasProfile = profile && (profile.move || profile.toughness || profile.save || profile.invSave || profile.wounds || profile.leadership || profile.oc);
         const profileCell = (field) => buffCell(profileChanges[field] ?? profile[field], profileChanges[field] !== undefined ? profile[field] : undefined);
 
-        // Only show the weapon table when a buff actually changed something (numeric shift or an
-        // appended keyword like [ヘヴィ]/[アサルト] from 命令教条) - otherwise it's just clutter,
-        // since baseline weapon stats are already visible on the roster screen.
-        const changedWeapons = weapons.filter((w) => Object.keys(w._changed).length > 0 || (w._addedAbilities || []).length > 0 || w.abilities);
-        const weaponsHtml = changedWeapons.length
+        // Always show the full weapon table (not just buff-changed weapons) - the tracker is the
+        // main screen used during play, so unit stats/weapons should be readable there without also
+        // needing the roster screen open. Buff-changed cells still highlight via buffCell.
+        const weaponsHtml = weapons.length
           ? `<table class="weapon-table">
-              <thead><tr><th>武器</th><th>攻</th><th>技</th><th>攻撃力</th><th>貫通</th><th>ダメ</th></tr></thead>
+              <thead><tr><th>武器</th><th>射程</th><th>攻</th><th>技</th><th>攻撃力</th><th>貫通</th><th>ダメ</th></tr></thead>
               <tbody>
-                ${changedWeapons
+                ${weapons
                   .map(
                     (w) => `<tr>
                       <td>${w.type === "melee" ? "⚔" : "🔫"} ${escapeHtml(w.name)}${w.abilities ? ` <span class="weapon-ability">[${escapeHtml(w.abilities)}]</span>` : ""}${(w._addedAbilities || [])
                         .map((a) => ` <span class="weapon-ability weapon-ability-added">[${escapeHtml(a)}]</span>`)
                         .join("")}</td>
+                      <td>${escapeHtml(w.range)}</td>
                       <td>${buffCell(w._changed.attacks ?? w.attacks, w._changed.attacks !== undefined ? w.attacks : undefined)}</td>
                       <td>${buffCell(w._changed.skill ?? w.skill, w._changed.skill !== undefined ? w.skill : undefined)}</td>
                       <td>${buffCell(w._changed.strength ?? w.strength, w._changed.strength !== undefined ? w.strength : undefined)}</td>
@@ -155,7 +155,7 @@
           : "";
 
         const statsHtml =
-          hasProfile || buffNotes.length || keywordSwapNote || changedWeapons.length
+          hasProfile || buffNotes.length || keywordSwapNote || weapons.length
             ? `<div class="tracker-unit-row-stats">
                 ${
                   hasProfile
