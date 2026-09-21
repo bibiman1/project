@@ -957,10 +957,42 @@
   const groupBuffsModal = document.getElementById("modal-group-buffs");
   const groupBuffsForm = document.getElementById("form-group-buffs");
 
+  // The 項目(field) options depend on 対象範囲(scope), and only matter when 種類(kind) is 数値.
+  const refreshGroupBuffFieldOptions = () => {
+    const scope = document.getElementById("group-buff-quick-scope").value;
+    const kind = document.getElementById("group-buff-quick-kind").value;
+    const fieldSelect = document.getElementById("group-buff-quick-field");
+    const labels = scope === "profile" ? W40K.PROFILE_FIELD_MAP : W40K.WEAPON_FIELD_MAP;
+    fieldSelect.innerHTML = Object.keys(labels)
+      .map((label) => `<option value="${escapeHtml(label)}">${escapeHtml(label)}</option>`)
+      .join("");
+    fieldSelect.disabled = kind !== "numeric";
+  };
+
+  // グループ名 suggestions: groups already used by this roster's units, plus any already registered.
+  const refreshGroupBuffGroupList = (roster) => {
+    const list = document.getElementById("group-buff-quick-group-list");
+    const values = [...new Set([...roster.units.map((u) => u.group).filter(Boolean), ...roster.groupBuffs.map((o) => o.group)])];
+    list.innerHTML = values.map((v) => `<option value="${escapeHtml(v)}"></option>`).join("");
+  };
+
+  // 対象ユニット suggestions: exact unit names in this roster (targetUnit is matched exactly, not by substring).
+  const refreshGroupBuffTargetUnitList = (roster) => {
+    const list = document.getElementById("group-buff-quick-target-unit-list");
+    list.innerHTML = roster.units.map((u) => `<option value="${escapeHtml(u.name)}"></option>`).join("");
+  };
+
+  const refreshGroupBuffQuickAdd = (roster) => {
+    refreshGroupBuffFieldOptions();
+    refreshGroupBuffGroupList(roster);
+    refreshGroupBuffTargetUnitList(roster);
+  };
+
   const openGroupBuffsModal = () => {
     const roster = getById(state.selectedRosterId);
     if (!roster) return;
     document.getElementById("group-buffs-input").value = serializeGroupBuffs(roster.groupBuffs);
+    refreshGroupBuffQuickAdd(roster);
     groupBuffsModal.showModal();
   };
 
@@ -1322,6 +1354,32 @@
       const textarea = document.getElementById("army-buffs-input");
       textarea.value = textarea.value.trim() ? `${textarea.value.trim()}\n${line}` : line;
       document.getElementById("army-buff-quick-value").value = "";
+    });
+
+    document.getElementById("group-buff-quick-scope").addEventListener("change", refreshGroupBuffFieldOptions);
+    document.getElementById("group-buff-quick-kind").addEventListener("change", refreshGroupBuffFieldOptions);
+
+    document.getElementById("btn-add-group-buff-line").addEventListener("click", () => {
+      const group = document.getElementById("group-buff-quick-group").value.trim();
+      const name = document.getElementById("group-buff-quick-name").value.trim();
+      if (!group || !name) {
+        alert("グループ名とオプション名を入力してください。");
+        return;
+      }
+      const targetUnit = document.getElementById("group-buff-quick-target-unit").value.trim();
+      const kind = document.getElementById("group-buff-quick-kind").value;
+      const kindLabel = kind === "keyword" ? "キーワード" : kind === "note" ? "メモ" : "数値";
+      const scope = document.getElementById("group-buff-quick-scope").value;
+      const scopeLabel = scope === "ranged" ? "射撃" : scope === "melee" ? "白兵" : "プロフィール";
+      const field = document.getElementById("group-buff-quick-field").value;
+      const value = document.getElementById("group-buff-quick-value").value.trim();
+      const alwaysOn = document.getElementById("group-buff-quick-always").checked;
+      const fields = [group, name, kindLabel, targetUnit, kind === "note" ? "" : scopeLabel, kind === "numeric" ? field : "", value];
+      if (alwaysOn) fields.push("常時");
+      const line = fields.join(", ");
+      const textarea = document.getElementById("group-buffs-input");
+      textarea.value = textarea.value.trim() ? `${textarea.value.trim()}\n${line}` : line;
+      document.getElementById("group-buff-quick-value").value = "";
     });
 
     document.getElementById("roster-import-input").addEventListener("change", (e) => {
