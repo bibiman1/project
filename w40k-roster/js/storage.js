@@ -95,6 +95,7 @@ W40K.computeUnitBuffs = (roster, unit, options) => {
   const applicableBuffs = (roster.armyBuffs || []).filter((buff) => {
     if (buff.targetType === "unit") return unit.name === buff.targetValue;
     if (buff.targetType === "enhancement") return unit.enhancement && unit.enhancement.name === buff.targetValue;
+    if (buff.targetType === "ability") return (unit.abilities || []).some((a) => (a.name || "").includes(buff.targetValue));
     return (unit.keywords || "").includes(buff.targetValue);
   });
 
@@ -150,6 +151,22 @@ W40K.computeUnitBuffs = (roster, unit, options) => {
       applyModifier("征服命令", { kind: "numeric", scope: "melee", field: "skill", value: -1 });
       applyModifier("征服命令", { kind: "keyword", scope: "melee", value: "アサルト" });
       buffNotes.push("征服命令: 白兵武器の技能+1、[アサルト]を得る");
+    }
+  }
+
+  // Detachment-wide rule: some detachment rules are simple flat stat buffs for any unit matching a
+  // keyword (e.g. コホート・サイバネティカ's "レギオ・サイバネティカ units get +2 move"); auto-apply
+  // those instead of requiring the user to recreate them by hand as an army buff. Most detachment
+  // rules are situational and have no `ruleModifiers`, so they stay text-only (shown at the roster
+  // header). `requiresNotBattleShock` modifiers only apply outside the tracker's battle-shock state.
+  if (roster.detachment && roster.detachment.name) {
+    const detachment = W40K.Detachments.getByName(roster.detachment.name);
+    if (detachment && (detachment.ruleModifiers || []).length && (unit.keywords || "").includes(detachment.ruleRestrict || "")) {
+      const battleShocked = !!(options && options.battleShock);
+      detachment.ruleModifiers.forEach((m) => {
+        if (m.requiresNotBattleShock && battleShocked) return;
+        applyModifier(detachment.name, m);
+      });
     }
   }
 
