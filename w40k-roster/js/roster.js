@@ -265,36 +265,6 @@
     String(str ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
   // Each line: "種別(射撃/白兵), 武器名, 射程, 攻撃回数, 技能, 攻撃力, 貫通値, ダメージ[, アビリティ]"
-  const parseWeapons = (text) =>
-    text
-      .split("\n")
-      .map((line) => line.trim())
-      .filter((line) => line.length > 0)
-      .map((line) => {
-        const [type, name, range, attacks, skill, strength, ap, damage, abilities] = line.split(/\t|,/).map((p) => p.trim());
-        return {
-          id: W40K.uid(),
-          type: type === "白兵" ? "melee" : "ranged",
-          name: name || "無名武器",
-          range: range || "",
-          attacks: attacks || "",
-          skill: skill || "",
-          strength: strength || "",
-          ap: ap || "",
-          damage: damage || "",
-          abilities: abilities || "",
-        };
-      });
-
-  const serializeWeapons = (weapons) =>
-    (weapons || [])
-      .map((w) => {
-        const fields = [w.type === "melee" ? "白兵" : "射撃", w.name, w.range, w.attacks, w.skill, w.strength, w.ap, w.damage];
-        if (w.abilities) fields.push(w.abilities);
-        return fields.join(", ");
-      })
-      .join("\n");
-
   // Each line: "アビリティ名: 説明"（説明は省略可）
   const ABILITY_CATEGORY_TAGS = { core: "コア", faction: "陣営", detachment: "デタッチメント" };
 
@@ -446,7 +416,7 @@
     u.profile?.wounds || "",
     u.profile?.leadership || "",
     u.profile?.oc || "",
-    serializeWeapons(u.weapons),
+    W40K.serializeWeapons(u.weapons),
     serializeAbilities(u.abilities),
     u.group || "",
     u.isWarlord ? "TRUE" : "",
@@ -473,7 +443,7 @@
         leadership: leadership || "",
         oc: oc || "",
       },
-      weapons: parseWeapons(weaponsText || ""),
+      weapons: W40K.parseWeapons(weaponsText || ""),
       abilities: parseAbilities(abilitiesText || ""),
     };
   };
@@ -859,9 +829,22 @@
     document.getElementById("unit-form-wounds").value = unit?.profile?.wounds || "";
     document.getElementById("unit-form-leadership").value = unit?.profile?.leadership || "";
     document.getElementById("unit-form-oc").value = unit?.profile?.oc || "";
-    document.getElementById("unit-form-weapons").value = serializeWeapons(unit?.weapons);
+    document.getElementById("unit-form-weapons").value = W40K.serializeWeapons(unit?.weapons);
     document.getElementById("unit-form-abilities").value = serializeAbilities(unit?.abilities);
+    refreshWeaponPicker();
     unitModal.showModal();
+  };
+
+  const refreshWeaponPicker = () => {
+    const picker = document.getElementById("unit-form-weapon-picker");
+    const library = W40K.Armory.getAll();
+    if (library.length === 0) {
+      picker.innerHTML = '<option value="" disabled>武器庫が空です（武器庫タブから登録）</option>';
+      return;
+    }
+    picker.innerHTML = library
+      .map((w) => `<option value="${w.id}">${w.type === "melee" ? "⚔" : "🔫"} ${escapeHtml(w.name)} (${escapeHtml(w.range || "白兵")})</option>`)
+      .join("");
   };
 
   unitForm.addEventListener("submit", (e) => {
@@ -886,7 +869,7 @@
         leadership: document.getElementById("unit-form-leadership").value.trim(),
         oc: document.getElementById("unit-form-oc").value.trim(),
       },
-      weapons: parseWeapons(document.getElementById("unit-form-weapons").value),
+      weapons: W40K.parseWeapons(document.getElementById("unit-form-weapons").value),
       abilities: parseAbilities(document.getElementById("unit-form-abilities").value),
     };
     if (state.editingUnitId) {
@@ -953,6 +936,20 @@
     document.getElementById("btn-export-units-csv").addEventListener("click", () => exportUnitsCsv(state.selectedRosterId));
     document.getElementById("btn-new-unit").addEventListener("click", () => openUnitModal());
     document.getElementById("btn-bulk-units").addEventListener("click", () => bulkUnitsModal.showModal());
+
+    document.getElementById("btn-add-picked-weapons").addEventListener("click", () => {
+      const picker = document.getElementById("unit-form-weapon-picker");
+      const library = W40K.Armory.getAll();
+      const picked = Array.from(picker.selectedOptions)
+        .map((opt) => library.find((w) => w.id === opt.value))
+        .filter(Boolean);
+      if (picked.length === 0) return;
+      const textarea = document.getElementById("unit-form-weapons");
+      const existing = textarea.value.trim();
+      const addedLines = W40K.serializeWeapons(picked);
+      textarea.value = existing ? `${existing}\n${addedLines}` : addedLines;
+      Array.from(picker.options).forEach((opt) => (opt.selected = false));
+    });
 
     document.getElementById("units-csv-import-input").addEventListener("change", (e) => {
       const file = e.target.files[0];
