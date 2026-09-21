@@ -962,7 +962,10 @@
   const groupBuffsModal = document.getElementById("modal-group-buffs");
   const groupBuffsForm = document.getElementById("form-group-buffs");
 
-  // The 項目(field) options depend on 対象範囲(scope), and only matter when 種類(kind) is 数値.
+  // The 項目(field) options depend on 対象範囲(scope), and only matter when 種類(kind) is 数値. The
+  // 値(value) input itself switches to a real number input for 数値, instead of free text - a hand-typed
+  // number (e.g. a full-width "２" left behind by IME conversion) has no validation and silently
+  // computes as 0, whereas a number input can't produce that in the first place.
   const refreshGroupBuffFieldOptions = () => {
     const scope = document.getElementById("group-buff-quick-scope").value;
     const kind = document.getElementById("group-buff-quick-kind").value;
@@ -972,6 +975,10 @@
       .map((label) => `<option value="${escapeHtml(label)}">${escapeHtml(label)}</option>`)
       .join("");
     fieldSelect.disabled = kind !== "numeric";
+    const valueInput = document.getElementById("group-buff-quick-value");
+    valueInput.type = kind === "numeric" ? "number" : "text";
+    valueInput.step = kind === "numeric" ? "1" : "";
+    valueInput.placeholder = kind === "numeric" ? "例: 2（マイナスも可）" : kind === "keyword" ? "追加するキーワード" : "メモの文章";
   };
 
   // グループ名 suggestions: groups already used by this roster's units, plus any already registered.
@@ -1014,7 +1021,9 @@
   const armyBuffsModal = document.getElementById("modal-army-buffs");
   const armyBuffsForm = document.getElementById("form-army-buffs");
 
-  // The 項目(field) options depend on 対象範囲(scope), and only matter when 種類(kind) is 数値.
+  // The 項目(field) options depend on 対象範囲(scope), and only matter when 種類(kind) is 数値. The
+  // 値(value) input itself switches to a real number input for 数値 - see refreshGroupBuffFieldOptions
+  // for why (a hand-typed number has no validation; a number input can't produce a bad value).
   const refreshArmyBuffFieldOptions = () => {
     const scope = document.getElementById("army-buff-quick-scope").value;
     const kind = document.getElementById("army-buff-quick-kind").value;
@@ -1024,6 +1033,10 @@
       .map((label) => `<option value="${escapeHtml(label)}">${escapeHtml(label)}</option>`)
       .join("");
     fieldSelect.disabled = kind !== "numeric";
+    const valueInput = document.getElementById("army-buff-quick-value");
+    valueInput.type = kind === "numeric" ? "number" : "text";
+    valueInput.step = kind === "numeric" ? "1" : "";
+    valueInput.placeholder = kind === "numeric" ? "例: 2（マイナスも可）" : kind === "keyword" ? "追加するキーワード" : "メモの文章";
   };
 
   // The 対象値(target value) suggestion list depends on 対象タイプ(target type): keywords from the
