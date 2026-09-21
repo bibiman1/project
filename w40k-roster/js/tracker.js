@@ -103,7 +103,11 @@
         const row = document.createElement("article");
         row.className = "tracker-unit-row" + (status.destroyed ? " is-destroyed" : "");
 
-        const { profile, profileChanges, weapons, buffNotes } = W40K.computeUnitBuffs(roster, unit, { doctrinaImperative: game.doctrinaImperative, battleShock: status.battleShock });
+        const { profile, profileChanges, weapons, buffNotes } = W40K.computeUnitBuffs(roster, unit, {
+          doctrinaImperative: game.doctrinaImperative,
+          battleShock: status.battleShock,
+          groupBuffSelections: game.groupBuffSelections,
+        });
         const hasProfile = profile && (profile.move || profile.toughness || profile.save || profile.invSave || profile.wounds || profile.leadership || profile.oc);
         const profileCell = (field) => buffCell(profileChanges[field] ?? profile[field], profileChanges[field] !== undefined ? profile[field] : undefined);
 

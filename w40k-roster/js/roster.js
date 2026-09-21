@@ -346,7 +346,7 @@
         const kind = kindLabel === "キーワード" ? "keyword" : kindLabel === "メモ" ? "note" : "numeric";
         const scope = scopeLabel === "射撃" ? "ranged" : scopeLabel === "白兵" ? "melee" : "profile";
         const field = scope === "profile" ? W40K.PROFILE_FIELD_MAP[fieldLabel] || fieldLabel : W40K.WEAPON_FIELD_MAP[fieldLabel] || fieldLabel;
-        return { id: W40K.uid(), targetUnit: targetUnit || "", kind, scope, field, value: value || "" };
+        return { id: W40K.uid(), targetUnit: targetUnit || "", kind, scope, field, value: W40K.toHalfWidthDigits(value || "") };
       });
 
   const serializeStratagemModifiers = (modifiers) =>
@@ -375,7 +375,7 @@
         const kind = kindLabel === "キーワード" ? "keyword" : kindLabel === "メモ" ? "note" : "numeric";
         const scope = scopeLabel === "射撃" ? "ranged" : scopeLabel === "白兵" ? "melee" : "profile";
         const field = scope === "profile" ? W40K.PROFILE_FIELD_MAP[fieldLabel] || fieldLabel : W40K.WEAPON_FIELD_MAP[fieldLabel] || fieldLabel;
-        optionsByKey.get(key).modifiers.push({ id: W40K.uid(), kind, targetUnit: targetUnit || "", scope, field, value: value || "" });
+        optionsByKey.get(key).modifiers.push({ id: W40K.uid(), kind, targetUnit: targetUnit || "", scope, field, value: W40K.toHalfWidthDigits(value || "") });
       });
     return Array.from(optionsByKey.values());
   };
@@ -441,7 +441,7 @@
         const kind = kindLabel === "キーワード" ? "keyword" : kindLabel === "メモ" ? "note" : "numeric";
         const scope = scopeLabel === "射撃" ? "ranged" : scopeLabel === "白兵" ? "melee" : "profile";
         const field = scope === "profile" ? W40K.PROFILE_FIELD_MAP[fieldLabel] || fieldLabel : W40K.WEAPON_FIELD_MAP[fieldLabel] || fieldLabel;
-        buffsByName.get(name).modifiers.push({ id: W40K.uid(), kind, scope, field, value: value || "" });
+        buffsByName.get(name).modifiers.push({ id: W40K.uid(), kind, scope, field, value: W40K.toHalfWidthDigits(value || "") });
       });
     return Array.from(buffsByName.values());
   };

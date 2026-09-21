@@ -39,9 +39,18 @@ W40K.PROFILE_FIELD_LABELS = Object.fromEntries(Object.entries(W40K.PROFILE_FIELD
 W40K.WEAPON_FIELD_MAP = { "攻撃回数": "attacks", "技能": "skill", "攻撃力": "strength", "貫通": "ap", "ダメージ": "damage" };
 W40K.WEAPON_FIELD_LABELS = Object.fromEntries(Object.entries(W40K.WEAPON_FIELD_MAP).map(([label, key]) => [key, label]));
 
+// Converts full-width digits/plus/minus (e.g. "２", "－") to half-width ("2", "-"), since Japanese
+// IME auto-conversion easily leaves these in a number field and Number("２") is NaN, not 2 - silently
+// zeroing out any buff/stat delta typed that way. Safe to run on any short numeric-ish value string.
+W40K.toHalfWidthDigits = (str) =>
+  String(str ?? "")
+    .replace(/[０-９]/g, (c) => String.fromCharCode(c.charCodeAt(0) - 0xfee0))
+    .replace(/＋/g, "+")
+    .replace(/－/g, "-");
+
 // Adds `delta` to the leading integer of a stat string (e.g. "6\"" -> "7\"", "3+" -> "2+"), keeping any suffix.
 W40K.applyStatDelta = (str, delta) => {
-  const match = String(str || "").match(/^(-?\d+)(.*)$/);
+  const match = W40K.toHalfWidthDigits(str || "").match(/^(-?\d+)(.*)$/);
   if (!match) return str;
   return `${Number(match[1]) + delta}${match[2] || ""}`;
 };
@@ -141,6 +150,17 @@ W40K.computeUnitBuffs = (roster, unit, options) => {
   };
 
   applicableBuffs.forEach((buff) => buff.modifiers.forEach((m) => applyModifier(buff.name, m)));
+
+  // 合流バフ (group buffs): options scoped to units sharing a `group` (e.g. a Datasmith's squad),
+  // each with its own per-modifier targetUnit. An always-on option always applies; any other option
+  // only applies once selected for that group in the tracker (options.groupBuffSelections), so this
+  // naturally does nothing extra on the roster screen (which calls computeUnitBuffs with no options).
+  if (unit.group) {
+    (roster.groupBuffs || [])
+      .filter((opt) => opt.group === unit.group)
+      .filter((opt) => opt.alwaysOn || (options && options.groupBuffSelections && options.groupBuffSelections[opt.group] === opt.id))
+      .forEach((opt) => opt.modifiers.filter((m) => m.targetUnit === unit.name).forEach((m) => applyModifier(opt.name, m)));
+  }
 
   // 命令教条 (Doctrina Imperatives): an army rule, chosen per battle round, active for every unit in a
   // roster that has this army rule set (roster.armyRule) - not something that needs tagging per unit.
