@@ -131,6 +131,11 @@
       forceType: "迎撃戦",
       dp: 2,
       rule: "自軍側レギオ・サイバネティカ・ユニットは移動+2mv。戦闘ショック状態でなければ確保+1。",
+      ruleRestrict: "レギオ・サイバネティカ",
+      ruleModifiers: [
+        { kind: "numeric", scope: "profile", field: "move", value: 2 },
+        { kind: "numeric", scope: "profile", field: "oc", value: 1, requiresNotBattleShock: true },
+      ],
       enhancements: [
         { name: "ネクロメカニック", points: 20, text: "テックプリーストのみ。バトルラウンド1回、12mv以内の味方レギオ・サイバネティカ/帝国技術局・ビークルのセーヴ失敗時にダメージを0にできる。", restrict: "テックプリースト" },
         { name: "マシンの君主", points: 15, text: "テックプリーストのみ。敵射撃フェイズ開始時1回、12mv以内の敵ビークルに統率テストを課し、失敗なら射撃不可、成功でも自軍へのヒット-1。", restrict: "テックプリースト" },
@@ -270,6 +275,8 @@
       forceType: d.forceType,
       dp: d.dp,
       rule: d.rule,
+      ruleRestrict: d.ruleRestrict || "",
+      ruleModifiers: d.ruleModifiers || [],
       enhancements: d.enhancements.map((e) => ({ id: uid(), ...e })),
       stratagems: d.stratagems.map((s) => ({ id: uid(), ...s })),
     }));
@@ -287,6 +294,11 @@
     library.forEach((d) => {
       const seedDetachment = SEED.find((s) => s.name === d.name);
       if (!seedDetachment) return;
+      if (d.ruleModifiers === undefined) {
+        d.ruleRestrict = seedDetachment.ruleRestrict || "";
+        d.ruleModifiers = seedDetachment.ruleModifiers || [];
+        backfilled = true;
+      }
       (d.enhancements || []).forEach((e) => {
         const seedEnh = seedDetachment.enhancements.find((se) => se.name === e.name);
         if (!seedEnh) return;
@@ -385,24 +397,31 @@
     const basics = parseBasics(basicsText);
     const enhancementRows = parseEnhancements(enhancementsText);
     const stratagemRows = parseStratagems(stratagemsText);
-    library = basics.map((b) => ({
-      id: uid(),
-      name: b.name,
-      forceType: b.forceType,
-      dp: b.dp,
-      rule: b.rule,
-      enhancements: enhancementRows
-        .filter((e) => e.detachment === b.name)
-        .map((e) => {
-          // Computed modifiers (for the handful of enhancements that are simple flat stat/weapon
-          // buffs) aren't part of the bulk-text format; reattach them from the seed by name so a
-          // save from this screen doesn't silently drop the auto-calculation.
-          const seedDetachment = SEED.find((s) => s.name === b.name);
-          const seedEnh = seedDetachment && seedDetachment.enhancements.find((se) => se.name === e.name);
-          return { id: uid(), name: e.name, points: e.points, text: e.text, restrict: e.restrict, exclude: e.exclude, modifiers: (seedEnh && seedEnh.modifiers) || [] };
-        }),
-      stratagems: stratagemRows.filter((s) => s.detachment === b.name).map((s) => ({ id: uid(), name: s.name, cost: s.cost, phase: s.phase, text: s.text })),
-    }));
+    library = basics.map((b) => {
+      // Computed rule modifiers (for detachment rules that are simple flat keyword-conditional stat
+      // buffs) aren't part of the bulk-text format; reattach them from the seed by name so a save
+      // from this screen doesn't silently drop the auto-calculation.
+      const seedDetachment = SEED.find((s) => s.name === b.name);
+      return {
+        id: uid(),
+        name: b.name,
+        forceType: b.forceType,
+        dp: b.dp,
+        rule: b.rule,
+        ruleRestrict: (seedDetachment && seedDetachment.ruleRestrict) || "",
+        ruleModifiers: (seedDetachment && seedDetachment.ruleModifiers) || [],
+        enhancements: enhancementRows
+          .filter((e) => e.detachment === b.name)
+          .map((e) => {
+            // Computed modifiers (for the handful of enhancements that are simple flat stat/weapon
+            // buffs) aren't part of the bulk-text format; reattach them from the seed by name so a
+            // save from this screen doesn't silently drop the auto-calculation.
+            const seedEnh = seedDetachment && seedDetachment.enhancements.find((se) => se.name === e.name);
+            return { id: uid(), name: e.name, points: e.points, text: e.text, restrict: e.restrict, exclude: e.exclude, modifiers: (seedEnh && seedEnh.modifiers) || [] };
+          }),
+        stratagems: stratagemRows.filter((s) => s.detachment === b.name).map((s) => ({ id: uid(), name: s.name, cost: s.cost, phase: s.phase, text: s.text })),
+      };
+    });
     persist();
     coreStratagems = parseCoreStratagems(coreStratagemsText);
     persistCore();

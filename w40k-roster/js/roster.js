@@ -403,7 +403,7 @@
     return `${escapeHtml(m.targetUnit)}の${scopeLabel}${fieldLabel || m.field}${sign}${escapeHtml(m.value)}`;
   };
 
-  const TARGET_TYPE_TAGS = { keyword: "キーワード", unit: "ユニット", enhancement: "強化" };
+  const TARGET_TYPE_TAGS = { keyword: "キーワード", unit: "ユニット", enhancement: "強化", ability: "アビリティ" };
 
   // Same as summarizeModifier but without a per-modifier target prefix (the buff's target is shown once, via a tag).
   const summarizeArmyModifier = (m) => {
@@ -418,7 +418,7 @@
     return `${scopeLabel}${fieldLabel || m.field}${sign}${escapeHtml(m.value)}`;
   };
 
-  // Each line: "バフ名, 対象タイプ(キーワード/ユニット/強化), 対象値, 種類(数値/キーワード/メモ), 対象範囲(プロフィール/射撃/白兵), 項目, 値"
+  // Each line: "バフ名, 対象タイプ(キーワード/ユニット/強化/アビリティ), 対象値, 種類(数値/キーワード/メモ), 対象範囲(プロフィール/射撃/白兵), 項目, 値"
   const parseArmyBuffs = (text) => {
     const buffsByName = new Map();
     text
@@ -429,7 +429,8 @@
         const [name, targetTypeLabel, targetValue, kindLabel, scopeLabel, fieldLabel, value] = line.split(/\t|,/).map((p) => p.trim());
         if (!name) return;
         if (!buffsByName.has(name)) {
-          const targetType = targetTypeLabel === "ユニット" ? "unit" : targetTypeLabel === "強化" ? "enhancement" : "keyword";
+          const targetType =
+            targetTypeLabel === "ユニット" ? "unit" : targetTypeLabel === "強化" ? "enhancement" : targetTypeLabel === "アビリティ" ? "ability" : "keyword";
           buffsByName.set(name, { id: W40K.uid(), name, targetType, targetValue: targetValue || "", modifiers: [] });
         }
         const kind = kindLabel === "キーワード" ? "keyword" : kindLabel === "メモ" ? "note" : "numeric";
@@ -999,6 +1000,8 @@
     } else if (targetType === "enhancement") {
       const detachment = W40K.Detachments.getByName(roster.detachment.name);
       values = detachment ? detachment.enhancements.map((e) => e.name) : [];
+    } else if (targetType === "ability") {
+      values = [...new Set(roster.units.flatMap((u) => (u.abilities || []).map((a) => a.name)))];
     } else {
       values = W40K.Keywords.getAll();
     }
