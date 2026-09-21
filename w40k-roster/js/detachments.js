@@ -194,6 +194,20 @@
     },
   ];
 
+  // Core Stratagems (基本策略): usable by any army regardless of detachment. From the Core Rules book, §15.
+  const CORE_STRATAGEM_SEED = [
+    { name: "リロール命令", cost: 1, phase: "どのフェイズでも", text: "味方ユニットまたは兵1体を対象に、以下のロールのいずれか1つを直後にリロールする：全力移動ロール／突撃ロール／ダメージ量判定ロール／危機ロール／ヒットロール／セーブロール／ウーンズロール／いずれかの武器で行う攻撃回数を決めるロール（2個以上のダイスを同時にロールしている場合は1個を選んでリロール、突撃ロールの場合は全てのダイスをリロール）。" },
+    { name: "英雄的挑戦", cost: 1, phase: "白兵フェイズ中、味方キャラクターが白兵を宣言した直後", text: "そのキャラクター・ユニット内の兵1体を選択。そのフェイズ終了時まで、その兵の白兵戦武器は精密攻撃アビリティを持つ。" },
+    { name: "狂気の奮戦", cost: 1, phase: "自軍側指揮フェイズの戦闘ショックステップ中", text: "戦闘ショックロールを行う味方ユニット1個を対象に、そのロールを自動成功にする（バトル中1回のみ使用可）。" },
+    { name: "爆発物使用", cost: 1, phase: "自軍側射撃フェイズ", text: "全力移動しておらず射撃可能な非接敵の味方爆発物/グレネード・ユニット1個を対象。その兵1体を選び、8mv以内の視認可能な非接敵の敵ユニット1個を選択。D6を6個ロールし、出目4+が出るたびその敵に致命的ダメージ1。" },
+    { name: "激突", cost: 1, phase: "自軍側突撃フェイズ、味方モンスター/ビークルの突撃移動終了直後", text: "接敵中の敵ユニット1個と、それに接敵中の自軍の兵1体を選択。その兵の耐久と同じ数のD6をロールし、出目1で自軍側が1ポイント、出目5+で敵側が1ポイントの致命的ダメージ（1体につき最大6ポイントまで）。" },
+    { name: "即応投入", cost: 1, phase: "敵軍側移動フェイズ終了時", text: "戦略的予備戦力の味方ユニット1個（航空機を除く）を対象に、突入移動を行わせる（第1バトルラウンドは使用不可）。" },
+    { name: "警戒射撃", cost: 1, phase: "敵軍側移動フェイズ終了時", text: "非接敵の味方ユニット1個（巨大兵器を除く）を対象に、即応射撃（射撃フェイズ以外でも通常の射撃手順で射撃、ただし修正済みヒットロール出目6のみヒット成立・リロール不可）を行わせる。" },
+    { name: "煙幕", cost: 1, phase: "敵軍側射撃フェイズ開始時", text: "味方煙幕ユニット1個を対象に、そのフェイズ終了時まで、そのユニットまたはそのユニットの兵によって完全視認を妨げられている敵からの攻撃に遮蔽物ボーナスを与える（第1バトルラウンドは使用不可）。" },
+    { name: "英雄的介入", cost: 1, phase: "敵軍側突撃フェイズ開始時", text: "12mv以内に敵ユニットがいる非接敵の味方ユニット1個（ビークルはキャラクター/ウォーカーのみ）を対象に突撃を解決させる。前進防衛（このフェイズに突撃移動済みの範囲内の敵のみ選択可）か、+1CPで攻勢突進（突撃ロール6超えは6扱い、6mv以内かつ範囲内ならどの敵も選択可）を選ぶ。" },
+    { name: "反攻戦術", cost: 2, phase: "敵軍側白兵フェイズ中、敵ユニットの攻撃解決直後", text: "白兵可能な味方ユニット1個を対象に、そのフェイズ終了時まで先手アビリティを付与する（自軍は次にそのユニットで白兵を宣言しなければならない）。" },
+  ];
+
   const buildSeed = () =>
     SEED.map((d) => ({
       id: uid(),
@@ -211,7 +225,14 @@
     W40K.save(W40K.KEYS.DETACHMENT_LIBRARY, library);
   }
 
+  let coreStratagems = W40K.load(W40K.KEYS.CORE_STRATAGEM_LIBRARY, null);
+  if (!coreStratagems) {
+    coreStratagems = CORE_STRATAGEM_SEED.map((s) => ({ id: uid(), ...s }));
+    W40K.save(W40K.KEYS.CORE_STRATAGEM_LIBRARY, coreStratagems);
+  }
+
   const persist = () => W40K.save(W40K.KEYS.DETACHMENT_LIBRARY, library);
+  const persistCore = () => W40K.save(W40K.KEYS.CORE_STRATAGEM_LIBRARY, coreStratagems);
 
   // Each line: "デタッチメント名, 陣形タイプ, DP, ルール概要"
   const parseBasics = (text) =>
@@ -256,7 +277,20 @@
     (list || []).flatMap((d) => d.stratagems.map((s) => [d.name, s.name, s.cost, s.phase, s.text].join(", ")))
       .join("\n");
 
-  const rebuildFromEditedText = (basicsText, enhancementsText, stratagemsText) => {
+  // Each line: "策略名, CP, タイミング, 効果" (no detachment column - these apply to every army).
+  const parseCoreStratagems = (text) =>
+    text
+      .split("\n")
+      .map((line) => line.trim())
+      .filter(Boolean)
+      .map((line) => {
+        const [name, cost, phase, text2] = line.split(/\t|,/).map((p) => p.trim());
+        return { id: uid(), name: name || "無名策略", cost: Number(cost) || 1, phase: phase || "", text: text2 || "" };
+      });
+
+  const serializeCoreStratagems = (list) => (list || []).map((s) => [s.name, s.cost, s.phase, s.text].join(", ")).join("\n");
+
+  const rebuildFromEditedText = (basicsText, enhancementsText, stratagemsText, coreStratagemsText) => {
     const basics = parseBasics(basicsText);
     const enhancementRows = parseEnhancements(enhancementsText);
     const stratagemRows = parseStratagems(stratagemsText);
@@ -270,12 +304,15 @@
       stratagems: stratagemRows.filter((s) => s.detachment === b.name).map((s) => ({ id: uid(), name: s.name, cost: s.cost, phase: s.phase, text: s.text })),
     }));
     persist();
+    coreStratagems = parseCoreStratagems(coreStratagemsText);
+    persistCore();
   };
 
   const openEditModal = () => {
     document.getElementById("detachments-basics-input").value = serializeBasics(library);
     document.getElementById("detachments-enhancements-input").value = serializeEnhancements(library);
     document.getElementById("detachments-stratagems-input").value = serializeStratagems(library);
+    document.getElementById("detachments-core-stratagems-input").value = serializeCoreStratagems(coreStratagems);
     document.getElementById("modal-detachments").showModal();
   };
 
@@ -286,12 +323,18 @@
       rebuildFromEditedText(
         document.getElementById("detachments-basics-input").value,
         document.getElementById("detachments-enhancements-input").value,
-        document.getElementById("detachments-stratagems-input").value
+        document.getElementById("detachments-stratagems-input").value,
+        document.getElementById("detachments-core-stratagems-input").value
       );
       document.getElementById("modal-detachments").close();
       document.dispatchEvent(new CustomEvent("w40k:detachments-changed"));
     });
   };
 
-  W40K.Detachments = { init, getAll: () => library, getByName: (name) => library.find((d) => d.name === name) };
+  W40K.Detachments = {
+    init,
+    getAll: () => library,
+    getByName: (name) => library.find((d) => d.name === name),
+    getCoreStratagems: () => coreStratagems,
+  };
 })();

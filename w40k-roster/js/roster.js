@@ -97,7 +97,7 @@
 
     els.stratagemList.innerHTML = "";
     if (roster.stratagems.length === 0) {
-      els.stratagemList.innerHTML = '<p class="empty-state">ストラタジムが未登録です。</p>';
+      els.stratagemList.innerHTML = '<p class="empty-state">策略が未登録です。</p>';
     } else {
       roster.stratagems.forEach((strat) => {
         const row = document.createElement("article");
@@ -602,7 +602,7 @@
   const deleteStratagem = (stratagemId) => {
     const roster = getById(state.selectedRosterId);
     if (!roster) return;
-    if (!confirm("このストラタジムを削除しますか？")) return;
+    if (!confirm("この策略を削除しますか？")) return;
     roster.stratagems = roster.stratagems.filter((s) => s.id !== stratagemId);
     persist();
     render();
@@ -716,7 +716,7 @@
           stratagems: Array.isArray(data.stratagems)
             ? data.stratagems.map((s) => ({
                 id: W40K.uid(),
-                name: s.name || "無名ストラタジム",
+                name: s.name || "無名策略",
                 cost: Number(s.cost) || 0,
                 phase: s.phase || "",
                 text: s.text || "",
@@ -905,11 +905,14 @@
     const picker = document.getElementById("stratagem-master-picker");
     const detachment = W40K.Detachments.getByName(roster.detachment.name);
     const stratagems = detachment ? detachment.stratagems : [];
+    const coreStratagems = W40K.Detachments.getCoreStratagems();
+    const optionHtml = (s) => `<option value="${s.id}">${escapeHtml(s.name)}（CP${s.cost}）</option>`;
     picker.innerHTML =
       '<option value="">選択しない（手入力）</option>' +
-      (stratagems.length === 0
-        ? '<option value="" disabled>現在のデタッチメント名と一致するマスタがありません</option>'
-        : stratagems.map((s) => `<option value="${s.id}">${escapeHtml(s.name)}（CP${s.cost}）</option>`).join(""));
+      (coreStratagems.length ? `<optgroup label="コア策略（共通）">${coreStratagems.map(optionHtml).join("")}</optgroup>` : "") +
+      (stratagems.length
+        ? `<optgroup label="デタッチメント策略">${stratagems.map(optionHtml).join("")}</optgroup>`
+        : '<option value="" disabled>現在のデタッチメント名と一致するマスタがありません</option>');
     picker.value = "";
   };
 
@@ -918,7 +921,7 @@
     if (!roster) return;
     editingStratagemId = stratagemId || null;
     const strat = stratagemId ? roster.stratagems.find((s) => s.id === stratagemId) : null;
-    document.getElementById("modal-stratagem-title").textContent = strat ? "ストラタジム編集" : "ストラタジム追加";
+    document.getElementById("modal-stratagem-title").textContent = strat ? "策略編集" : "策略追加";
     document.getElementById("stratagem-form-name").value = strat?.name || "";
     document.getElementById("stratagem-form-cost").value = strat?.cost ?? 1;
     document.getElementById("stratagem-form-phase").value = strat?.phase || "";
@@ -933,7 +936,7 @@
     const roster = getById(state.selectedRosterId);
     if (!roster) return;
     const data = {
-      name: document.getElementById("stratagem-form-name").value.trim() || "無名ストラタジム",
+      name: document.getElementById("stratagem-form-name").value.trim() || "無名策略",
       cost: Number(document.getElementById("stratagem-form-cost").value) || 0,
       phase: document.getElementById("stratagem-form-phase").value.trim(),
       text: document.getElementById("stratagem-form-text").value.trim(),
@@ -1203,7 +1206,9 @@
     document.getElementById("stratagem-master-picker").addEventListener("change", (e) => {
       const roster = getById(state.selectedRosterId);
       const detachment = roster ? W40K.Detachments.getByName(roster.detachment.name) : null;
-      const strat = detachment ? detachment.stratagems.find((s) => s.id === e.target.value) : null;
+      const strat =
+        (detachment && detachment.stratagems.find((s) => s.id === e.target.value)) ||
+        W40K.Detachments.getCoreStratagems().find((s) => s.id === e.target.value);
       if (!strat) return;
       document.getElementById("stratagem-form-name").value = strat.name;
       document.getElementById("stratagem-form-cost").value = strat.cost;
