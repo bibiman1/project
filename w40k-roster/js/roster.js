@@ -11,6 +11,7 @@
   // Fills in fields added after a roster/unit may have been created, so older saved data keeps working.
   const normalizeRoster = (roster) => {
     if (!roster.detachment) roster.detachment = { name: "", rule: "" };
+    if (roster.armyRule === undefined) roster.armyRule = "";
     if (!roster.stratagems) roster.stratagems = [];
     roster.stratagems.forEach((s) => {
       if (!s.modifiers) s.modifiers = [];
@@ -52,6 +53,7 @@
     els.unitList = document.getElementById("unit-list");
     els.detachmentName = document.getElementById("detachment-name");
     els.detachmentRule = document.getElementById("detachment-rule");
+    els.armyRuleSelect = document.getElementById("army-rule-select");
     els.stratagemList = document.getElementById("stratagem-list");
     els.groupBuffList = document.getElementById("group-buff-list");
     els.armyBuffList = document.getElementById("army-buff-list");
@@ -94,6 +96,7 @@
     els.detachmentName.textContent = roster.detachment.name || "デタッチメント未設定";
     els.detachmentRule.textContent = roster.detachment.rule || "";
     els.detachmentRule.hidden = !roster.detachment.rule;
+    els.armyRuleSelect.value = roster.armyRule || "";
 
     els.stratagemList.innerHTML = "";
     if (roster.stratagems.length === 0) {
@@ -230,7 +233,9 @@
             ${weapons
               .map(
                 (w) => `<tr>
-                  <td>${w.type === "melee" ? "⚔" : "🔫"} ${escapeHtml(w.name)}${w.abilities ? ` <span class="weapon-ability">[${escapeHtml(w.abilities)}]</span>` : ""}</td>
+                  <td>${w.type === "melee" ? "⚔" : "🔫"} ${escapeHtml(w.name)}${w.abilities ? ` <span class="weapon-ability">[${escapeHtml(w.abilities)}]</span>` : ""}${(w._addedAbilities || [])
+                    .map((a) => ` <span class="weapon-ability weapon-ability-added">[${escapeHtml(a)}]</span>`)
+                    .join("")}</td>
                   <td>${escapeHtml(w.range)}</td>
                   <td>${buffCell(w._changed.attacks ?? w.attacks, w._changed.attacks !== undefined ? w.attacks : undefined)}</td>
                   <td>${buffCell(w._changed.skill ?? w.skill, w._changed.skill !== undefined ? w.skill : undefined)}</td>
@@ -1366,6 +1371,13 @@
       if (file) importUnitsCsv(file);
       e.target.value = "";
     });
+    els.armyRuleSelect.addEventListener("change", () => {
+      const roster = getById(state.selectedRosterId);
+      if (!roster) return;
+      roster.armyRule = els.armyRuleSelect.value;
+      persist();
+    });
+
     document.getElementById("btn-edit-detachment").addEventListener("click", () => openDetachmentModal());
     document.getElementById("btn-new-stratagem").addEventListener("click", () => openStratagemModal());
     document.getElementById("btn-edit-group-buffs").addEventListener("click", () => openGroupBuffsModal());

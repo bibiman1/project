@@ -8,6 +8,7 @@
   --gold-bright: #e6c368;
   --red: #8f2a2a;
   --red-bright: #b83a3a;
+  --buff-added: #7fbf6a;
   --text: #ede4d3;
   --text-dim: #a89c8a;
   --danger: #b83a3a;
@@ -387,6 +388,11 @@ main {
 .weapon-ability {
   color: var(--gold-bright);
   font-size: 0.72rem;
+}
+
+.weapon-ability-added {
+  color: var(--buff-added);
+  font-weight: 600;
 }
 
 .ability-list {
