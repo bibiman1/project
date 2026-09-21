@@ -18,6 +18,7 @@
       if (u.profile.invSave === undefined) u.profile.invSave = "";
       if (!u.weapons) u.weapons = [];
       if (!u.abilities) u.abilities = [];
+      if (u.group === undefined) u.group = "";
     });
     return roster;
   };
@@ -116,67 +117,23 @@
       els.unitList.innerHTML = '<p class="empty-state">ユニットが未登録です。</p>';
       return;
     }
+
+    const rendered = new Set();
     roster.units.forEach((unit) => {
-      const row = document.createElement("article");
-      row.className = "unit-card";
-      const unitTotal = unit.points + (unit.enhancement ? unit.enhancement.points : 0);
-      const p = unit.profile;
-      const hasProfile = p && (p.move || p.toughness || p.save || p.invSave || p.wounds || p.leadership || p.oc);
-      const profileHtml = hasProfile
-        ? `<p class="unit-profile">
-            <span>移動<strong>${escapeHtml(p.move || "-")}</strong></span>
-            <span>耐久<strong>${escapeHtml(p.toughness || "-")}</strong></span>
-            <span>防御<strong>${escapeHtml(p.save || "-")}</strong></span>
-            ${p.invSave ? `<span>特防<strong>${escapeHtml(p.invSave)}</strong></span>` : ""}
-            <span>傷<strong>${escapeHtml(p.wounds || "-")}</strong></span>
-            <span>統率<strong>${escapeHtml(p.leadership || "-")}</strong></span>
-            <span>確保<strong>${escapeHtml(p.oc || "-")}</strong></span>
-          </p>`
-        : "";
-      const weaponsHtml = unit.weapons.length
-        ? `<table class="weapon-table">
-            <thead><tr><th>武器</th><th>射程</th><th>攻</th><th>技</th><th>攻撃力</th><th>貫通</th><th>ダメ</th></tr></thead>
-            <tbody>
-              ${unit.weapons
-                .map(
-                  (w) => `<tr>
-                    <td>${w.type === "melee" ? "⚔" : "🔫"} ${escapeHtml(w.name)}${w.abilities ? ` <span class="weapon-ability">[${escapeHtml(w.abilities)}]</span>` : ""}</td>
-                    <td>${escapeHtml(w.range)}</td>
-                    <td>${escapeHtml(w.attacks)}</td>
-                    <td>${escapeHtml(w.skill)}</td>
-                    <td>${escapeHtml(w.strength)}</td>
-                    <td>${escapeHtml(w.ap)}</td>
-                    <td>${escapeHtml(w.damage)}</td>
-                  </tr>`
-                )
-                .join("")}
-            </tbody>
-          </table>`
-        : "";
-      const abilitiesHtml = unit.abilities.length
-        ? `<ul class="ability-list">
-            ${unit.abilities.map((a) => `<li><strong>${escapeHtml(a.name)}</strong>${a.text ? `: ${escapeHtml(a.text)}` : ""}</li>`).join("")}
-          </ul>`
-        : "";
-      row.innerHTML = `
-        <div class="unit-main">
-          <h4>${escapeHtml(unit.name)} <span class="unit-models">×${unit.models}</span></h4>
-          <p class="meta-line">${escapeHtml(unit.keywords || "")}</p>
-          ${unit.notes ? `<p class="unit-notes">${escapeHtml(unit.notes)}</p>` : ""}
-          ${unit.enhancement ? `<p class="unit-enhancement">✦ ${escapeHtml(unit.enhancement.name)} (+${unit.enhancement.points}pts)</p>` : ""}
-          ${profileHtml}
-          ${weaponsHtml}
-          ${abilitiesHtml}
-        </div>
-        <div class="unit-side">
-          <span class="unit-points">${unitTotal} pts</span>
-          <div class="unit-actions">
-            <button class="btn btn-ghost btn-sm" data-edit-unit="${unit.id}">編集</button>
-            <button class="btn btn-danger btn-sm" data-delete-unit="${unit.id}">削除</button>
-          </div>
-        </div>
-      `;
-      els.unitList.appendChild(row);
+      if (rendered.has(unit.id)) return;
+      if (unit.group) {
+        const groupUnits = roster.units.filter((u) => u.group === unit.group);
+        groupUnits.forEach((u) => rendered.add(u.id));
+        const groupTotal = groupUnits.reduce((sum, u) => sum + u.points + (u.enhancement ? u.enhancement.points : 0), 0);
+        const wrapper = document.createElement("div");
+        wrapper.className = "unit-group";
+        wrapper.innerHTML = `<div class="unit-group-header">🔗 ${escapeHtml(unit.group)}（合流ユニット・計${groupTotal}pts）</div>`;
+        groupUnits.forEach((u) => wrapper.appendChild(buildUnitCard(u)));
+        els.unitList.appendChild(wrapper);
+      } else {
+        rendered.add(unit.id);
+        els.unitList.appendChild(buildUnitCard(unit));
+      }
     });
 
     els.unitList.querySelectorAll("[data-edit-unit]").forEach((btn) => {
@@ -185,6 +142,69 @@
     els.unitList.querySelectorAll("[data-delete-unit]").forEach((btn) => {
       btn.addEventListener("click", () => deleteUnit(btn.dataset.deleteUnit));
     });
+  };
+
+  const buildUnitCard = (unit) => {
+    const row = document.createElement("article");
+    row.className = "unit-card";
+    const unitTotal = unit.points + (unit.enhancement ? unit.enhancement.points : 0);
+    const p = unit.profile;
+    const hasProfile = p && (p.move || p.toughness || p.save || p.invSave || p.wounds || p.leadership || p.oc);
+    const profileHtml = hasProfile
+      ? `<p class="unit-profile">
+          <span>移動<strong>${escapeHtml(p.move || "-")}</strong></span>
+          <span>耐久<strong>${escapeHtml(p.toughness || "-")}</strong></span>
+          <span>防御<strong>${escapeHtml(p.save || "-")}</strong></span>
+          ${p.invSave ? `<span>特防<strong>${escapeHtml(p.invSave)}</strong></span>` : ""}
+          <span>傷<strong>${escapeHtml(p.wounds || "-")}</strong></span>
+          <span>統率<strong>${escapeHtml(p.leadership || "-")}</strong></span>
+          <span>確保<strong>${escapeHtml(p.oc || "-")}</strong></span>
+        </p>`
+      : "";
+    const weaponsHtml = unit.weapons.length
+      ? `<table class="weapon-table">
+          <thead><tr><th>武器</th><th>射程</th><th>攻</th><th>技</th><th>攻撃力</th><th>貫通</th><th>ダメ</th></tr></thead>
+          <tbody>
+            ${unit.weapons
+              .map(
+                (w) => `<tr>
+                  <td>${w.type === "melee" ? "⚔" : "🔫"} ${escapeHtml(w.name)}${w.abilities ? ` <span class="weapon-ability">[${escapeHtml(w.abilities)}]</span>` : ""}</td>
+                  <td>${escapeHtml(w.range)}</td>
+                  <td>${escapeHtml(w.attacks)}</td>
+                  <td>${escapeHtml(w.skill)}</td>
+                  <td>${escapeHtml(w.strength)}</td>
+                  <td>${escapeHtml(w.ap)}</td>
+                  <td>${escapeHtml(w.damage)}</td>
+                </tr>`
+              )
+              .join("")}
+          </tbody>
+        </table>`
+      : "";
+    const abilitiesHtml = unit.abilities.length
+      ? `<ul class="ability-list">
+          ${unit.abilities.map((a) => `<li><strong>${escapeHtml(a.name)}</strong>${a.text ? `: ${escapeHtml(a.text)}` : ""}</li>`).join("")}
+        </ul>`
+      : "";
+    row.innerHTML = `
+      <div class="unit-main">
+        <h4>${escapeHtml(unit.name)} <span class="unit-models">×${unit.models}</span></h4>
+        <p class="meta-line">${escapeHtml(unit.keywords || "")}</p>
+        ${unit.notes ? `<p class="unit-notes">${escapeHtml(unit.notes)}</p>` : ""}
+        ${unit.enhancement ? `<p class="unit-enhancement">✦ ${escapeHtml(unit.enhancement.name)} (+${unit.enhancement.points}pts)</p>` : ""}
+        ${profileHtml}
+        ${weaponsHtml}
+        ${abilitiesHtml}
+      </div>
+      <div class="unit-side">
+        <span class="unit-points">${unitTotal} pts</span>
+        <div class="unit-actions">
+          <button class="btn btn-ghost btn-sm" data-edit-unit="${unit.id}">編集</button>
+          <button class="btn btn-danger btn-sm" data-delete-unit="${unit.id}">削除</button>
+        </div>
+      </div>
+    `;
+    return row;
   };
 
   const render = () => {
@@ -248,7 +268,7 @@
     "name", "models", "points", "keywords", "notes",
     "enh_name", "enh_points",
     "move", "toughness", "save", "inv_save", "wounds", "leadership", "oc",
-    "weapons", "abilities",
+    "weapons", "abilities", "group",
   ];
 
   const csvEscapeField = (value) => {
@@ -315,10 +335,11 @@
     u.profile?.oc || "",
     serializeWeapons(u.weapons),
     serializeAbilities(u.abilities),
+    u.group || "",
   ];
 
   const csvRowToUnit = (cols) => {
-    const [name, models, points, keywords, notes, enhName, enhPoints, move, toughness, save, invSave, wounds, leadership, oc, weaponsText, abilitiesText] = cols;
+    const [name, models, points, keywords, notes, enhName, enhPoints, move, toughness, save, invSave, wounds, leadership, oc, weaponsText, abilitiesText, group] = cols;
     return {
       id: W40K.uid(),
       name: name || "無名ユニット",
@@ -326,6 +347,7 @@
       points: Number(points) || 0,
       keywords: keywords || "",
       notes: notes || "",
+      group: group || "",
       enhancement: enhName ? { name: enhName, points: Number(enhPoints) || 0 } : null,
       profile: {
         move: move || "",
@@ -476,6 +498,7 @@
             points: Number(u.points) || 0,
             keywords: u.keywords || "",
             notes: u.notes || "",
+            group: u.group || "",
             enhancement: u.enhancement ? { name: u.enhancement.name || "", points: Number(u.enhancement.points) || 0 } : null,
             profile: {
               move: u.profile?.move || "",
@@ -637,6 +660,7 @@
     document.getElementById("unit-form-points").value = unit?.points ?? 0;
     document.getElementById("unit-form-keywords").value = unit?.keywords || "";
     document.getElementById("unit-form-notes").value = unit?.notes || "";
+    document.getElementById("unit-form-group").value = unit?.group || "";
     document.getElementById("unit-form-enh-name").value = unit?.enhancement?.name || "";
     document.getElementById("unit-form-enh-points").value = unit?.enhancement?.points ?? 0;
     document.getElementById("unit-form-move").value = unit?.profile?.move || "";
@@ -662,6 +686,7 @@
       points: Number(document.getElementById("unit-form-points").value) || 0,
       keywords: document.getElementById("unit-form-keywords").value.trim(),
       notes: document.getElementById("unit-form-notes").value.trim(),
+      group: document.getElementById("unit-form-group").value.trim(),
       enhancement: enhName ? { name: enhName, points: Number(document.getElementById("unit-form-enh-points").value) || 0 } : null,
       profile: {
         move: document.getElementById("unit-form-move").value.trim(),
@@ -704,6 +729,7 @@
           points: Number(points) || 0,
           keywords: keywords || "",
           notes: notes || "",
+          group: "",
           enhancement: null,
           profile: { move: "", toughness: "", save: "", invSave: "", wounds: "", leadership: "", oc: "" },
           weapons: [],

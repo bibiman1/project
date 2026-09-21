@@ -83,7 +83,7 @@
         row.innerHTML = `
           <label class="unit-destroyed-toggle">
             <input type="checkbox" data-unit-toggle="${unit.id}" ${status.destroyed ? "checked" : ""}>
-            <span>${escapeHtml(unit.name)}</span>
+            <span>${escapeHtml(unit.name)}${unit.group ? ` <span class="unit-group-badge">🔗${escapeHtml(unit.group)}</span>` : ""}</span>
           </label>
           <input type="text" class="unit-status-notes" data-unit-notes="${unit.id}" placeholder="ダメージ・状態メモ" value="${escapeHtml(status.notes)}">
         `;

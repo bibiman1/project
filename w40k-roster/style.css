@@ -259,6 +259,33 @@ main {
   gap: 0.6rem;
 }
 
+.unit-group {
+  border: 1px solid var(--gold);
+  border-radius: var(--radius);
+  padding: 0.6rem;
+  background: rgba(201, 162, 75, 0.06);
+}
+
+.unit-group-header {
+  color: var(--gold-bright);
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 0.6rem;
+}
+
+.unit-group .unit-card {
+  margin-bottom: 0.6rem;
+}
+
+.unit-group .unit-card:last-child {
+  margin-bottom: 0;
+}
+
+.unit-group-badge {
+  color: var(--gold-bright);
+  font-size: 0.75rem;
+}
+
 .unit-card {
   display: flex;
   justify-content: space-between;
