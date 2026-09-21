@@ -45,6 +45,19 @@
     reader.readAsText(file);
   };
 
+  // Explicit reset: overwrites the armory/keyword/ability/unit libraries with the bundled 11th-edition
+  // Adeptus Mechanicus seed regardless of what's currently in them (unlike the automatic first-run
+  // seed in each module, which only fills in while a library is still empty). Detachments are
+  // untouched - there's no Wahapedia-derived seed for them.
+  const resetToWahapediaSeed = () => {
+    if (!confirm("武器庫・キーワード帳・アビリティ辞書・ユニットマスタを、現在の内容にかかわらずWahapediaデータで上書きします。よろしいですか？（デタッチメントマスタは対象外です）")) return;
+    W40K.Armory.resetToSeed();
+    W40K.Keywords.resetToSeed();
+    W40K.Abilities.resetToSeed();
+    W40K.UnitLibrary.resetToSeed();
+    alert("上書きしました。");
+  };
+
   const init = () => {
     document.getElementById("btn-export-master-data").addEventListener("click", exportMasterData);
     document.getElementById("master-data-import-input").addEventListener("change", (e) => {
@@ -52,6 +65,7 @@
       if (file) importMasterData(file);
       e.target.value = "";
     });
+    document.getElementById("btn-reset-wahapedia-seed").addEventListener("click", resetToWahapediaSeed);
   };
 
   W40K.MasterData = { init };
