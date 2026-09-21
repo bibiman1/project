@@ -140,17 +140,22 @@ W40K.computeUnitBuffs = (roster, unit, options) => {
   applicableBuffs.forEach((buff) => buff.modifiers.forEach((m) => applyModifier(buff.name, m)));
 
   // 命令教条 (Doctrina Imperatives): chosen per battle round, active for any unit whose ability text names it.
-  // Improving a Skill characteristic means a *lower* number, hence delta -1.
+  // Improving a Skill characteristic means a *lower* number, hence delta -1. Both imperatives also carry a
+  // conditional effect (active only for BATTLELINE units, or units within 6" of a friendly AdMech BATTLELINE
+  // unit) that the app has no positional data to check automatically; that part is recorded as a text note
+  // only, for the player to apply by hand.
   const doctrinaImperative = options && options.doctrinaImperative;
   if (doctrinaImperative && (unit.abilities || []).some((a) => (a.name || "").includes("命令教条"))) {
     if (doctrinaImperative === "protector") {
       applyModifier("迎撃命令", { kind: "numeric", scope: "ranged", field: "skill", value: -1 });
       applyModifier("迎撃命令", { kind: "keyword", scope: "ranged", value: "ヘヴィ" });
       buffNotes.push("迎撃命令: 射撃武器の技能+1、[ヘヴィ]を得る");
+      buffNotes.push("迎撃命令(条件付き・要手動反映): バトルラインか、自軍バトルライン6\"以内なら、被白兵ヒット-1");
     } else if (doctrinaImperative === "conqueror") {
       applyModifier("征服命令", { kind: "numeric", scope: "melee", field: "skill", value: -1 });
-      applyModifier("征服命令", { kind: "keyword", scope: "melee", value: "アサルト" });
-      buffNotes.push("征服命令: 白兵武器の技能+1、[アサルト]を得る");
+      applyModifier("征服命令", { kind: "keyword", scope: "ranged", value: "アサルト" });
+      buffNotes.push("征服命令: 白兵武器の技能+1、射撃武器に[アサルト]を得る");
+      buffNotes.push("征服命令(条件付き・要手動反映): バトルラインか、自軍バトルライン6\"以内なら、攻撃の貫通値+1");
     }
   }
 
