@@ -25,6 +25,15 @@
     W40K.save(W40K.KEYS.KEYWORD_LIBRARY, library);
   }
 
+  // Still empty after the roster-seed pass above: fall back to the bundled 11th-edition Adeptus
+  // Mechanicus keyword seed, if keywords-seed.js is present.
+  if (library.length === 0 && W40K.KEYWORD_LIBRARY_SEED) {
+    library = W40K.KEYWORD_LIBRARY_SEED.split("\n")
+      .map((k) => k.trim())
+      .filter(Boolean);
+    W40K.save(W40K.KEYS.KEYWORD_LIBRARY, library);
+  }
+
   const persist = () => W40K.save(W40K.KEYS.KEYWORD_LIBRARY, library);
 
   const addKeyword = (keyword) => {
