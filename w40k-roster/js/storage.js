@@ -9,6 +9,7 @@ W40K.KEYS = {
   WEAPON_LIBRARY: "w40k_weapon_library",
   KEYWORD_LIBRARY: "w40k_keyword_library",
   DETACHMENT_LIBRARY: "w40k_detachment_library",
+  CORE_STRATAGEM_LIBRARY: "w40k_core_stratagem_library",
 };
 
 W40K.uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);

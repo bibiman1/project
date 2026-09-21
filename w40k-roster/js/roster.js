@@ -905,11 +905,14 @@
     const picker = document.getElementById("stratagem-master-picker");
     const detachment = W40K.Detachments.getByName(roster.detachment.name);
     const stratagems = detachment ? detachment.stratagems : [];
+    const coreStratagems = W40K.Detachments.getCoreStratagems();
+    const optionHtml = (s) => `<option value="${s.id}">${escapeHtml(s.name)}（CP${s.cost}）</option>`;
     picker.innerHTML =
       '<option value="">選択しない（手入力）</option>' +
-      (stratagems.length === 0
-        ? '<option value="" disabled>現在のデタッチメント名と一致するマスタがありません</option>'
-        : stratagems.map((s) => `<option value="${s.id}">${escapeHtml(s.name)}（CP${s.cost}）</option>`).join(""));
+      (coreStratagems.length ? `<optgroup label="コア策略（共通）">${coreStratagems.map(optionHtml).join("")}</optgroup>` : "") +
+      (stratagems.length
+        ? `<optgroup label="デタッチメント策略">${stratagems.map(optionHtml).join("")}</optgroup>`
+        : '<option value="" disabled>現在のデタッチメント名と一致するマスタがありません</option>');
     picker.value = "";
   };
 
@@ -1203,7 +1206,9 @@
     document.getElementById("stratagem-master-picker").addEventListener("change", (e) => {
       const roster = getById(state.selectedRosterId);
       const detachment = roster ? W40K.Detachments.getByName(roster.detachment.name) : null;
-      const strat = detachment ? detachment.stratagems.find((s) => s.id === e.target.value) : null;
+      const strat =
+        (detachment && detachment.stratagems.find((s) => s.id === e.target.value)) ||
+        W40K.Detachments.getCoreStratagems().find((s) => s.id === e.target.value);
       if (!strat) return;
       document.getElementById("stratagem-form-name").value = strat.name;
       document.getElementById("stratagem-form-cost").value = strat.cost;
