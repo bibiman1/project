@@ -397,6 +397,26 @@
     const basics = parseBasics(basicsText);
     const enhancementRows = parseEnhancements(enhancementsText);
     const stratagemRows = parseStratagems(stratagemsText);
+    const coreStratagemRows = parseCoreStratagems(coreStratagemsText);
+
+    // One combined warning across all four sections, rather than a separate popup for each -
+    // this screen replaces the whole master dataset in one save, so a column mistake anywhere
+    // is worth flagging before it silently overwrites everything.
+    const badSections = [
+      [basics, "無名デタッチメント", "デタッチメント基本情報"],
+      [enhancementRows, "無名強化", "強化一覧"],
+      [stratagemRows, "無名策略", "策略一覧"],
+      [coreStratagemRows, "無名策略", "コア策略一覧"],
+    ]
+      .map(([items, fallback, label]) => ({ label, count: items.filter((it) => it.name === fallback).length }))
+      .filter((s) => s.count > 0);
+    if (badSections.length > 0) {
+      const summary = badSections.map((s) => `${s.label}: ${s.count}件`).join("、");
+      if (!confirm(`次の項目が正しく読み取れませんでした（${summary}）。列の区切り（カンマ）が正しいか確認してください。このまま保存しますか？`)) {
+        return false;
+      }
+    }
+
     library = basics.map((b) => {
       // Computed rule modifiers (for detachment rules that are simple flat keyword-conditional stat
       // buffs) aren't part of the bulk-text format; reattach them from the seed by name so a save
@@ -423,8 +443,9 @@
       };
     });
     persist();
-    coreStratagems = parseCoreStratagems(coreStratagemsText);
+    coreStratagems = coreStratagemRows;
     persistCore();
+    return true;
   };
 
   const openEditModal = () => {
@@ -439,12 +460,13 @@
     document.getElementById("btn-edit-detachments").addEventListener("click", () => openEditModal());
     document.getElementById("form-detachments").addEventListener("submit", (e) => {
       e.preventDefault();
-      rebuildFromEditedText(
+      const saved = rebuildFromEditedText(
         document.getElementById("detachments-basics-input").value,
         document.getElementById("detachments-enhancements-input").value,
         document.getElementById("detachments-stratagems-input").value,
         document.getElementById("detachments-core-stratagems-input").value
       );
+      if (!saved) return;
       document.getElementById("modal-detachments").close();
       document.dispatchEvent(new CustomEvent("w40k:detachments-changed"));
     });

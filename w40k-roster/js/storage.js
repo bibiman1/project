@@ -48,6 +48,16 @@ W40K.toHalfWidthDigits = (str) =>
     .replace(/＋/g, "+")
     .replace(/－/g, "-");
 
+// Confirms with the user before saving bulk-text-parsed items that include entries which fell back
+// to a default name - a likely sign a line didn't split into the expected columns (e.g. a stray
+// comma, or a column short), rather than something the user actually meant to leave blank. Returns
+// true if it's fine to proceed (no issues found, or the user confirmed anyway).
+W40K.confirmBulkParseFallbacks = (items, fallbackName) => {
+  const count = (items || []).filter((item) => item.name === fallbackName).length;
+  if (count === 0) return true;
+  return confirm(`${count}件の行が正しく読み取れず「${fallbackName}」になっています。列の区切り（カンマ）が正しいか確認してください。このまま保存しますか？`);
+};
+
 // Adds `delta` to the leading integer of a stat string (e.g. "6\"" -> "7\"", "3+" -> "2+"), keeping any suffix.
 W40K.applyStatDelta = (str, delta) => {
   const match = W40K.toHalfWidthDigits(str || "").match(/^(-?\d+)(.*)$/);

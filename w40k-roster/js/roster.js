@@ -696,6 +696,7 @@
         if (rows.length && rows[0][0]?.trim().toLowerCase() === "name") rows = rows.slice(1);
         const units = rows.map(csvRowToUnit);
         if (units.length === 0) return;
+        if (!W40K.confirmBulkParseFallbacks(units, "無名ユニット")) return;
         roster.units.push(...units);
         persist();
         render();
@@ -1224,6 +1225,7 @@
       weapons: W40K.parseWeapons(document.getElementById("unit-form-weapons").value),
       abilities: parseAbilities(document.getElementById("unit-form-abilities").value),
     };
+    if (!W40K.confirmBulkParseFallbacks(data.weapons, "無名武器")) return;
     if (state.editingUnitId) {
       const unit = roster.units.find((u) => u.id === state.editingUnitId);
       Object.assign(unit, data);
@@ -1268,6 +1270,7 @@
     const input = document.getElementById("bulk-units-input");
     const units = parseBulkUnits(input.value);
     if (units.length === 0) return;
+    if (!W40K.confirmBulkParseFallbacks(units, "無名ユニット")) return;
     roster.units.push(...units);
     persist();
     render();
