@@ -457,6 +457,12 @@ main {
   min-width: 160px;
 }
 
+.group-buff-alwayson-label {
+  margin: 0 0 0.3rem;
+  font-size: 0.8rem;
+  color: var(--gold-bright);
+}
+
 .group-buff-effects {
   margin: 0;
   padding-left: 1.1rem;
