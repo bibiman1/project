@@ -116,7 +116,16 @@
     document.getElementById("modal-unitlibrary").showModal();
   };
 
+  // While the library is empty, load the bundled seed of official 11th-edition Adeptus Mechanicus
+  // datasheets (if unitlibrary-seed.js is present). Once it holds anything, this never runs again -
+  // "ユニットマスタ編集" is the one place the library gets changed from here on.
+  const loadSeedIfEmpty = () => {
+    if (library.length > 0 || !W40K.UNIT_LIBRARY_SEED) return;
+    rebuildFromEditedText(W40K.UNIT_LIBRARY_SEED.basics, W40K.UNIT_LIBRARY_SEED.weapons, W40K.UNIT_LIBRARY_SEED.abilities);
+  };
+
   const init = () => {
+    loadSeedIfEmpty();
     document.getElementById("btn-edit-unitlibrary").addEventListener("click", () => openEditModal());
     document.getElementById("form-unitlibrary").addEventListener("submit", (e) => {
       e.preventDefault();
