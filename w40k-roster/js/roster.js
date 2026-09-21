@@ -12,6 +12,9 @@
   const normalizeRoster = (roster) => {
     if (!roster.detachment) roster.detachment = { name: "", rule: "" };
     if (!roster.stratagems) roster.stratagems = [];
+    roster.stratagems.forEach((s) => {
+      if (!s.modifiers) s.modifiers = [];
+    });
     if (!roster.groupBuffs) roster.groupBuffs = [];
     if (!roster.armyBuffs) roster.armyBuffs = [];
     roster.units.forEach((u) => {
@@ -366,6 +369,31 @@
 
   // Each line: "グループ名, オプション名, 種類(数値/キーワード/メモ), 対象ユニット, 対象範囲(プロフィール/射撃/白兵), 項目, 値"
   // Lines sharing the same group+option name are merged into one option with multiple modifiers.
+  // Each line: "対象ユニット, 種類(数値/キーワード/メモ), 対象範囲(プロフィール/射撃/白兵), 項目, 値"
+  const parseStratagemModifiers = (text) =>
+    text
+      .split("\n")
+      .map((line) => line.trim())
+      .filter((line) => line.length > 0)
+      .map((line) => {
+        const [targetUnit, kindLabel, scopeLabel, fieldLabel, value] = line.split(/\t|,/).map((p) => p.trim());
+        const kind = kindLabel === "キーワード" ? "keyword" : kindLabel === "メモ" ? "note" : "numeric";
+        const scope = scopeLabel === "射撃" ? "ranged" : scopeLabel === "白兵" ? "melee" : "profile";
+        const field = scope === "profile" ? W40K.PROFILE_FIELD_MAP[fieldLabel] || fieldLabel : W40K.WEAPON_FIELD_MAP[fieldLabel] || fieldLabel;
+        return { id: W40K.uid(), targetUnit: targetUnit || "", kind, scope, field, value: value || "" };
+      });
+
+  const serializeStratagemModifiers = (modifiers) =>
+    (modifiers || [])
+      .map((m) => {
+        const kindLabel = m.kind === "keyword" ? "キーワード" : m.kind === "note" ? "メモ" : "数値";
+        const scopeLabel = m.scope === "ranged" ? "射撃" : m.scope === "melee" ? "白兵" : "プロフィール";
+        const fieldLabel =
+          m.kind === "note" ? "" : m.scope === "profile" ? W40K.PROFILE_FIELD_LABELS[m.field] || m.field : W40K.WEAPON_FIELD_LABELS[m.field] || m.field;
+        return [m.targetUnit, kindLabel, m.kind === "note" ? "" : scopeLabel, fieldLabel, m.value].join(", ");
+      })
+      .join("\n");
+
   const parseGroupBuffs = (text) => {
     const optionsByKey = new Map();
     text
@@ -597,7 +625,7 @@
       id: W40K.uid(),
       name: `${roster.name} (コピー)`,
       detachment: { ...roster.detachment },
-      stratagems: roster.stratagems.map((s) => ({ ...s, id: W40K.uid() })),
+      stratagems: roster.stratagems.map((s) => ({ ...s, id: W40K.uid(), modifiers: (s.modifiers || []).map((m) => ({ ...m, id: W40K.uid() })) })),
       groupBuffs: roster.groupBuffs.map((opt) => ({ ...opt, id: W40K.uid(), modifiers: opt.modifiers.map((m) => ({ ...m, id: W40K.uid() })) })),
       armyBuffs: roster.armyBuffs.map((buff) => ({ ...buff, id: W40K.uid(), modifiers: buff.modifiers.map((m) => ({ ...m, id: W40K.uid() })) })),
       units: roster.units.map((u) => ({
@@ -736,6 +764,16 @@
                 cost: Number(s.cost) || 0,
                 phase: s.phase || "",
                 text: s.text || "",
+                modifiers: Array.isArray(s.modifiers)
+                  ? s.modifiers.map((m) => ({
+                      id: W40K.uid(),
+                      targetUnit: m.targetUnit || "",
+                      kind: m.kind || "numeric",
+                      scope: m.scope || "profile",
+                      field: m.field || "",
+                      value: m.value || "",
+                    }))
+                  : [],
               }))
             : [],
           groupBuffs: Array.isArray(data.groupBuffs)
@@ -906,6 +944,7 @@
     document.getElementById("stratagem-form-cost").value = strat?.cost ?? 1;
     document.getElementById("stratagem-form-phase").value = strat?.phase || "";
     document.getElementById("stratagem-form-text").value = strat?.text || "";
+    document.getElementById("stratagem-form-modifiers").value = serializeStratagemModifiers(strat?.modifiers);
     stratagemModal.showModal();
   };
 
@@ -918,6 +957,7 @@
       cost: Number(document.getElementById("stratagem-form-cost").value) || 0,
       phase: document.getElementById("stratagem-form-phase").value.trim(),
       text: document.getElementById("stratagem-form-text").value.trim(),
+      modifiers: parseStratagemModifiers(document.getElementById("stratagem-form-modifiers").value),
     };
     if (editingStratagemId) {
       const strat = roster.stratagems.find((s) => s.id === editingStratagemId);

@@ -376,7 +376,7 @@
   </dialog>
 
   <!-- Stratagem form modal -->
-  <dialog id="modal-stratagem" class="modal">
+  <dialog id="modal-stratagem" class="modal modal-wide">
     <form id="form-stratagem" method="dialog" class="form-grid">
       <h3 id="modal-stratagem-title">ストラタジム追加</h3>
       <label>ストラタジム名
@@ -390,6 +390,10 @@
       </label>
       <label>効果
         <textarea id="stratagem-form-text" rows="3"></textarea>
+      </label>
+      <label>効果の自動計算（一括入力・任意）
+        <p class="hint">1行1修正。「対象ユニット名, 種類(数値/キーワード/メモ), 対象範囲(プロフィール/射撃/白兵), 項目, 値」の順。トラッカーで使用した時に自動計算されてログに残ります。対象ユニットが戦闘ショック状態の場合は適用されません。</p>
+        <textarea id="stratagem-form-modifiers" rows="3" placeholder="カステラン・ロボット, 数値, 射撃, 攻撃力, 1"></textarea>
       </label>
       <div class="modal-actions">
         <button type="button" class="btn btn-ghost" data-close-modal>キャンセル</button>
