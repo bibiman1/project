@@ -346,7 +346,7 @@
         const kind = kindLabel === "キーワード" ? "keyword" : kindLabel === "メモ" ? "note" : "numeric";
         const scope = scopeLabel === "射撃" ? "ranged" : scopeLabel === "白兵" ? "melee" : "profile";
         const field = scope === "profile" ? W40K.PROFILE_FIELD_MAP[fieldLabel] || fieldLabel : W40K.WEAPON_FIELD_MAP[fieldLabel] || fieldLabel;
-        return { id: W40K.uid(), targetUnit: targetUnit || "", kind, scope, field, value: value || "" };
+        return { id: W40K.uid(), targetUnit: targetUnit || "", kind, scope, field, value: W40K.toHalfWidthDigits(value || "") };
       });
 
   const serializeStratagemModifiers = (modifiers) =>
@@ -375,7 +375,7 @@
         const kind = kindLabel === "キーワード" ? "keyword" : kindLabel === "メモ" ? "note" : "numeric";
         const scope = scopeLabel === "射撃" ? "ranged" : scopeLabel === "白兵" ? "melee" : "profile";
         const field = scope === "profile" ? W40K.PROFILE_FIELD_MAP[fieldLabel] || fieldLabel : W40K.WEAPON_FIELD_MAP[fieldLabel] || fieldLabel;
-        optionsByKey.get(key).modifiers.push({ id: W40K.uid(), kind, targetUnit: targetUnit || "", scope, field, value: value || "" });
+        optionsByKey.get(key).modifiers.push({ id: W40K.uid(), kind, targetUnit: targetUnit || "", scope, field, value: W40K.toHalfWidthDigits(value || "") });
       });
     return Array.from(optionsByKey.values());
   };
@@ -441,7 +441,7 @@
         const kind = kindLabel === "キーワード" ? "keyword" : kindLabel === "メモ" ? "note" : "numeric";
         const scope = scopeLabel === "射撃" ? "ranged" : scopeLabel === "白兵" ? "melee" : "profile";
         const field = scope === "profile" ? W40K.PROFILE_FIELD_MAP[fieldLabel] || fieldLabel : W40K.WEAPON_FIELD_MAP[fieldLabel] || fieldLabel;
-        buffsByName.get(name).modifiers.push({ id: W40K.uid(), kind, scope, field, value: value || "" });
+        buffsByName.get(name).modifiers.push({ id: W40K.uid(), kind, scope, field, value: W40K.toHalfWidthDigits(value || "") });
       });
     return Array.from(buffsByName.values());
   };
@@ -543,21 +543,21 @@
     return {
       id: W40K.uid(),
       name: name || "無名ユニット",
-      models: Number(models) || 1,
-      points: Number(points) || 0,
+      models: Number(W40K.toHalfWidthDigits(models)) || 1,
+      points: Number(W40K.toHalfWidthDigits(points)) || 0,
       keywords: keywords || "",
       notes: notes || "",
       group: group || "",
       isWarlord: /^(true|1|yes)$/i.test((isWarlord || "").trim()),
-      enhancement: enhName ? { name: enhName, points: Number(enhPoints) || 0 } : null,
+      enhancement: enhName ? { name: enhName, points: Number(W40K.toHalfWidthDigits(enhPoints)) || 0 } : null,
       profile: {
-        move: move || "",
-        toughness: toughness || "",
-        save: save || "",
-        invSave: invSave || "",
-        wounds: wounds || "",
-        leadership: leadership || "",
-        oc: oc || "",
+        move: W40K.toHalfWidthDigits(move || ""),
+        toughness: W40K.toHalfWidthDigits(toughness || ""),
+        save: W40K.toHalfWidthDigits(save || ""),
+        invSave: W40K.toHalfWidthDigits(invSave || ""),
+        wounds: W40K.toHalfWidthDigits(wounds || ""),
+        leadership: W40K.toHalfWidthDigits(leadership || ""),
+        oc: W40K.toHalfWidthDigits(oc || ""),
       },
       weapons: W40K.parseWeapons(weaponsText || ""),
       abilities: parseAbilities(abilitiesText || ""),
@@ -696,6 +696,7 @@
         if (rows.length && rows[0][0]?.trim().toLowerCase() === "name") rows = rows.slice(1);
         const units = rows.map(csvRowToUnit);
         if (units.length === 0) return;
+        if (!W40K.confirmBulkParseFallbacks(units, "無名ユニット")) return;
         roster.units.push(...units);
         persist();
         render();
@@ -962,7 +963,10 @@
   const groupBuffsModal = document.getElementById("modal-group-buffs");
   const groupBuffsForm = document.getElementById("form-group-buffs");
 
-  // The 項目(field) options depend on 対象範囲(scope), and only matter when 種類(kind) is 数値.
+  // The 項目(field) options depend on 対象範囲(scope), and only matter when 種類(kind) is 数値. The
+  // 値(value) input itself switches to a real number input for 数値, instead of free text - a hand-typed
+  // number (e.g. a full-width "２" left behind by IME conversion) has no validation and silently
+  // computes as 0, whereas a number input can't produce that in the first place.
   const refreshGroupBuffFieldOptions = () => {
     const scope = document.getElementById("group-buff-quick-scope").value;
     const kind = document.getElementById("group-buff-quick-kind").value;
@@ -972,6 +976,10 @@
       .map((label) => `<option value="${escapeHtml(label)}">${escapeHtml(label)}</option>`)
       .join("");
     fieldSelect.disabled = kind !== "numeric";
+    const valueInput = document.getElementById("group-buff-quick-value");
+    valueInput.type = kind === "numeric" ? "number" : "text";
+    valueInput.step = kind === "numeric" ? "1" : "";
+    valueInput.placeholder = kind === "numeric" ? "例: 2（マイナスも可）" : kind === "keyword" ? "追加するキーワード" : "メモの文章";
   };
 
   // グループ名 suggestions: groups already used by this roster's units, plus any already registered.
@@ -1014,7 +1022,9 @@
   const armyBuffsModal = document.getElementById("modal-army-buffs");
   const armyBuffsForm = document.getElementById("form-army-buffs");
 
-  // The 項目(field) options depend on 対象範囲(scope), and only matter when 種類(kind) is 数値.
+  // The 項目(field) options depend on 対象範囲(scope), and only matter when 種類(kind) is 数値. The
+  // 値(value) input itself switches to a real number input for 数値 - see refreshGroupBuffFieldOptions
+  // for why (a hand-typed number has no validation; a number input can't produce a bad value).
   const refreshArmyBuffFieldOptions = () => {
     const scope = document.getElementById("army-buff-quick-scope").value;
     const kind = document.getElementById("army-buff-quick-kind").value;
@@ -1024,6 +1034,10 @@
       .map((label) => `<option value="${escapeHtml(label)}">${escapeHtml(label)}</option>`)
       .join("");
     fieldSelect.disabled = kind !== "numeric";
+    const valueInput = document.getElementById("army-buff-quick-value");
+    valueInput.type = kind === "numeric" ? "number" : "text";
+    valueInput.step = kind === "numeric" ? "1" : "";
+    valueInput.placeholder = kind === "numeric" ? "例: 2（マイナスも可）" : kind === "keyword" ? "追加するキーワード" : "メモの文章";
   };
 
   // The 対象値(target value) suggestion list depends on 対象タイプ(target type): keywords from the
@@ -1200,17 +1214,18 @@
       group: document.getElementById("unit-form-group").value.trim(),
       enhancement: enhName ? { name: enhName, points: Number(document.getElementById("unit-form-enh-points").value) || 0 } : null,
       profile: {
-        move: document.getElementById("unit-form-move").value.trim(),
-        toughness: document.getElementById("unit-form-toughness").value.trim(),
-        save: document.getElementById("unit-form-save").value.trim(),
-        invSave: document.getElementById("unit-form-invsave").value.trim(),
-        wounds: document.getElementById("unit-form-wounds").value.trim(),
-        leadership: document.getElementById("unit-form-leadership").value.trim(),
-        oc: document.getElementById("unit-form-oc").value.trim(),
+        move: W40K.toHalfWidthDigits(document.getElementById("unit-form-move").value.trim()),
+        toughness: W40K.toHalfWidthDigits(document.getElementById("unit-form-toughness").value.trim()),
+        save: W40K.toHalfWidthDigits(document.getElementById("unit-form-save").value.trim()),
+        invSave: W40K.toHalfWidthDigits(document.getElementById("unit-form-invsave").value.trim()),
+        wounds: W40K.toHalfWidthDigits(document.getElementById("unit-form-wounds").value.trim()),
+        leadership: W40K.toHalfWidthDigits(document.getElementById("unit-form-leadership").value.trim()),
+        oc: W40K.toHalfWidthDigits(document.getElementById("unit-form-oc").value.trim()),
       },
       weapons: W40K.parseWeapons(document.getElementById("unit-form-weapons").value),
       abilities: parseAbilities(document.getElementById("unit-form-abilities").value),
     };
+    if (!W40K.confirmBulkParseFallbacks(data.weapons, "無名武器")) return;
     if (state.editingUnitId) {
       const unit = roster.units.find((u) => u.id === state.editingUnitId);
       Object.assign(unit, data);
@@ -1236,8 +1251,8 @@
         return {
           id: W40K.uid(),
           name: name || "無名ユニット",
-          models: Number(models) || 1,
-          points: Number(points) || 0,
+          models: Number(W40K.toHalfWidthDigits(models)) || 1,
+          points: Number(W40K.toHalfWidthDigits(points)) || 0,
           keywords: keywords || "",
           notes: notes || "",
           group: "",
@@ -1255,6 +1270,7 @@
     const input = document.getElementById("bulk-units-input");
     const units = parseBulkUnits(input.value);
     if (units.length === 0) return;
+    if (!W40K.confirmBulkParseFallbacks(units, "無名ユニット")) return;
     roster.units.push(...units);
     persist();
     render();

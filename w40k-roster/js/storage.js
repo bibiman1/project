@@ -39,9 +39,28 @@ W40K.PROFILE_FIELD_LABELS = Object.fromEntries(Object.entries(W40K.PROFILE_FIELD
 W40K.WEAPON_FIELD_MAP = { "攻撃回数": "attacks", "技能": "skill", "攻撃力": "strength", "貫通": "ap", "ダメージ": "damage" };
 W40K.WEAPON_FIELD_LABELS = Object.fromEntries(Object.entries(W40K.WEAPON_FIELD_MAP).map(([label, key]) => [key, label]));
 
+// Converts full-width digits/plus/minus (e.g. "２", "－") to half-width ("2", "-"), since Japanese
+// IME auto-conversion easily leaves these in a number field and Number("２") is NaN, not 2 - silently
+// zeroing out any buff/stat delta typed that way. Safe to run on any short numeric-ish value string.
+W40K.toHalfWidthDigits = (str) =>
+  String(str ?? "")
+    .replace(/[０-９]/g, (c) => String.fromCharCode(c.charCodeAt(0) - 0xfee0))
+    .replace(/＋/g, "+")
+    .replace(/－/g, "-");
+
+// Confirms with the user before saving bulk-text-parsed items that include entries which fell back
+// to a default name - a likely sign a line didn't split into the expected columns (e.g. a stray
+// comma, or a column short), rather than something the user actually meant to leave blank. Returns
+// true if it's fine to proceed (no issues found, or the user confirmed anyway).
+W40K.confirmBulkParseFallbacks = (items, fallbackName) => {
+  const count = (items || []).filter((item) => item.name === fallbackName).length;
+  if (count === 0) return true;
+  return confirm(`${count}件の行が正しく読み取れず「${fallbackName}」になっています。列の区切り（カンマ）が正しいか確認してください。このまま保存しますか？`);
+};
+
 // Adds `delta` to the leading integer of a stat string (e.g. "6\"" -> "7\"", "3+" -> "2+"), keeping any suffix.
 W40K.applyStatDelta = (str, delta) => {
-  const match = String(str || "").match(/^(-?\d+)(.*)$/);
+  const match = W40K.toHalfWidthDigits(str || "").match(/^(-?\d+)(.*)$/);
   if (!match) return str;
   return `${Number(match[1]) + delta}${match[2] || ""}`;
 };
@@ -59,12 +78,12 @@ W40K.parseWeapons = (text) =>
         id: W40K.uid(),
         type: type === "白兵" ? "melee" : "ranged",
         name: name || "無名武器",
-        range: range || "",
-        attacks: attacks || "",
-        skill: skill || "",
-        strength: strength || "",
-        ap: ap || "",
-        damage: damage || "",
+        range: W40K.toHalfWidthDigits(range || ""),
+        attacks: W40K.toHalfWidthDigits(attacks || ""),
+        skill: W40K.toHalfWidthDigits(skill || ""),
+        strength: W40K.toHalfWidthDigits(strength || ""),
+        ap: W40K.toHalfWidthDigits(ap || ""),
+        damage: W40K.toHalfWidthDigits(damage || ""),
         abilities: abilities || "",
       };
     });
@@ -141,6 +160,17 @@ W40K.computeUnitBuffs = (roster, unit, options) => {
   };
 
   applicableBuffs.forEach((buff) => buff.modifiers.forEach((m) => applyModifier(buff.name, m)));
+
+  // 合流バフ (group buffs): options scoped to units sharing a `group` (e.g. a Datasmith's squad),
+  // each with its own per-modifier targetUnit. An always-on option always applies; any other option
+  // only applies once selected for that group in the tracker (options.groupBuffSelections), so this
+  // naturally does nothing extra on the roster screen (which calls computeUnitBuffs with no options).
+  if (unit.group) {
+    (roster.groupBuffs || [])
+      .filter((opt) => opt.group === unit.group)
+      .filter((opt) => opt.alwaysOn || (options && options.groupBuffSelections && options.groupBuffSelections[opt.group] === opt.id))
+      .forEach((opt) => opt.modifiers.filter((m) => m.targetUnit === unit.name).forEach((m) => applyModifier(opt.name, m)));
+  }
 
   // 命令教条 (Doctrina Imperatives): an army rule, chosen per battle round, active for every unit in a
   // roster that has this army rule set (roster.armyRule) - not something that needs tagging per unit.

@@ -77,7 +77,9 @@
 
   armoryForm.addEventListener("submit", (e) => {
     e.preventDefault();
-    library = W40K.parseWeapons(document.getElementById("armory-input").value);
+    const parsed = W40K.parseWeapons(document.getElementById("armory-input").value);
+    if (!W40K.confirmBulkParseFallbacks(parsed, "無名武器")) return;
+    library = parsed;
     persist();
     render();
     armoryModal.close();

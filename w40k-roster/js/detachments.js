@@ -333,7 +333,7 @@
       .filter(Boolean)
       .map((line) => {
         const [name, forceType, dp, rule] = line.split(/\t|,/).map((p) => p.trim());
-        return { name: name || "無名デタッチメント", forceType: forceType || "", dp: Number(dp) || 0, rule: rule || "" };
+        return { name: name || "無名デタッチメント", forceType: forceType || "", dp: Number(W40K.toHalfWidthDigits(dp)) || 0, rule: rule || "" };
       });
 
   const serializeBasics = (list) => (list || []).map((d) => [d.name, d.forceType, d.dp, d.rule].join(", ")).join("\n");
@@ -350,7 +350,7 @@
         const [detachment, name, points, text2, restrictText, exclude] = line.split(/\t|,/).map((p) => p.trim());
         const restrictParts = (restrictText || "").split("/").map((p) => p.trim()).filter(Boolean);
         const restrict = restrictParts.length > 1 ? restrictParts : restrictParts[0] || "";
-        return { detachment, name: name || "無名強化", points: Number(points) || 0, text: text2 || "", restrict, exclude: exclude || "" };
+        return { detachment, name: name || "無名強化", points: Number(W40K.toHalfWidthDigits(points)) || 0, text: text2 || "", restrict, exclude: exclude || "" };
       });
 
   const serializeEnhancements = (list) =>
@@ -373,7 +373,7 @@
       .filter(Boolean)
       .map((line) => {
         const [detachment, name, cost, phase, text2] = line.split(/\t|,/).map((p) => p.trim());
-        return { detachment, name: name || "無名策略", cost: Number(cost) || 1, phase: phase || "", text: text2 || "" };
+        return { detachment, name: name || "無名策略", cost: Number(W40K.toHalfWidthDigits(cost)) || 1, phase: phase || "", text: text2 || "" };
       });
 
   const serializeStratagems = (list) =>
@@ -388,7 +388,7 @@
       .filter(Boolean)
       .map((line) => {
         const [name, cost, phase, text2] = line.split(/\t|,/).map((p) => p.trim());
-        return { id: uid(), name: name || "無名策略", cost: Number(cost) || 1, phase: phase || "", text: text2 || "" };
+        return { id: uid(), name: name || "無名策略", cost: Number(W40K.toHalfWidthDigits(cost)) || 1, phase: phase || "", text: text2 || "" };
       });
 
   const serializeCoreStratagems = (list) => (list || []).map((s) => [s.name, s.cost, s.phase, s.text].join(", ")).join("\n");
@@ -397,6 +397,26 @@
     const basics = parseBasics(basicsText);
     const enhancementRows = parseEnhancements(enhancementsText);
     const stratagemRows = parseStratagems(stratagemsText);
+    const coreStratagemRows = parseCoreStratagems(coreStratagemsText);
+
+    // One combined warning across all four sections, rather than a separate popup for each -
+    // this screen replaces the whole master dataset in one save, so a column mistake anywhere
+    // is worth flagging before it silently overwrites everything.
+    const badSections = [
+      [basics, "無名デタッチメント", "デタッチメント基本情報"],
+      [enhancementRows, "無名強化", "強化一覧"],
+      [stratagemRows, "無名策略", "策略一覧"],
+      [coreStratagemRows, "無名策略", "コア策略一覧"],
+    ]
+      .map(([items, fallback, label]) => ({ label, count: items.filter((it) => it.name === fallback).length }))
+      .filter((s) => s.count > 0);
+    if (badSections.length > 0) {
+      const summary = badSections.map((s) => `${s.label}: ${s.count}件`).join("、");
+      if (!confirm(`次の項目が正しく読み取れませんでした（${summary}）。列の区切り（カンマ）が正しいか確認してください。このまま保存しますか？`)) {
+        return false;
+      }
+    }
+
     library = basics.map((b) => {
       // Computed rule modifiers (for detachment rules that are simple flat keyword-conditional stat
       // buffs) aren't part of the bulk-text format; reattach them from the seed by name so a save
@@ -423,8 +443,9 @@
       };
     });
     persist();
-    coreStratagems = parseCoreStratagems(coreStratagemsText);
+    coreStratagems = coreStratagemRows;
     persistCore();
+    return true;
   };
 
   const openEditModal = () => {
@@ -439,12 +460,13 @@
     document.getElementById("btn-edit-detachments").addEventListener("click", () => openEditModal());
     document.getElementById("form-detachments").addEventListener("submit", (e) => {
       e.preventDefault();
-      rebuildFromEditedText(
+      const saved = rebuildFromEditedText(
         document.getElementById("detachments-basics-input").value,
         document.getElementById("detachments-enhancements-input").value,
         document.getElementById("detachments-stratagems-input").value,
         document.getElementById("detachments-core-stratagems-input").value
       );
+      if (!saved) return;
       document.getElementById("modal-detachments").close();
       document.dispatchEvent(new CustomEvent("w40k:detachments-changed"));
     });
