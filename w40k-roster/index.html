@@ -18,7 +18,7 @@
       <button class="tab-btn is-active" data-tab="roster" role="tab" aria-selected="true">📋 ロスター</button>
       <button class="tab-btn" data-tab="tracker" role="tab" aria-selected="false">⚔️ 対戦トラッカー</button>
       <button class="tab-btn" data-tab="rules" role="tab" aria-selected="false">📖 ルール早見</button>
-      <button class="tab-btn" data-tab="armory" role="tab" aria-selected="false">🔫 武器庫</button>
+      <button class="tab-btn" data-tab="armory" role="tab" aria-selected="false">🗂️ マスタデータ</button>
     </nav>
   </header>
 
@@ -57,50 +57,52 @@
                 <button id="btn-delete-roster" class="btn btn-danger">削除</button>
               </div>
             </div>
-            <div class="detachment-section">
-              <div class="pane-heading">
-                <h3>アーミールール</h3>
-              </div>
-              <select id="army-rule-select">
-                <option value="">未選択</option>
-                <option value="doctrina_imperatives">命令教条（帝国技術局）</option>
-              </select>
-              <details class="hint-details">
-                <summary>説明</summary>
-                <p class="hint">選択すると、対戦トラッカーの「命令教条」プルダウンで迎撃命令/征服命令を選んだ時、このロスターの全ユニットに自動適用されます（ユニット側でアビリティを登録する必要はありません）。</p>
-              </details>
-            </div>
-
-            <div class="detachment-section">
-              <div class="pane-heading">
-                <h3>デタッチメント</h3>
-                <div class="detail-actions">
-                  <button id="btn-edit-detachments" class="btn btn-ghost btn-sm">📚 マスタ編集</button>
-                  <button id="btn-edit-detachment" class="btn btn-ghost btn-sm">編集</button>
+            <details class="section-details" open>
+              <summary>ルール設定（アーミールール・デタッチメント・策略・バフ）</summary>
+              <div class="section-details-body">
+                <div class="detachment-section">
+                  <div class="pane-heading">
+                    <h3>アーミールール</h3>
+                  </div>
+                  <select id="army-rule-select">
+                    <option value="">未選択</option>
+                    <option value="doctrina_imperatives">命令教条（帝国技術局）</option>
+                  </select>
+                  <details class="hint-details">
+                    <summary>説明</summary>
+                    <p class="hint">選択すると、対戦トラッカーの「命令教条」プルダウンで迎撃命令/征服命令を選んだ時、このロスターの全ユニットに自動適用されます（ユニット側でアビリティを登録する必要はありません）。</p>
+                  </details>
                 </div>
+
+                <div class="detachment-section">
+                  <div class="pane-heading">
+                    <h3>デタッチメント</h3>
+                    <button id="btn-edit-detachment" class="btn btn-ghost btn-sm">編集</button>
+                  </div>
+                  <p id="detachment-name" class="detachment-name"></p>
+                  <p id="detachment-rule" class="detachment-rule"></p>
+                </div>
+
+                <div class="pane-heading">
+                  <h3>策略</h3>
+                  <button id="btn-new-stratagem" class="btn btn-primary btn-sm">＋ 策略追加</button>
+                </div>
+                <div id="stratagem-list" class="stratagem-list"></div>
+
+                <div class="pane-heading">
+                  <h3>常時バフ（陣営アビリティ・強化）</h3>
+                  <button id="btn-edit-army-buffs" class="btn btn-primary btn-sm">編集</button>
+                </div>
+                <p class="hint">キーワードや強化の有無で自動適用される、常時有効なバフ。ユニット一覧に自動反映されます。</p>
+                <div id="army-buff-list" class="group-buff-list"></div>
+
+                <div class="pane-heading">
+                  <h3>合流バフ</h3>
+                  <button id="btn-edit-group-buffs" class="btn btn-primary btn-sm">編集</button>
+                </div>
+                <div id="group-buff-list" class="group-buff-list"></div>
               </div>
-              <p id="detachment-name" class="detachment-name"></p>
-              <p id="detachment-rule" class="detachment-rule"></p>
-            </div>
-
-            <div class="pane-heading">
-              <h3>策略</h3>
-              <button id="btn-new-stratagem" class="btn btn-primary btn-sm">＋ 策略追加</button>
-            </div>
-            <div id="stratagem-list" class="stratagem-list"></div>
-
-            <div class="pane-heading">
-              <h3>常時バフ（陣営アビリティ・強化）</h3>
-              <button id="btn-edit-army-buffs" class="btn btn-primary btn-sm">編集</button>
-            </div>
-            <p class="hint">キーワードや強化の有無で自動適用される、常時有効なバフ。ユニット一覧に自動反映されます。</p>
-            <div id="army-buff-list" class="group-buff-list"></div>
-
-            <div class="pane-heading">
-              <h3>合流バフ</h3>
-              <button id="btn-edit-group-buffs" class="btn btn-primary btn-sm">編集</button>
-            </div>
-            <div id="group-buff-list" class="group-buff-list"></div>
+            </details>
 
             <div class="pane-heading">
               <h3>ユニット</h3>
@@ -274,14 +276,55 @@
       <div id="rules-list" class="rules-list"></div>
     </section>
 
-    <!-- ARMORY TAB -->
+    <!-- MASTER DATA TAB -->
     <section id="tab-armory" class="tab-panel" role="tabpanel" aria-labelledby="armory">
       <div class="pane-heading">
-        <h2>武器庫</h2>
-        <button id="btn-edit-armory" class="btn btn-primary">編集</button>
+        <h2>マスタデータ</h2>
       </div>
-      <p class="hint">ここに登録した武器は、ユニット編集フォームの「武器庫から追加」で選んで使い回せます。すでに入力済みのユニットの武器は自動で取り込まれています。</p>
-      <div id="armory-list"></div>
+      <p class="hint">ユニット追加時に使う各種マスタ（辞書・テンプレート）をここでまとめて管理します。マスタを直しても、すでにロスターに追加済みのユニットには自動反映されません（独立コピーのため）。</p>
+
+      <div class="master-data-grid">
+        <div class="master-data-card">
+          <div class="pane-heading">
+            <h3>🔫 武器庫</h3>
+            <button id="btn-edit-armory" class="btn btn-primary btn-sm">編集</button>
+          </div>
+          <p class="hint">ユニット編集フォームの「武器庫から追加」で選んで使い回せます。すでに入力済みのユニットの武器は自動で取り込まれています。</p>
+          <div id="armory-list"></div>
+        </div>
+
+        <div class="master-data-card">
+          <div class="pane-heading">
+            <h3>🏷️ キーワード帳</h3>
+            <button id="btn-edit-keywords" class="btn btn-primary btn-sm">編集</button>
+          </div>
+          <p class="hint">ユニット編集フォームの「キーワード帳から追加」で選べます。すでにユニットに設定済みのキーワードは自動で取り込まれています。</p>
+        </div>
+
+        <div class="master-data-card">
+          <div class="pane-heading">
+            <h3>✨ アビリティ辞書</h3>
+            <button id="btn-edit-ability-library" class="btn btn-primary btn-sm">編集</button>
+          </div>
+          <p class="hint">ユニット編集フォームの「アビリティ辞書から追加」で選べます。命令教条などよく使うアビリティを登録しておくと便利です。</p>
+        </div>
+
+        <div class="master-data-card">
+          <div class="pane-heading">
+            <h3>📚 ユニットマスタ</h3>
+            <button id="btn-edit-unitlibrary" class="btn btn-primary btn-sm">編集</button>
+          </div>
+          <p class="hint">コデックスのデータシート（プロフィール・武器・アビリティ・ポイント）をまとめて登録しておくと、ユニット追加時に「ユニットマスタから選択」で毎回手入力せずに済みます。</p>
+        </div>
+
+        <div class="master-data-card">
+          <div class="pane-heading">
+            <h3>🛡️ デタッチメントマスタ</h3>
+            <button id="btn-edit-detachments" class="btn btn-primary btn-sm">編集</button>
+          </div>
+          <p class="hint">デタッチメントのルール・強化・策略・コア策略をまとめて登録しておくと、ロスターの「デタッチメント」欄で「マスタから選択」して使い回せます。</p>
+        </div>
+      </div>
 
       <div class="pane-heading">
         <h3>全データバックアップ（デバイス移行用）</h3>
@@ -343,9 +386,10 @@
             <option value="">選択しない（手入力）</option>
           </select>
         </label>
-        <button type="button" id="btn-edit-unitlibrary" class="btn btn-ghost btn-sm">📚 ユニットマスタ編集</button>
       </div>
-      <p class="hint">選ぶと、下記のプロフィール・武器・アビリティ・キーワード・ポイントが自動入力されます（その後は自由に編集できます。ロスターに追加した後はマスタと切り離された独立コピーになるので、データスレート改定でマスタ側を直しても既存ユニットには自動反映されません）。</p>
+      <p class="hint">選ぶと、下記のプロフィール・武器・アビリティ・キーワード・ポイントが自動入力されます（その後は自由に編集できます。ロスターに追加した後はマスタと切り離された独立コピーになるので、データスレート改定でマスタ側を直しても既存ユニットには自動反映されません。マスタ自体の登録・編集は「マスタデータ」タブから）。</p>
+
+      <div class="form-section-label">基本情報</div>
       <label>ユニット名
         <input id="unit-form-name" type="text" required>
       </label>
@@ -367,6 +411,7 @@
         <label>確保<input id="unit-form-oc" type="text" placeholder="2"></label>
       </div>
 
+      <div class="form-section-label">武器</div>
       <label>武器（一括入力・任意）
         <p class="hint">1行1武器。「種別(射撃/白兵), 武器名, 射程, 攻撃回数, 技能, 攻撃力, 貫通値, ダメージ[, アビリティ]」の順。</p>
         <textarea id="unit-form-weapons" rows="4" placeholder="射撃, ボルトライフル, 24&quot;, 2, 3+, 4, 0, 1
@@ -380,6 +425,7 @@
         <button type="button" id="btn-add-picked-weapons" class="btn btn-ghost btn-sm">＋ 選択した武器をテキストへ追加</button>
       </div>
 
+      <div class="form-section-label">アビリティ</div>
       <label>アビリティ（一括入力・任意）
         <p class="hint">1行1アビリティ。「アビリティ名: 説明」の形式（説明は省略可）。行頭に「[コア]」「[陣営]」「[デタッチメント]」を付けるとカテゴリ分けして表示されます（タグなしはユニット固有アビリティ扱い）。</p>
         <textarea id="unit-form-abilities" rows="4" placeholder="[コア] 支援
@@ -396,9 +442,9 @@
           <input id="unit-form-new-ability" type="text" placeholder="例: [陣営] 命令教条: 選択した命令に応じたアビリティを得る">
         </label>
         <button type="button" id="btn-add-new-ability" class="btn btn-ghost btn-sm">＋ 登録して追加</button>
-        <button type="button" id="btn-edit-ability-library" class="btn btn-ghost btn-sm">アビリティ辞書を編集</button>
       </div>
 
+      <div class="form-section-label">キーワード</div>
       <label>キーワード
         <input id="unit-form-keywords" type="text" placeholder="例: INFANTRY, CHARACTER">
       </label>
@@ -411,17 +457,10 @@
           <input id="unit-form-new-keyword" type="text" placeholder="例: MONSTER">
         </label>
         <button type="button" id="btn-add-new-keyword" class="btn btn-ghost btn-sm">＋ 登録して追加</button>
-        <button type="button" id="btn-edit-keywords" class="btn btn-ghost btn-sm">キーワード帳を編集</button>
       </div>
 
-      <div class="form-section-label">その他（任意）</div>
-      <label>ワーギア・備考
-        <textarea id="unit-form-notes" rows="3"></textarea>
-      </label>
-      <label>合流グループ名
-        <input id="unit-form-group" type="text" placeholder="例: データスミス部隊（同じ名前を付けたユニット同士がまとめて表示されます）">
-      </label>
-      <label>マスタから選択（現在のデタッチメントの強化・任意）
+      <div class="form-section-label">強化（任意）</div>
+      <label>マスタから選択（現在のデタッチメントの強化）
         <select id="enhancement-master-picker">
           <option value="">選択しない（手入力）</option>
         </select>
@@ -431,6 +470,14 @@
       </label>
       <label>強化の追加ポイント
         <input id="unit-form-enh-points" type="number" min="0" step="1" value="0">
+      </label>
+
+      <div class="form-section-label">その他（任意）</div>
+      <label>ワーギア・備考
+        <textarea id="unit-form-notes" rows="3"></textarea>
+      </label>
+      <label>合流グループ名
+        <input id="unit-form-group" type="text" placeholder="例: データスミス部隊（同じ名前を付けたユニット同士がまとめて表示されます）">
       </label>
 
       <div class="modal-actions">

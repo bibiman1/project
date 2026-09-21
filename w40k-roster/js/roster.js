@@ -1095,7 +1095,7 @@
     const picker = document.getElementById("unit-form-weapon-picker");
     const library = W40K.Armory.getAll();
     if (library.length === 0) {
-      picker.innerHTML = '<option value="" disabled>武器庫が空です（武器庫タブから登録）</option>';
+      picker.innerHTML = '<option value="" disabled>武器庫が空です（マスタデータタブから登録）</option>';
       return;
     }
     picker.innerHTML = library
