@@ -866,11 +866,21 @@
   const detachmentModal = document.getElementById("modal-detachment");
   const detachmentForm = document.getElementById("form-detachment");
 
+  const refreshDetachmentMasterPicker = () => {
+    const picker = document.getElementById("detachment-master-picker");
+    const library = W40K.Detachments.getAll();
+    picker.innerHTML =
+      '<option value="">選択しない（手入力）</option>' +
+      library.map((d) => `<option value="${escapeHtml(d.name)}">${escapeHtml(d.name)}（${escapeHtml(d.forceType)}・${d.dp}DP）</option>`).join("");
+    picker.value = "";
+  };
+
   const openDetachmentModal = () => {
     const roster = getById(state.selectedRosterId);
     if (!roster) return;
     document.getElementById("detachment-form-name").value = roster.detachment.name || "";
     document.getElementById("detachment-form-rule").value = roster.detachment.rule || "";
+    refreshDetachmentMasterPicker();
     detachmentModal.showModal();
   };
 
@@ -891,6 +901,18 @@
   const stratagemForm = document.getElementById("form-stratagem");
   let editingStratagemId = null;
 
+  const refreshStratagemMasterPicker = (roster) => {
+    const picker = document.getElementById("stratagem-master-picker");
+    const detachment = W40K.Detachments.getByName(roster.detachment.name);
+    const stratagems = detachment ? detachment.stratagems : [];
+    picker.innerHTML =
+      '<option value="">選択しない（手入力）</option>' +
+      (stratagems.length === 0
+        ? '<option value="" disabled>現在のデタッチメント名と一致するマスタがありません</option>'
+        : stratagems.map((s) => `<option value="${s.id}">${escapeHtml(s.name)}（CP${s.cost}）</option>`).join(""));
+    picker.value = "";
+  };
+
   const openStratagemModal = (stratagemId) => {
     const roster = getById(state.selectedRosterId);
     if (!roster) return;
@@ -902,6 +924,7 @@
     document.getElementById("stratagem-form-phase").value = strat?.phase || "";
     document.getElementById("stratagem-form-text").value = strat?.text || "";
     document.getElementById("stratagem-form-modifiers").value = serializeStratagemModifiers(strat?.modifiers);
+    refreshStratagemMasterPicker(roster);
     stratagemModal.showModal();
   };
 
@@ -995,6 +1018,7 @@
     document.getElementById("unit-form-abilities").value = serializeAbilities(unit?.abilities);
     refreshWeaponPicker();
     refreshKeywordPicker();
+    refreshEnhancementMasterPicker(roster);
     unitModal.showModal();
   };
 
@@ -1018,6 +1042,18 @@
       return;
     }
     picker.innerHTML = library.map((k) => `<option value="${escapeHtml(k)}">${escapeHtml(k)}</option>`).join("");
+  };
+
+  const refreshEnhancementMasterPicker = (roster) => {
+    const picker = document.getElementById("enhancement-master-picker");
+    const detachment = W40K.Detachments.getByName(roster.detachment.name);
+    const enhancements = detachment ? detachment.enhancements : [];
+    picker.innerHTML =
+      '<option value="">選択しない（手入力）</option>' +
+      (enhancements.length === 0
+        ? '<option value="" disabled>現在のデタッチメント名と一致するマスタがありません</option>'
+        : enhancements.map((e) => `<option value="${e.id}">${escapeHtml(e.name)}（${e.points}pt）</option>`).join(""));
+    picker.value = "";
   };
 
   // Appends keywords not already present in the comma-separated keyword field.
@@ -1156,6 +1192,33 @@
     });
 
     document.addEventListener("w40k:keywords-changed", () => refreshKeywordPicker());
+
+    document.getElementById("detachment-master-picker").addEventListener("change", (e) => {
+      const detachment = W40K.Detachments.getByName(e.target.value);
+      if (!detachment) return;
+      document.getElementById("detachment-form-name").value = detachment.name;
+      document.getElementById("detachment-form-rule").value = detachment.rule;
+    });
+
+    document.getElementById("stratagem-master-picker").addEventListener("change", (e) => {
+      const roster = getById(state.selectedRosterId);
+      const detachment = roster ? W40K.Detachments.getByName(roster.detachment.name) : null;
+      const strat = detachment ? detachment.stratagems.find((s) => s.id === e.target.value) : null;
+      if (!strat) return;
+      document.getElementById("stratagem-form-name").value = strat.name;
+      document.getElementById("stratagem-form-cost").value = strat.cost;
+      document.getElementById("stratagem-form-phase").value = strat.phase;
+      document.getElementById("stratagem-form-text").value = strat.text;
+    });
+
+    document.getElementById("enhancement-master-picker").addEventListener("change", (e) => {
+      const roster = getById(state.selectedRosterId);
+      const detachment = roster ? W40K.Detachments.getByName(roster.detachment.name) : null;
+      const enh = detachment ? detachment.enhancements.find((en) => en.id === e.target.value) : null;
+      if (!enh) return;
+      document.getElementById("unit-form-enh-name").value = enh.name;
+      document.getElementById("unit-form-enh-points").value = enh.points;
+    });
 
     document.getElementById("units-csv-import-input").addEventListener("change", (e) => {
       const file = e.target.files[0];
