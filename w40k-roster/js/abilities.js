@@ -29,6 +29,19 @@
     W40K.save(W40K.KEYS.ABILITY_LIBRARY, library);
   }
 
+  // Nothing beyond the built-in SEED above (no roster abilities existed to add either - the common
+  // case, since SEED alone always makes library.length >= 1): fall back to the bundled 11th-edition
+  // Adeptus Mechanicus ability seed, if abilities-seed.js is present.
+  const isOnlyBuiltInSeed = library.length === 0 || (library.length === SEED.length && library.every((l, i) => l === SEED[i]));
+  if (isOnlyBuiltInSeed && W40K.ABILITY_LIBRARY_SEED) {
+    library = SEED.concat(
+      W40K.ABILITY_LIBRARY_SEED.split("\n")
+        .map((l) => l.trim())
+        .filter(Boolean)
+    );
+    W40K.save(W40K.KEYS.ABILITY_LIBRARY, library);
+  }
+
   const persist = () => W40K.save(W40K.KEYS.ABILITY_LIBRARY, library);
 
   const addAbility = (line) => {

@@ -32,6 +32,13 @@
     W40K.save(W40K.KEYS.WEAPON_LIBRARY, library);
   }
 
+  // Still empty after the roster-seed pass above (no roster units existed to seed from either):
+  // fall back to the bundled 11th-edition Adeptus Mechanicus weapon seed, if armory-seed.js is present.
+  if (library.length === 0 && W40K.ARMORY_SEED) {
+    library = W40K.parseWeapons(W40K.ARMORY_SEED);
+    W40K.save(W40K.KEYS.WEAPON_LIBRARY, library);
+  }
+
   const persist = () => W40K.save(W40K.KEYS.WEAPON_LIBRARY, library);
 
   const escapeHtml = (str) =>
