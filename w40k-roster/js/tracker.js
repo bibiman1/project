@@ -50,7 +50,7 @@
   const escapeHtml = (str) =>
     String(str ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
-  const defaultUnitStatus = () => ({ destroyed: false, notes: "", battleShock: false });
+  const defaultUnitStatus = (unit) => ({ destroyed: false, notes: "", battleShock: false, modelsRemaining: unit.models });
 
   // Cell shows "base→new" (new bolded) when a buff changed it, otherwise just the value. Mirrors roster.js's buffCell.
   const buffCell = (base, changed) => (changed !== undefined ? `${escapeHtml(base || "-")}→<strong>${escapeHtml(changed)}</strong>` : escapeHtml(base || "-"));
@@ -86,7 +86,7 @@
     els.unitList.innerHTML = "";
     if (roster && roster.units.length) {
       roster.units.forEach((unit) => {
-        const status = game.unitStatus[unit.id] || defaultUnitStatus();
+        const status = game.unitStatus[unit.id] || defaultUnitStatus(unit);
         const row = document.createElement("article");
         row.className = "tracker-unit-row" + (status.destroyed ? " is-destroyed" : "");
 
@@ -98,7 +98,7 @@
         const keywordSwapNote = ((unit.abilities || []).some((a) => (a.name || "").includes("データ切断")) && unit.group)
           ? (() => {
               const hasActivePartner = roster.units.some(
-                (u) => u.id !== unit.id && u.group === unit.group && u.name.includes("カステラン・ロボット") && !(game.unitStatus[u.id] || defaultUnitStatus()).destroyed
+                (u) => u.id !== unit.id && u.group === unit.group && u.name.includes("カステラン・ロボット") && !(game.unitStatus[u.id] || defaultUnitStatus(u)).destroyed
               );
               return hasActivePartner ? null : "データ切断: 合流ロボット不在のため【ビークル】を失い【インファントリー】を持つ";
             })()
@@ -125,12 +125,22 @@
               </div>`
             : "";
 
+        const modelsRemaining = status.modelsRemaining ?? unit.models;
         row.innerHTML = `
           <div class="tracker-unit-row-main">
             <label class="unit-destroyed-toggle">
               <input type="checkbox" data-unit-toggle="${unit.id}" ${status.destroyed ? "checked" : ""}>
               <span>${escapeHtml(unit.name)}${unit.group ? ` <span class="unit-group-badge">🔗${escapeHtml(unit.group)}</span>` : ""}</span>
             </label>
+            ${
+              unit.models > 1
+                ? `<div class="unit-models-counter">
+                    <button type="button" class="btn btn-round btn-xs" data-unit-model-dec="${unit.id}">−</button>
+                    <span class="unit-models-value">${modelsRemaining}/${unit.models}体</span>
+                    <button type="button" class="btn btn-round btn-xs" data-unit-model-inc="${unit.id}">＋</button>
+                  </div>`
+                : ""
+            }
             <label class="unit-battleshock-toggle">
               <input type="checkbox" data-unit-battleshock="${unit.id}" ${status.battleShock ? "checked" : ""}>
               <span>戦闘ショック</span>
@@ -145,7 +155,8 @@
       els.unitList.querySelectorAll("[data-unit-toggle]").forEach((cb) => {
         cb.addEventListener("change", () => {
           const id = cb.dataset.unitToggle;
-          game.unitStatus[id] = game.unitStatus[id] || defaultUnitStatus();
+          const unit = roster.units.find((u) => u.id === id);
+          game.unitStatus[id] = game.unitStatus[id] || defaultUnitStatus(unit);
           game.unitStatus[id].destroyed = cb.checked;
           persist();
           render();
@@ -154,7 +165,8 @@
       els.unitList.querySelectorAll("[data-unit-battleshock]").forEach((cb) => {
         cb.addEventListener("change", () => {
           const id = cb.dataset.unitBattleshock;
-          game.unitStatus[id] = game.unitStatus[id] || defaultUnitStatus();
+          const unit = roster.units.find((u) => u.id === id);
+          game.unitStatus[id] = game.unitStatus[id] || defaultUnitStatus(unit);
           game.unitStatus[id].battleShock = cb.checked;
           persist();
           render();
@@ -163,9 +175,35 @@
       els.unitList.querySelectorAll("[data-unit-notes]").forEach((input) => {
         input.addEventListener("change", () => {
           const id = input.dataset.unitNotes;
-          game.unitStatus[id] = game.unitStatus[id] || defaultUnitStatus();
+          const unit = roster.units.find((u) => u.id === id);
+          game.unitStatus[id] = game.unitStatus[id] || defaultUnitStatus(unit);
           game.unitStatus[id].notes = input.value;
           persist();
+        });
+      });
+      els.unitList.querySelectorAll("[data-unit-model-dec]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const id = btn.dataset.unitModelDec;
+          const unit = roster.units.find((u) => u.id === id);
+          game.unitStatus[id] = game.unitStatus[id] || defaultUnitStatus(unit);
+          const status = game.unitStatus[id];
+          status.modelsRemaining = Math.max(0, (status.modelsRemaining ?? unit.models) - 1);
+          if (status.modelsRemaining === 0) status.destroyed = true;
+          persist();
+          render();
+        });
+      });
+      els.unitList.querySelectorAll("[data-unit-model-inc]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const id = btn.dataset.unitModelInc;
+          const unit = roster.units.find((u) => u.id === id);
+          game.unitStatus[id] = game.unitStatus[id] || defaultUnitStatus(unit);
+          const status = game.unitStatus[id];
+          const wasZero = (status.modelsRemaining ?? unit.models) === 0;
+          status.modelsRemaining = Math.min(unit.models, (status.modelsRemaining ?? unit.models) + 1);
+          if (wasZero && status.modelsRemaining > 0) status.destroyed = false;
+          persist();
+          render();
         });
       });
     } else {

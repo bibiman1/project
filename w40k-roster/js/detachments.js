@@ -363,10 +363,19 @@
     });
   };
 
+  const replaceAll = (newLibrary, newCoreStratagems) => {
+    library = Array.isArray(newLibrary) ? newLibrary : [];
+    persist();
+    coreStratagems = Array.isArray(newCoreStratagems) ? newCoreStratagems : [];
+    persistCore();
+    document.dispatchEvent(new CustomEvent("w40k:detachments-changed"));
+  };
+
   W40K.Detachments = {
     init,
     getAll: () => library,
     getByName: (name) => library.find((d) => d.name === name),
     getCoreStratagems: () => coreStratagems,
+    replaceAll,
   };
 })();
