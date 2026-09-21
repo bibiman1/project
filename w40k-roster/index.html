@@ -65,7 +65,10 @@
                 <option value="">未選択</option>
                 <option value="doctrina_imperatives">命令教条（帝国技術局）</option>
               </select>
-              <p class="hint">選択すると、対戦トラッカーの「命令教条」プルダウンで迎撃命令/征服命令を選んだ時、このロスターの全ユニットに自動適用されます（ユニット側でアビリティを登録する必要はありません）。</p>
+              <details class="hint-details">
+                <summary>説明</summary>
+                <p class="hint">選択すると、対戦トラッカーの「命令教条」プルダウンで迎撃命令/征服命令を選んだ時、このロスターの全ユニットに自動適用されます（ユニット側でアビリティを登録する必要はありません）。</p>
+              </details>
             </div>
 
             <div class="detachment-section">
@@ -163,9 +166,12 @@
               <option value="protector">迎撃命令</option>
               <option value="conqueror">征服命令</option>
             </select>
-            <p class="hint">ラウンドが進むと未選択に戻ります。ロスターの「アーミールール」で命令教条を選択している場合、全ユニットに自動反映されます（未選択の場合は何も反映されません）。<br>
-            迎撃命令: 射撃武器の技能+1、[ヘヴィ]を得る。加えて、バトルラインか自軍バトルライン6"以内のユニットは被白兵ヒット-1（要手動反映）。<br>
-            征服命令: 白兵武器の技能+1、射撃武器に[アサルト]を得る。加えて、バトルラインか自軍バトルライン6"以内のユニットは攻撃の貫通値+1（要手動反映）。</p>
+            <details class="hint-details">
+              <summary>説明</summary>
+              <p class="hint">ラウンドが進むと未選択に戻ります。ロスターの「アーミールール」で命令教条を選択している場合、全ユニットに自動反映されます（未選択の場合は何も反映されません）。<br>
+              迎撃命令: 射撃武器の技能+1、[ヘヴィ]を得る。加えて、バトルラインか自軍バトルライン6"以内のユニットは被白兵ヒット-1（要手動反映）。<br>
+              征服命令: 白兵武器の技能+1、射撃武器に[アサルト]を得る。加えて、バトルラインか自軍バトルライン6"以内のユニットは攻撃の貫通値+1（要手動反映）。</p>
+            </details>
           </div>
 
           <div class="tracker-card">
@@ -274,9 +280,21 @@
       <div id="armory-list"></div>
 
       <div class="pane-heading">
+        <h3>全データバックアップ（デバイス移行用）</h3>
+      </div>
+      <p class="hint">このブラウザに保存されている全データ（すべてのロスター・進行中の対戦・ルールメモ・フェイズチェックリストのひな形・武器庫やキーワード帳などの各種マスタ）を1つのJSONファイルにまとめてバックアップ/復元します。デバイスやブラウザを変える時はこちらを使ってください。読み込むと現在のデータはすべて上書きされ、ページが再読み込みされます。</p>
+      <div class="detail-actions">
+        <button id="btn-export-full-backup" class="btn btn-primary">📤 全データ書き出し</button>
+        <label class="btn btn-ghost">
+          📥 全データ読み込み
+          <input id="full-backup-import-input" type="file" accept=".json,application/json" hidden>
+        </label>
+      </div>
+
+      <div class="pane-heading">
         <h3>マスタデータの書き出し・読み込み</h3>
       </div>
-      <p class="hint">武器庫・キーワード帳・デタッチメントマスタ（強化・策略・コア策略）をまとめてバックアップ/復元できます。ブラウザやデバイスを変える時にお使いください。読み込むと現在のマスタデータは上書きされます。</p>
+      <p class="hint">武器庫・キーワード帳・アビリティ辞書・デタッチメントマスタ（強化・策略・コア策略）だけをバックアップ/復元します（ロスターや対戦記録は含みません）。マスタデータだけ別環境と共有したい時にお使いください。読み込むと現在のマスタデータは上書きされます。</p>
       <div class="detail-actions">
         <button id="btn-export-master-data" class="btn btn-ghost">📤 マスタデータ書き出し</button>
         <label class="btn btn-ghost">
@@ -690,6 +708,7 @@
   <script src="./js/abilities.js"></script>
   <script src="./js/detachments.js"></script>
   <script src="./js/masterdata.js"></script>
+  <script src="./js/backup.js"></script>
   <script src="./js/roster.js"></script>
   <script src="./js/tracker.js"></script>
   <script src="./js/rules.js"></script>

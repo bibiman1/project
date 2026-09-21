@@ -26,6 +26,7 @@
     W40K.Abilities.init();
     W40K.Detachments.init();
     W40K.MasterData.init();
+    W40K.Backup.init();
     W40K.Roster.init();
     W40K.Tracker.init();
     W40K.Rules.init();

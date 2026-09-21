@@ -130,6 +130,17 @@
             })()
           : null;
 
+        // Buff/ability explanation text is collapsed by default (▶ 効果 (N)) so it doesn't eat up
+        // scroll space for every unit during play - the weapon table above already shows the numbers
+        // at a glance; this is just the "why", read on demand.
+        const noteCount = buffNotes.length + (keywordSwapNote ? 1 : 0);
+        const notesHtml = noteCount
+          ? `<details class="notes-details">
+              <summary>効果 (${noteCount})</summary>
+              <p class="unit-buff-notes">${[...buffNotes.map((n) => `🔺${escapeHtml(n)}`), ...(keywordSwapNote ? [`🔻${escapeHtml(keywordSwapNote)}`] : [])].join("<br>")}</p>
+            </details>`
+          : "";
+
         const statsHtml =
           hasProfile || buffNotes.length || keywordSwapNote || changedWeapons.length
             ? `<div class="tracker-unit-row-stats">
@@ -147,8 +158,7 @@
                     : ""
                 }
                 ${weaponsHtml}
-                ${buffNotes.length ? `<p class="unit-buff-notes">${buffNotes.map((n) => `🔺${escapeHtml(n)}`).join("<br>")}</p>` : ""}
-                ${keywordSwapNote ? `<p class="unit-buff-notes">🔻${escapeHtml(keywordSwapNote)}</p>` : ""}
+                ${notesHtml}
               </div>`
             : "";
 

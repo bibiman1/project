@@ -87,6 +87,50 @@ a {
   border-bottom-color: var(--gold);
 }
 
+/* On a phone (likely how this gets used tableside), the header's marketing copy just eats vertical
+   space above the fold on every tab - shrink it so more of the actual screen (esp. the tracker) is
+   visible without scrolling. */
+@media (max-width: 600px) {
+  .site-header {
+    padding: 0.9rem 1rem 0;
+  }
+
+  .lead {
+    display: none;
+  }
+
+  .site-header h1 {
+    font-size: 1.3rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .eyebrow {
+    margin-bottom: 0.1rem;
+  }
+
+  .tab-btn {
+    padding: 0.6rem 0.7rem;
+    font-size: 0.85rem;
+  }
+
+  main {
+    padding: 0.9rem;
+  }
+
+  .tracker-grid {
+    gap: 0.6rem;
+    margin-bottom: 1rem;
+  }
+
+  .tracker-card {
+    padding: 0.7rem 0.8rem;
+  }
+
+  .tracker-card h3 {
+    margin-bottom: 0.4rem;
+  }
+}
+
 /* ---- layout ---- */
 
 main {
@@ -922,6 +966,44 @@ textarea:focus {
   margin: -0.4rem 0 0;
   color: var(--text-dim);
   font-size: 0.85rem;
+}
+
+/* Collapsible long text (reference hints, per-unit buff notes) so it doesn't eat up scroll space
+   until the player actually wants to read it - opens/closes via the ▶/▼ marker on the summary. */
+details.hint-details,
+details.notes-details {
+  margin-top: 0.2rem;
+}
+
+details.hint-details > summary,
+details.notes-details > summary {
+  cursor: pointer;
+  color: var(--gold-bright);
+  font-size: 0.78rem;
+  list-style: none;
+}
+
+details.hint-details > summary::-webkit-details-marker,
+details.notes-details > summary::-webkit-details-marker {
+  display: none;
+}
+
+details.hint-details > summary::before,
+details.notes-details > summary::before {
+  content: "▶ ";
+}
+
+details.hint-details[open] > summary::before,
+details.notes-details[open] > summary::before {
+  content: "▼ ";
+}
+
+details.hint-details > .hint {
+  margin-top: 0.3rem;
+}
+
+details.notes-details > .unit-buff-notes {
+  margin-top: 0.3rem;
 }
 
 #bulk-units-input,
