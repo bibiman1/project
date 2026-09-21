@@ -152,7 +152,7 @@
         section.innerHTML = `
           <p class="meta-line">🔗 ${escapeHtml(group)}</p>
           <ul class="ability-list">
-            ${options.map((opt) => `<li><strong>${escapeHtml(opt.name)}</strong>: ${opt.modifiers.map(summarizeModifier).join(" / ")}</li>`).join("")}
+            ${options.map((opt) => `<li><strong>${escapeHtml(opt.name)}</strong>${opt.alwaysOn ? ' <span class="tag">常時</span>' : ""}: ${opt.modifiers.map(summarizeModifier).join(" / ")}</li>`).join("")}
           </ul>
         `;
         els.groupBuffList.appendChild(section);
@@ -362,10 +362,11 @@
       .map((line) => line.trim())
       .filter((line) => line.length > 0)
       .forEach((line) => {
-        const [group, name, kindLabel, targetUnit, scopeLabel, fieldLabel, value] = line.split(/\t|,/).map((p) => p.trim());
+        const [group, name, kindLabel, targetUnit, scopeLabel, fieldLabel, value, alwaysOnLabel] = line.split(/\t|,/).map((p) => p.trim());
         if (!group || !name) return;
         const key = `${group}\u0000${name}`;
-        if (!optionsByKey.has(key)) optionsByKey.set(key, { id: W40K.uid(), group, name, modifiers: [] });
+        if (!optionsByKey.has(key)) optionsByKey.set(key, { id: W40K.uid(), group, name, alwaysOn: false, modifiers: [] });
+        if (alwaysOnLabel === "常時") optionsByKey.get(key).alwaysOn = true;
         const kind = kindLabel === "キーワード" ? "keyword" : kindLabel === "メモ" ? "note" : "numeric";
         const scope = scopeLabel === "射撃" ? "ranged" : scopeLabel === "白兵" ? "melee" : "profile";
         const field = scope === "profile" ? W40K.PROFILE_FIELD_MAP[fieldLabel] || fieldLabel : W40K.WEAPON_FIELD_MAP[fieldLabel] || fieldLabel;
@@ -382,7 +383,9 @@
           const scopeLabel = m.scope === "ranged" ? "射撃" : m.scope === "melee" ? "白兵" : "プロフィール";
           const fieldLabel =
             m.kind === "note" ? "" : m.scope === "profile" ? W40K.PROFILE_FIELD_LABELS[m.field] || m.field : W40K.WEAPON_FIELD_LABELS[m.field] || m.field;
-          return [opt.group, opt.name, kindLabel, m.targetUnit, m.kind === "note" ? "" : scopeLabel, fieldLabel, m.value].join(", ");
+          const fields = [opt.group, opt.name, kindLabel, m.targetUnit, m.kind === "note" ? "" : scopeLabel, fieldLabel, m.value];
+          if (opt.alwaysOn) fields.push("常時");
+          return fields.join(", ");
         })
       )
       .join("\n");
@@ -734,6 +737,7 @@
                 id: W40K.uid(),
                 group: opt.group || "",
                 name: opt.name || "無名オプション",
+                alwaysOn: !!opt.alwaysOn,
                 modifiers: Array.isArray(opt.modifiers)
                   ? opt.modifiers.map((m) => ({
                       id: W40K.uid(),

@@ -91,8 +91,19 @@
         const { profile, profileChanges, buffNotes } = W40K.computeUnitBuffs(roster, unit);
         const hasProfile = profile && (profile.move || profile.toughness || profile.save || profile.invSave || profile.wounds || profile.leadership || profile.oc);
         const profileCell = (field) => buffCell(profileChanges[field] ?? profile[field], profileChanges[field] !== undefined ? profile[field] : undefined);
+
+        // "Data-severed"-style ability: if this unit is named a partner unit's keyword swaps when that partner is absent/destroyed.
+        const keywordSwapNote = ((unit.abilities || []).some((a) => (a.name || "").includes("データ切断")) && unit.group)
+          ? (() => {
+              const hasActivePartner = roster.units.some(
+                (u) => u.id !== unit.id && u.group === unit.group && u.name.includes("カステラン・ロボット") && !(game.unitStatus[u.id] || defaultUnitStatus()).destroyed
+              );
+              return hasActivePartner ? null : "データ切断: 合流ロボット不在のため【ビークル】を失い【インファントリー】を持つ";
+            })()
+          : null;
+
         const statsHtml =
-          hasProfile || buffNotes.length
+          hasProfile || buffNotes.length || keywordSwapNote
             ? `<div class="tracker-unit-row-stats">
                 ${
                   hasProfile
@@ -108,6 +119,7 @@
                     : ""
                 }
                 ${buffNotes.length ? `<p class="unit-buff-notes">${buffNotes.map((n) => `🔺${escapeHtml(n)}`).join("<br>")}</p>` : ""}
+                ${keywordSwapNote ? `<p class="unit-buff-notes">🔻${escapeHtml(keywordSwapNote)}</p>` : ""}
               </div>`
             : "";
 
@@ -195,16 +207,22 @@
 
     els.groupBuffTrackerList.innerHTML = groups
       .map((group) => {
-        const options = roster.groupBuffs.filter((o) => o.group === group);
+        const allOptions = roster.groupBuffs.filter((o) => o.group === group);
+        const alwaysOnOptions = allOptions.filter((o) => o.alwaysOn);
+        const selectableOptions = allOptions.filter((o) => !o.alwaysOn);
         const selectedId = game.groupBuffSelections[group] || "";
-        const selectHtml = `<select data-buff-group="${escapeHtml(group)}" ${options.length === 0 ? "disabled" : ""}>
-          <option value="">${options.length === 0 ? "バフ未登録" : "なし"}</option>
-          ${options.map((o) => `<option value="${o.id}" ${o.id === selectedId ? "selected" : ""}>${escapeHtml(o.name)}</option>`).join("")}
+        const selectHtml = `<select data-buff-group="${escapeHtml(group)}" ${selectableOptions.length === 0 ? "disabled" : ""}>
+          <option value="">${selectableOptions.length === 0 ? "バフ未登録" : "なし"}</option>
+          ${selectableOptions.map((o) => `<option value="${o.id}" ${o.id === selectedId ? "selected" : ""}>${escapeHtml(o.name)}</option>`).join("")}
         </select>`;
-        const selectedOption = options.find((o) => o.id === selectedId);
-        const effectsHtml = selectedOption ? renderBuffEffects(roster, selectedOption) : "";
+        const selectedOption = selectableOptions.find((o) => o.id === selectedId);
+        const alwaysOnHtml = alwaysOnOptions.length
+          ? `<p class="group-buff-alwayson-label">🔒 常時: ${alwaysOnOptions.map((o) => escapeHtml(o.name)).join(" / ")}</p>`
+          : "";
+        const effectsHtml = [...alwaysOnOptions, ...(selectedOption ? [selectedOption] : [])].map((opt) => renderBuffEffects(roster, opt)).join("");
         return `<div class="group-buff-row">
           <div class="group-buff-row-head">🔗 <strong>${escapeHtml(group)}</strong> ${selectHtml}</div>
+          ${alwaysOnHtml}
           ${effectsHtml}
         </div>`;
       })
