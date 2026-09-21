@@ -345,6 +345,17 @@
 [デタッチメント] 戦闘プロトコル: バトル開始時に...
 オブジェクティブ・セキュアード: 作戦目標の確保判定でこのユニットの兵を2体分として数える"></textarea>
       </label>
+      <div class="keyword-picker">
+        <label>アビリティ辞書から追加
+          <select id="unit-form-ability-picker" multiple size="4"></select>
+        </label>
+        <button type="button" id="btn-add-picked-abilities" class="btn btn-ghost btn-sm">＋ 選択したアビリティを追加</button>
+        <label>新規アビリティを登録して追加
+          <input id="unit-form-new-ability" type="text" placeholder="例: [陣営] 命令教条: 選択した命令に応じたアビリティを得る">
+        </label>
+        <button type="button" id="btn-add-new-ability" class="btn btn-ghost btn-sm">＋ 登録して追加</button>
+        <button type="button" id="btn-edit-ability-library" class="btn btn-ghost btn-sm">アビリティ辞書を編集</button>
+      </div>
 
       <label>キーワード
         <input id="unit-form-keywords" type="text" placeholder="例: INFANTRY, CHARACTER">
@@ -626,6 +637,19 @@
     </form>
   </dialog>
 
+  <!-- Ability library edit modal -->
+  <dialog id="modal-ability-library" class="modal">
+    <form id="form-ability-library" method="dialog" class="form-grid">
+      <h3>アビリティ辞書編集</h3>
+      <p class="hint">1行1アビリティ。「[コア/陣営/デタッチメント] アビリティ名: 説明」の形式（タグ・説明は省略可）。保存すると辞書全体がこの内容で置き換わります（すでにユニットに設定済みのアビリティは変わりません）。</p>
+      <textarea id="ability-library-input" rows="10"></textarea>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" data-close-modal>キャンセル</button>
+        <button type="submit" class="btn btn-primary">保存</button>
+      </div>
+    </form>
+  </dialog>
+
   <!-- Rule note form modal -->
   <dialog id="modal-note" class="modal">
     <form id="form-note" method="dialog" class="form-grid">
@@ -652,6 +676,7 @@
   <script src="./js/storage.js"></script>
   <script src="./js/armory.js"></script>
   <script src="./js/keywords.js"></script>
+  <script src="./js/abilities.js"></script>
   <script src="./js/detachments.js"></script>
   <script src="./js/masterdata.js"></script>
   <script src="./js/roster.js"></script>

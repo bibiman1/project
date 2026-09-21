@@ -23,6 +23,7 @@
     initTabs();
     W40K.Armory.init();
     W40K.Keywords.init();
+    W40K.Abilities.init();
     W40K.Detachments.init();
     W40K.MasterData.init();
     W40K.Roster.init();

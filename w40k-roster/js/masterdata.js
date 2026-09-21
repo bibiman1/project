@@ -8,6 +8,7 @@
       exportedAt: new Date().toISOString(),
       weaponLibrary: W40K.Armory.getAll(),
       keywordLibrary: W40K.Keywords.getAll(),
+      abilityLibrary: W40K.Abilities.getAll(),
       detachmentLibrary: W40K.Detachments.getAll(),
       coreStratagemLibrary: W40K.Detachments.getCoreStratagems(),
     };
@@ -28,9 +29,11 @@
         if (!Array.isArray(data.weaponLibrary) || !Array.isArray(data.keywordLibrary) || !Array.isArray(data.detachmentLibrary)) {
           throw new Error("invalid format");
         }
-        if (!confirm("現在のマスタデータ（武器庫・キーワード帳・デタッチメントマスタ）をすべて上書きします。よろしいですか？")) return;
+        if (!confirm("現在のマスタデータ（武器庫・キーワード帳・アビリティ辞書・デタッチメントマスタ）をすべて上書きします。よろしいですか？")) return;
         W40K.Armory.replaceAll(data.weaponLibrary);
         W40K.Keywords.replaceAll(data.keywordLibrary);
+        // Older exports predate the ability library; leave the current one alone rather than wiping it.
+        if (Array.isArray(data.abilityLibrary)) W40K.Abilities.replaceAll(data.abilityLibrary);
         W40K.Detachments.replaceAll(data.detachmentLibrary, data.coreStratagemLibrary || []);
         alert("マスタデータを読み込みました。");
       } catch (err) {
