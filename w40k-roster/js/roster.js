@@ -976,10 +976,45 @@
   const armyBuffsModal = document.getElementById("modal-army-buffs");
   const armyBuffsForm = document.getElementById("form-army-buffs");
 
+  // The 項目(field) options depend on 対象範囲(scope), and only matter when 種類(kind) is 数値.
+  const refreshArmyBuffFieldOptions = () => {
+    const scope = document.getElementById("army-buff-quick-scope").value;
+    const kind = document.getElementById("army-buff-quick-kind").value;
+    const fieldSelect = document.getElementById("army-buff-quick-field");
+    const labels = scope === "profile" ? W40K.PROFILE_FIELD_MAP : W40K.WEAPON_FIELD_MAP;
+    fieldSelect.innerHTML = Object.keys(labels)
+      .map((label) => `<option value="${escapeHtml(label)}">${escapeHtml(label)}</option>`)
+      .join("");
+    fieldSelect.disabled = kind !== "numeric";
+  };
+
+  // The 対象値(target value) suggestion list depends on 対象タイプ(target type): keywords from the
+  // keyword library, unit names from this roster, or enhancement names from the current detachment.
+  const refreshArmyBuffTargetValueList = (roster) => {
+    const targetType = document.getElementById("army-buff-quick-target-type").value;
+    const list = document.getElementById("army-buff-quick-target-value-list");
+    let values = [];
+    if (targetType === "unit") {
+      values = roster.units.map((u) => u.name);
+    } else if (targetType === "enhancement") {
+      const detachment = W40K.Detachments.getByName(roster.detachment.name);
+      values = detachment ? detachment.enhancements.map((e) => e.name) : [];
+    } else {
+      values = W40K.Keywords.getAll();
+    }
+    list.innerHTML = values.map((v) => `<option value="${escapeHtml(v)}"></option>`).join("");
+  };
+
+  const refreshArmyBuffQuickAdd = (roster) => {
+    refreshArmyBuffFieldOptions();
+    refreshArmyBuffTargetValueList(roster);
+  };
+
   const openArmyBuffsModal = () => {
     const roster = getById(state.selectedRosterId);
     if (!roster) return;
     document.getElementById("army-buffs-input").value = serializeArmyBuffs(roster.armyBuffs);
+    refreshArmyBuffQuickAdd(roster);
     armyBuffsModal.showModal();
   };
 
@@ -1256,6 +1291,35 @@
     document.getElementById("btn-new-stratagem").addEventListener("click", () => openStratagemModal());
     document.getElementById("btn-edit-group-buffs").addEventListener("click", () => openGroupBuffsModal());
     document.getElementById("btn-edit-army-buffs").addEventListener("click", () => openArmyBuffsModal());
+
+    document.getElementById("army-buff-quick-scope").addEventListener("change", refreshArmyBuffFieldOptions);
+    document.getElementById("army-buff-quick-kind").addEventListener("change", refreshArmyBuffFieldOptions);
+    document.getElementById("army-buff-quick-target-type").addEventListener("change", () => {
+      const roster = getById(state.selectedRosterId);
+      if (roster) refreshArmyBuffTargetValueList(roster);
+    });
+
+    document.getElementById("btn-add-army-buff-line").addEventListener("click", () => {
+      const name = document.getElementById("army-buff-quick-name").value.trim();
+      if (!name) {
+        alert("バフ名を入力してください。");
+        return;
+      }
+      const targetType = document.getElementById("army-buff-quick-target-type").value;
+      const targetValue = document.getElementById("army-buff-quick-target-value").value.trim();
+      const kind = document.getElementById("army-buff-quick-kind").value;
+      const kindLabel = kind === "keyword" ? "キーワード" : kind === "note" ? "メモ" : "数値";
+      const scope = document.getElementById("army-buff-quick-scope").value;
+      const scopeLabel = scope === "ranged" ? "射撃" : scope === "melee" ? "白兵" : "プロフィール";
+      const field = document.getElementById("army-buff-quick-field").value;
+      const value = document.getElementById("army-buff-quick-value").value.trim();
+      const line = [name, TARGET_TYPE_TAGS[targetType], targetValue, kindLabel, kind === "note" ? "" : scopeLabel, kind === "numeric" ? field : "", value].join(
+        ", "
+      );
+      const textarea = document.getElementById("army-buffs-input");
+      textarea.value = textarea.value.trim() ? `${textarea.value.trim()}\n${line}` : line;
+      document.getElementById("army-buff-quick-value").value = "";
+    });
 
     document.getElementById("roster-import-input").addEventListener("change", (e) => {
       const file = e.target.files[0];
