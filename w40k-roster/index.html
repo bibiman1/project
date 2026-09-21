@@ -149,8 +149,8 @@
           <button id="btn-end-game" class="btn btn-danger">🏁 ゲーム終了</button>
         </div>
 
-        <div class="tracker-grid">
-          <div class="tracker-card">
+        <div class="tracker-sticky-bar">
+          <div class="tracker-card tracker-card-compact">
             <h3>バトルラウンド</h3>
             <div class="counter-row">
               <button class="btn btn-round" id="round-dec">−</button>
@@ -159,7 +159,7 @@
             </div>
           </div>
 
-          <div class="tracker-card">
+          <div class="tracker-card tracker-card-compact">
             <h3>命令教条</h3>
             <select id="doctrina-imperative-select">
               <option value="">未選択</option>
@@ -173,46 +173,50 @@
               征服命令: 白兵武器の技能+1、射撃武器に[アサルト]を得る。加えて、バトルラインか自軍バトルライン6"以内のユニットは攻撃の貫通値+1（要手動反映）。</p>
             </details>
           </div>
+        </div>
 
+        <div class="tracker-grid">
           <div class="tracker-card">
-            <h3>コマンドポイント (CP)</h3>
-            <div class="counter-pair">
-              <div class="counter-item">
-                <span class="counter-label">自分</span>
-                <div class="counter-row">
-                  <button class="btn btn-round" data-cp="me" data-delta="-1">−</button>
-                  <span id="cp-me" class="counter-value">0</span>
-                  <button class="btn btn-round" data-cp="me" data-delta="1">＋</button>
+            <h3>得点管理</h3>
+            <div class="score-row">
+              <span class="score-row-label">CP</span>
+              <div class="counter-pair">
+                <div class="counter-item">
+                  <span class="counter-label">自分</span>
+                  <div class="counter-row">
+                    <button class="btn btn-round" data-cp="me" data-delta="-1">−</button>
+                    <span id="cp-me" class="counter-value">0</span>
+                    <button class="btn btn-round" data-cp="me" data-delta="1">＋</button>
+                  </div>
                 </div>
-              </div>
-              <div class="counter-item">
-                <span class="counter-label">相手</span>
-                <div class="counter-row">
-                  <button class="btn btn-round" data-cp="opponent" data-delta="-1">−</button>
-                  <span id="cp-opponent" class="counter-value">0</span>
-                  <button class="btn btn-round" data-cp="opponent" data-delta="1">＋</button>
+                <div class="counter-item">
+                  <span class="counter-label">相手</span>
+                  <div class="counter-row">
+                    <button class="btn btn-round" data-cp="opponent" data-delta="-1">−</button>
+                    <span id="cp-opponent" class="counter-value">0</span>
+                    <button class="btn btn-round" data-cp="opponent" data-delta="1">＋</button>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-
-          <div class="tracker-card">
-            <h3>勝利ポイント (VP)</h3>
-            <div class="counter-pair">
-              <div class="counter-item">
-                <span class="counter-label">自分</span>
-                <div class="counter-row">
-                  <button class="btn btn-round" data-vp="me" data-delta="-1">−</button>
-                  <span id="vp-me" class="counter-value">0</span>
-                  <button class="btn btn-round" data-vp="me" data-delta="1">＋</button>
+            <div class="score-row">
+              <span class="score-row-label">VP</span>
+              <div class="counter-pair">
+                <div class="counter-item">
+                  <span class="counter-label">自分</span>
+                  <div class="counter-row">
+                    <button class="btn btn-round" data-vp="me" data-delta="-1">−</button>
+                    <span id="vp-me" class="counter-value">0</span>
+                    <button class="btn btn-round" data-vp="me" data-delta="1">＋</button>
+                  </div>
                 </div>
-              </div>
-              <div class="counter-item">
-                <span class="counter-label">相手</span>
-                <div class="counter-row">
-                  <button class="btn btn-round" data-vp="opponent" data-delta="-1">−</button>
-                  <span id="vp-opponent" class="counter-value">0</span>
-                  <button class="btn btn-round" data-vp="opponent" data-delta="1">＋</button>
+                <div class="counter-item">
+                  <span class="counter-label">相手</span>
+                  <div class="counter-row">
+                    <button class="btn btn-round" data-vp="opponent" data-delta="-1">−</button>
+                    <span id="vp-opponent" class="counter-value">0</span>
+                    <button class="btn btn-round" data-vp="opponent" data-delta="1">＋</button>
+                  </div>
                 </div>
               </div>
             </div>

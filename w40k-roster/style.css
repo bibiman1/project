@@ -129,6 +129,16 @@ a {
   .tracker-card h3 {
     margin-bottom: 0.4rem;
   }
+
+  .tracker-sticky-bar {
+    gap: 0.4rem;
+    margin-bottom: 0.7rem;
+    padding: 0.4rem 1px;
+  }
+
+  .tracker-sticky-bar .tracker-card {
+    min-width: 140px;
+  }
 }
 
 /* ---- layout ---- */
@@ -586,6 +596,51 @@ main {
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 1rem;
   margin-bottom: 1.5rem;
+}
+
+/* Round + Doctrina Imperatives are the two things checked most while scrolled down the unit list
+   during play, so keep them pinned to the top instead of making the player scroll back up. */
+.tracker-sticky-bar {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin: 0 -1px 1rem;
+  padding: 0.6rem 1px 0.6rem;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+}
+
+.tracker-sticky-bar .tracker-card {
+  flex: 1;
+  min-width: 200px;
+}
+
+.tracker-card-compact {
+  padding: 0.7rem 0.9rem;
+}
+
+.tracker-card-compact h3 {
+  margin-bottom: 0.4rem;
+}
+
+.score-row {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.score-row + .score-row {
+  margin-top: 0.6rem;
+}
+
+.score-row-label {
+  min-width: 2.2rem;
+  font-weight: 700;
+  color: var(--text-dim);
+  font-size: 0.85rem;
 }
 
 .tracker-card {
