@@ -90,9 +90,33 @@
         const row = document.createElement("article");
         row.className = "tracker-unit-row" + (status.destroyed ? " is-destroyed" : "");
 
-        const { profile, profileChanges, buffNotes } = W40K.computeUnitBuffs(roster, unit, { doctrinaImperative: game.doctrinaImperative, battleShock: status.battleShock });
+        const { profile, profileChanges, weapons, buffNotes } = W40K.computeUnitBuffs(roster, unit, { doctrinaImperative: game.doctrinaImperative, battleShock: status.battleShock });
         const hasProfile = profile && (profile.move || profile.toughness || profile.save || profile.invSave || profile.wounds || profile.leadership || profile.oc);
         const profileCell = (field) => buffCell(profileChanges[field] ?? profile[field], profileChanges[field] !== undefined ? profile[field] : undefined);
+
+        // Only show the weapon table when a buff actually changed something (numeric shift or an
+        // appended keyword like [ヘヴィ]/[アサルト] from 命令教条) - otherwise it's just clutter,
+        // since baseline weapon stats are already visible on the roster screen.
+        const changedWeapons = weapons.filter((w) => Object.keys(w._changed).length > 0 || w.abilities);
+        const weaponsHtml = changedWeapons.length
+          ? `<table class="weapon-table">
+              <thead><tr><th>武器</th><th>攻</th><th>技</th><th>攻撃力</th><th>貫通</th><th>ダメ</th></tr></thead>
+              <tbody>
+                ${changedWeapons
+                  .map(
+                    (w) => `<tr>
+                      <td>${w.type === "melee" ? "⚔" : "🔫"} ${escapeHtml(w.name)}${w.abilities ? ` <span class="weapon-ability">[${escapeHtml(w.abilities)}]</span>` : ""}</td>
+                      <td>${buffCell(w._changed.attacks ?? w.attacks, w._changed.attacks !== undefined ? w.attacks : undefined)}</td>
+                      <td>${buffCell(w._changed.skill ?? w.skill, w._changed.skill !== undefined ? w.skill : undefined)}</td>
+                      <td>${buffCell(w._changed.strength ?? w.strength, w._changed.strength !== undefined ? w.strength : undefined)}</td>
+                      <td>${buffCell(w._changed.ap ?? w.ap, w._changed.ap !== undefined ? w.ap : undefined)}</td>
+                      <td>${buffCell(w._changed.damage ?? w.damage, w._changed.damage !== undefined ? w.damage : undefined)}</td>
+                    </tr>`
+                  )
+                  .join("")}
+              </tbody>
+            </table>`
+          : "";
 
         // "Data-severed"-style ability: if this unit is named a partner unit's keyword swaps when that partner is absent/destroyed.
         const keywordSwapNote = ((unit.abilities || []).some((a) => (a.name || "").includes("データ切断")) && unit.group)
@@ -105,7 +129,7 @@
           : null;
 
         const statsHtml =
-          hasProfile || buffNotes.length || keywordSwapNote
+          hasProfile || buffNotes.length || keywordSwapNote || changedWeapons.length
             ? `<div class="tracker-unit-row-stats">
                 ${
                   hasProfile
@@ -120,6 +144,7 @@
                       </p>`
                     : ""
                 }
+                ${weaponsHtml}
                 ${buffNotes.length ? `<p class="unit-buff-notes">${buffNotes.map((n) => `🔺${escapeHtml(n)}`).join("<br>")}</p>` : ""}
                 ${keywordSwapNote ? `<p class="unit-buff-notes">🔻${escapeHtml(keywordSwapNote)}</p>` : ""}
               </div>`
