@@ -1091,6 +1091,7 @@
     document.getElementById("unit-form-abilities").value = serializeAbilities(unit?.abilities);
     refreshWeaponPicker();
     refreshKeywordPicker();
+    refreshAbilityPicker();
     refreshEnhancementMasterPicker(roster);
     unitModal.showModal();
   };
@@ -1115,6 +1116,16 @@
       return;
     }
     picker.innerHTML = library.map((k) => `<option value="${escapeHtml(k)}">${escapeHtml(k)}</option>`).join("");
+  };
+
+  const refreshAbilityPicker = () => {
+    const picker = document.getElementById("unit-form-ability-picker");
+    const library = W40K.Abilities.getAll();
+    if (library.length === 0) {
+      picker.innerHTML = '<option value="" disabled>アビリティ辞書が空です</option>';
+      return;
+    }
+    picker.innerHTML = library.map((line) => `<option value="${escapeHtml(line)}">${escapeHtml(line)}</option>`).join("");
   };
 
   // Filters the current detachment's enhancements to ones this (possibly unsaved) unit actually qualifies
@@ -1155,6 +1166,19 @@
     field.value = existing.join(", ");
     const roster = getById(state.selectedRosterId);
     if (roster) refreshEnhancementMasterPicker(roster);
+  };
+
+  // Appends full ability lines (raw "[category] name: text" bulk-text format) not already present.
+  const appendAbilityLines = (lines) => {
+    const field = document.getElementById("unit-form-abilities");
+    const existing = field.value
+      .split("\n")
+      .map((l) => l.trim())
+      .filter(Boolean);
+    lines.forEach((line) => {
+      if (!existing.includes(line)) existing.push(line);
+    });
+    field.value = existing.join("\n");
   };
 
   unitForm.addEventListener("submit", (e) => {
@@ -1280,6 +1304,26 @@
     });
 
     document.addEventListener("w40k:keywords-changed", () => refreshKeywordPicker());
+
+    document.getElementById("btn-add-picked-abilities").addEventListener("click", () => {
+      const picker = document.getElementById("unit-form-ability-picker");
+      const picked = Array.from(picker.selectedOptions).map((opt) => opt.value);
+      if (picked.length === 0) return;
+      appendAbilityLines(picked);
+      Array.from(picker.options).forEach((opt) => (opt.selected = false));
+    });
+
+    document.getElementById("btn-add-new-ability").addEventListener("click", () => {
+      const input = document.getElementById("unit-form-new-ability");
+      const value = input.value.trim();
+      if (!value) return;
+      W40K.Abilities.addAbility(value);
+      appendAbilityLines([value]);
+      refreshAbilityPicker();
+      input.value = "";
+    });
+
+    document.addEventListener("w40k:abilities-changed", () => refreshAbilityPicker());
 
     document.getElementById("detachment-master-picker").addEventListener("change", (e) => {
       const detachment = W40K.Detachments.getByName(e.target.value);

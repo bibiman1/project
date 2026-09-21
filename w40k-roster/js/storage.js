@@ -8,6 +8,7 @@ W40K.KEYS = {
   PHASE_CHECKLIST: "w40k_phase_checklist_template",
   WEAPON_LIBRARY: "w40k_weapon_library",
   KEYWORD_LIBRARY: "w40k_keyword_library",
+  ABILITY_LIBRARY: "w40k_ability_library",
   DETACHMENT_LIBRARY: "w40k_detachment_library",
   CORE_STRATAGEM_LIBRARY: "w40k_core_stratagem_library",
 };
