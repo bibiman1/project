@@ -67,5 +67,16 @@
     document.dispatchEvent(new CustomEvent("w40k:keywords-changed"));
   };
 
-  W40K.Keywords = { init, getAll: () => library, addKeyword, replaceAll };
+  // Explicit, user-triggered overwrite (unlike the first-run seed above, this replaces whatever is there now).
+  const resetToSeed = () => {
+    if (!W40K.KEYWORD_LIBRARY_SEED) return false;
+    library = W40K.KEYWORD_LIBRARY_SEED.split("\n")
+      .map((k) => k.trim())
+      .filter(Boolean);
+    persist();
+    document.dispatchEvent(new CustomEvent("w40k:keywords-changed"));
+    return true;
+  };
+
+  W40K.Keywords = { init, getAll: () => library, addKeyword, replaceAll, resetToSeed };
 })();

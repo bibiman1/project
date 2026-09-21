@@ -146,5 +146,11 @@
     document.dispatchEvent(new CustomEvent("w40k:unitlibrary-changed"));
   };
 
-  W40K.UnitLibrary = { init, getAll: () => library, replaceAll };
+  // Explicit, user-triggered overwrite (unlike loadSeedIfEmpty, this replaces whatever is there now).
+  const resetToSeed = () => {
+    if (!W40K.UNIT_LIBRARY_SEED) return false;
+    return rebuildFromEditedText(W40K.UNIT_LIBRARY_SEED.basics, W40K.UNIT_LIBRARY_SEED.weapons, W40K.UNIT_LIBRARY_SEED.abilities);
+  };
+
+  W40K.UnitLibrary = { init, getAll: () => library, replaceAll, resetToSeed };
 })();

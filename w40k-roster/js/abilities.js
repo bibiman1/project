@@ -75,5 +75,18 @@
     document.dispatchEvent(new CustomEvent("w40k:abilities-changed"));
   };
 
-  W40K.Abilities = { init, getAll: () => library, addAbility, replaceAll };
+  // Explicit, user-triggered overwrite (unlike the first-run seed above, this replaces whatever is there now).
+  const resetToSeed = () => {
+    if (!W40K.ABILITY_LIBRARY_SEED) return false;
+    library = SEED.concat(
+      W40K.ABILITY_LIBRARY_SEED.split("\n")
+        .map((l) => l.trim())
+        .filter(Boolean)
+    );
+    persist();
+    document.dispatchEvent(new CustomEvent("w40k:abilities-changed"));
+    return true;
+  };
+
+  W40K.Abilities = { init, getAll: () => library, addAbility, replaceAll, resetToSeed };
 })();

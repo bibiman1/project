@@ -104,5 +104,14 @@
     render();
   };
 
-  W40K.Armory = { init, getAll: () => library, replaceAll };
+  // Explicit, user-triggered overwrite (unlike the first-run seed above, this replaces whatever is there now).
+  const resetToSeed = () => {
+    if (!W40K.ARMORY_SEED) return false;
+    library = W40K.parseWeapons(W40K.ARMORY_SEED);
+    persist();
+    render();
+    return true;
+  };
+
+  W40K.Armory = { init, getAll: () => library, replaceAll, resetToSeed };
 })();
