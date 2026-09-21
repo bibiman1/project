@@ -59,6 +59,17 @@
             </div>
             <div class="detachment-section">
               <div class="pane-heading">
+                <h3>アーミールール</h3>
+              </div>
+              <select id="army-rule-select">
+                <option value="">未選択</option>
+                <option value="doctrina_imperatives">命令教条（帝国技術局）</option>
+              </select>
+              <p class="hint">選択すると、対戦トラッカーの「命令教条」プルダウンで迎撃命令/征服命令を選んだ時、このロスターの全ユニットに自動適用されます（ユニット側でアビリティを登録する必要はありません）。</p>
+            </div>
+
+            <div class="detachment-section">
+              <div class="pane-heading">
                 <h3>デタッチメント</h3>
                 <div class="detail-actions">
                   <button id="btn-edit-detachments" class="btn btn-ghost btn-sm">📚 マスタ編集</button>
@@ -152,7 +163,7 @@
               <option value="protector">迎撃命令</option>
               <option value="conqueror">征服命令</option>
             </select>
-            <p class="hint">ラウンドが進むと未選択に戻ります。命令教条アビリティを持つユニットに自動反映されます。<br>
+            <p class="hint">ラウンドが進むと未選択に戻ります。ロスターの「アーミールール」で命令教条を選択している場合、全ユニットに自動反映されます（未選択の場合は何も反映されません）。<br>
             迎撃命令: 射撃武器の技能+1、[ヘヴィ]を得る。加えて、バトルラインか自軍バトルライン6"以内のユニットは被白兵ヒット-1（要手動反映）。<br>
             征服命令: 白兵武器の技能+1、射撃武器に[アサルト]を得る。加えて、バトルラインか自軍バトルライン6"以内のユニットは攻撃の貫通値+1（要手動反映）。</p>
           </div>

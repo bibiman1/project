@@ -103,7 +103,7 @@ W40K.computeUnitBuffs = (roster, unit, options) => {
   const profile = { ...unit.profile };
   const profileChanges = {};
   const buffNotes = [];
-  const weapons = (unit.weapons || []).map((w) => ({ ...w, _changed: {} }));
+  const weapons = (unit.weapons || []).map((w) => ({ ...w, _changed: {}, _addedAbilities: [] }));
 
   const applyModifier = (label, m) => {
     if (m.kind === "note") {
@@ -133,20 +133,23 @@ W40K.computeUnitBuffs = (roster, unit, options) => {
           w[m.field] = newVal;
         }
       } else if (m.kind === "keyword") {
-        w.abilities = [w.abilities, m.value].filter(Boolean).join("、");
+        // Kept separate from the weapon's own (typed-in) abilities so the UI can show buff-added
+        // keywords like [ヘヴィ]/[アサルト] in a different color instead of blending into the base text.
+        w._addedAbilities.push(m.value);
       }
     });
   };
 
   applicableBuffs.forEach((buff) => buff.modifiers.forEach((m) => applyModifier(buff.name, m)));
 
-  // 命令教条 (Doctrina Imperatives): chosen per battle round, active for any unit whose ability text names it.
+  // 命令教条 (Doctrina Imperatives): an army rule, chosen per battle round, active for every unit in a
+  // roster that has this army rule set (roster.armyRule) - not something that needs tagging per unit.
   // Improving a Skill characteristic means a *lower* number, hence delta -1. Both imperatives also carry a
   // conditional effect (active only for BATTLELINE units, or units within 6" of a friendly AdMech BATTLELINE
   // unit) that the app has no positional data to check automatically; that part is recorded as a text note
   // only, for the player to apply by hand.
   const doctrinaImperative = options && options.doctrinaImperative;
-  if (doctrinaImperative && (unit.abilities || []).some((a) => (a.name || "").includes("命令教条"))) {
+  if (doctrinaImperative && roster.armyRule === "doctrina_imperatives") {
     if (doctrinaImperative === "protector") {
       applyModifier("迎撃命令", { kind: "numeric", scope: "ranged", field: "skill", value: -1 });
       applyModifier("迎撃命令", { kind: "keyword", scope: "ranged", value: "ヘヴィ" });

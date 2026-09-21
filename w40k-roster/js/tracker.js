@@ -97,7 +97,7 @@
         // Only show the weapon table when a buff actually changed something (numeric shift or an
         // appended keyword like [ヘヴィ]/[アサルト] from 命令教条) - otherwise it's just clutter,
         // since baseline weapon stats are already visible on the roster screen.
-        const changedWeapons = weapons.filter((w) => Object.keys(w._changed).length > 0 || w.abilities);
+        const changedWeapons = weapons.filter((w) => Object.keys(w._changed).length > 0 || (w._addedAbilities || []).length > 0 || w.abilities);
         const weaponsHtml = changedWeapons.length
           ? `<table class="weapon-table">
               <thead><tr><th>武器</th><th>攻</th><th>技</th><th>攻撃力</th><th>貫通</th><th>ダメ</th></tr></thead>
@@ -105,7 +105,9 @@
                 ${changedWeapons
                   .map(
                     (w) => `<tr>
-                      <td>${w.type === "melee" ? "⚔" : "🔫"} ${escapeHtml(w.name)}${w.abilities ? ` <span class="weapon-ability">[${escapeHtml(w.abilities)}]</span>` : ""}</td>
+                      <td>${w.type === "melee" ? "⚔" : "🔫"} ${escapeHtml(w.name)}${w.abilities ? ` <span class="weapon-ability">[${escapeHtml(w.abilities)}]</span>` : ""}${(w._addedAbilities || [])
+                        .map((a) => ` <span class="weapon-ability weapon-ability-added">[${escapeHtml(a)}]</span>`)
+                        .join("")}</td>
                       <td>${buffCell(w._changed.attacks ?? w.attacks, w._changed.attacks !== undefined ? w.attacks : undefined)}</td>
                       <td>${buffCell(w._changed.skill ?? w.skill, w._changed.skill !== undefined ? w.skill : undefined)}</td>
                       <td>${buffCell(w._changed.strength ?? w.strength, w._changed.strength !== undefined ? w.strength : undefined)}</td>
