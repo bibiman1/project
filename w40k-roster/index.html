@@ -337,6 +337,15 @@
   <dialog id="modal-unit" class="modal modal-wide">
     <form id="form-unit" method="dialog" class="form-grid">
       <h3 id="modal-unit-title">ユニット追加</h3>
+      <div class="unit-master-picker">
+        <label>ユニットマスタから選択（任意）
+          <select id="unit-form-master-picker">
+            <option value="">選択しない（手入力）</option>
+          </select>
+        </label>
+        <button type="button" id="btn-edit-unitlibrary" class="btn btn-ghost btn-sm">📚 ユニットマスタ編集</button>
+      </div>
+      <p class="hint">選ぶと、下記のプロフィール・武器・アビリティ・キーワード・ポイントが自動入力されます（その後は自由に編集できます。ロスターに追加した後はマスタと切り離された独立コピーになるので、データスレート改定でマスタ側を直しても既存ユニットには自動反映されません）。</p>
       <label>ユニット名
         <input id="unit-form-name" type="text" required>
       </label>
@@ -682,6 +691,30 @@
     </form>
   </dialog>
 
+  <!-- Unit datasheet library edit modal -->
+  <dialog id="modal-unitlibrary" class="modal modal-wide">
+    <form id="form-unitlibrary" method="dialog" class="form-grid">
+      <h3>ユニットマスタ編集</h3>
+      <p class="hint">コデックスのデータシートをここにまとめておくと、ユニット追加時に「ユニットマスタから選択」で毎回手入力せずに済みます。データスレートで数値が変わったら、ここを直すだけで済みます（すでにロスターに追加済みのユニットには自動反映されません）。</p>
+      <label>基本情報・プロフィール
+        <p class="hint">1行1ユニット。「ユニット名, モデル数, ポイント, キーワード, 移動, 耐久, 防御, 特防, 傷, 統率, 確保」の順（プロフィール欄は空欄可）。キーワードが複数ある場合は「キャラクター/テックプリースト」のように「/」区切りにしてください（カンマは列の区切りに使われるため）。</p>
+        <textarea id="unitlibrary-basics-input" rows="8"></textarea>
+      </label>
+      <label>武器一覧
+        <p class="hint">1行1武器。「ユニット名, 種別(射撃/白兵), 武器名, 射程, 攻撃回数, 技能, 攻撃力, 貫通値, ダメージ[, アビリティ]」の順。ユニット名は上の基本情報と一致させてください。</p>
+        <textarea id="unitlibrary-weapons-input" rows="10"></textarea>
+      </label>
+      <label>アビリティ一覧
+        <p class="hint">1行1アビリティ。「ユニット名, [コア/陣営/デタッチメント] アビリティ名: 説明」の順（タグ・説明は省略可）。ユニット名は上の基本情報と一致させてください。</p>
+        <textarea id="unitlibrary-abilities-input" rows="10"></textarea>
+      </label>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" data-close-modal>キャンセル</button>
+        <button type="submit" class="btn btn-primary">保存</button>
+      </div>
+    </form>
+  </dialog>
+
   <!-- Rule note form modal -->
   <dialog id="modal-note" class="modal">
     <form id="form-note" method="dialog" class="form-grid">
@@ -709,6 +742,7 @@
   <script src="./js/armory.js"></script>
   <script src="./js/keywords.js"></script>
   <script src="./js/abilities.js"></script>
+  <script src="./js/unitlibrary.js"></script>
   <script src="./js/detachments.js"></script>
   <script src="./js/masterdata.js"></script>
   <script src="./js/backup.js"></script>

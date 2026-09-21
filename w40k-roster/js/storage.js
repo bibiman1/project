@@ -9,6 +9,7 @@ W40K.KEYS = {
   WEAPON_LIBRARY: "w40k_weapon_library",
   KEYWORD_LIBRARY: "w40k_keyword_library",
   ABILITY_LIBRARY: "w40k_ability_library",
+  UNIT_LIBRARY: "w40k_unit_library",
   DETACHMENT_LIBRARY: "w40k_detachment_library",
   CORE_STRATAGEM_LIBRARY: "w40k_core_stratagem_library",
 };
@@ -94,6 +95,39 @@ W40K.serializeWeapons = (weapons) =>
       const fields = [w.type === "melee" ? "白兵" : "射撃", w.name, w.range, w.attacks, w.skill, w.strength, w.ap, w.damage];
       if (w.abilities) fields.push(w.abilities);
       return fields.join(", ");
+    })
+    .join("\n");
+
+// Shared ability bulk-text format (used by unit ability lists and the unit datasheet library).
+// Each line: "[コア/陣営/デタッチメント] アビリティ名: 説明" (tag and description are both optional;
+// no tag means a unit-specific ability).
+W40K.ABILITY_CATEGORY_TAGS = { core: "コア", faction: "陣営", detachment: "デタッチメント" };
+
+W40K.parseAbilities = (text) =>
+  text
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0)
+    .map((line) => {
+      let category = "unit";
+      const tagMatch = line.match(/^\[(.+?)\]\s*/);
+      if (tagMatch) {
+        const tag = tagMatch[1];
+        if (tag.includes("コア")) category = "core";
+        else if (tag.includes("陣営")) category = "faction";
+        else if (tag.includes("デタッチメント")) category = "detachment";
+        line = line.slice(tagMatch[0].length);
+      }
+      const sepIndex = [line.indexOf(":"), line.indexOf("：")].filter((i) => i >= 0).sort((a, b) => a - b)[0];
+      if (sepIndex === undefined) return { id: W40K.uid(), category, name: line, text: "" };
+      return { id: W40K.uid(), category, name: line.slice(0, sepIndex).trim(), text: line.slice(sepIndex + 1).trim() };
+    });
+
+W40K.serializeAbilities = (abilities) =>
+  (abilities || [])
+    .map((a) => {
+      const prefix = W40K.ABILITY_CATEGORY_TAGS[a.category] ? `[${W40K.ABILITY_CATEGORY_TAGS[a.category]}] ` : "";
+      return a.text ? `${prefix}${a.name}: ${a.text}` : `${prefix}${a.name}`;
     })
     .join("\n");
 
