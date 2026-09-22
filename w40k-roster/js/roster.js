@@ -893,7 +893,9 @@
       (coreStratagems.length ? `<optgroup label="コア策略（共通）">${coreStratagems.map(optionHtml).join("")}</optgroup>` : "") +
       (stratagems.length
         ? `<optgroup label="デタッチメント策略">${stratagems.map(optionHtml).join("")}</optgroup>`
-        : '<option value="" disabled>現在のデタッチメント名と一致するマスタがありません</option>');
+        : !detachment
+        ? `<option value="" disabled>現在のデタッチメント名「${escapeHtml(roster.detachment.name || "（未設定）")}」と一致するマスタがありません（デタッチメント編集画面で「マスタから選択」を選び直してください）</option>`
+        : "");
     picker.value = "";
   };
 
@@ -1251,7 +1253,7 @@
     picker.innerHTML =
       '<option value="">選択しない（手入力）</option>' +
       (!detachment
-        ? '<option value="" disabled>現在のデタッチメント名と一致するマスタがありません</option>'
+        ? `<option value="" disabled>現在のデタッチメント名「${escapeHtml(roster.detachment.name || "（未設定）")}」と一致するマスタがありません（デタッチメント編集画面で「マスタから選択」を選び直してください）</option>`
         : !isCharacter
         ? '<option value="" disabled>キャラクターのみ強化を装備できます（キーワードに「キャラクター」の追加が必要）</option>'
         : eligible.length === 0

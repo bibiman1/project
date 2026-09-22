@@ -390,7 +390,10 @@
   W40K.Detachments = {
     init,
     getAll: () => library,
-    getByName: (name) => library.find((d) => d.name === name),
+    // Trimmed compare: roster.detachment.name is free-typed text, not an id reference, so it can
+    // pick up incidental leading/trailing whitespace (e.g. from older bulk-paste flows) that would
+    // otherwise silently break the exact-match lookup used by the enhancement/stratagem pickers.
+    getByName: (name) => library.find((d) => d.name === name || d.name === (name || "").trim()),
     getCoreStratagems: () => coreStratagems,
     replaceAll,
     resetToSeed,
