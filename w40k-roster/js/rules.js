@@ -18,6 +18,16 @@
 
   const persist = () => W40K.save(W40K.KEYS.NOTES, state.notes);
 
+  // First run: seed the universal core-rules quick reference (js/rules-seed.js) into an empty list,
+  // so this doesn't start blank. Guarded by length so it also helps a list that was already
+  // initialized empty. Never overwrites notes the player already added - see 🔄 button in マスタ
+  // データ for other master data, but core rules have no such "reset" button since they aren't
+  // faction data.
+  if (state.notes.length === 0 && W40K.RULES_SEED) {
+    state.notes = W40K.RULES_SEED.map((n) => ({ id: W40K.uid(), ...n }));
+    persist();
+  }
+
   const els = {};
 
   const cacheEls = () => {
