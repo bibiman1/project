@@ -989,6 +989,11 @@ main {
   margin: -0.3rem 0 0;
 }
 
+.buff-source-text.buff-source-warning {
+  color: var(--danger);
+  font-weight: 600;
+}
+
 .form-grid label {
   display: flex;
   flex-direction: column;
