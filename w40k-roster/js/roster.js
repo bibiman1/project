@@ -1042,6 +1042,30 @@
     valueInput.placeholder = kind === "numeric" ? "例: 2（マイナスも可）" : kind === "keyword" ? "追加するキーワード" : "メモの文章";
   };
 
+  // Curated multi-option 合流バフ templates for abilities that bundle several mutually-exclusive
+  // effects in one block of text (e.g. Battle Protocols' 3-way switch) - too structured for the
+  // generic single-value guessBuffFromText picker above to split correctly on its own.
+  const GROUP_BUFF_TEMPLATES = {
+    battle_protocols: {
+      label: "戦闘プロトコル（カステラン・ロボットの3択切替）",
+      options: [
+        { name: "迎撃プロトコル", scope: "ranged", field: "attacks", value: "2" },
+        { name: "征服プロトコル", scope: "melee", field: "attacks", value: "2" },
+        { name: "生存プロトコル", scope: "profile", field: "toughness", value: "1" },
+      ],
+    },
+  };
+
+  const populateGroupBuffTemplateSelect = () => {
+    const select = document.getElementById("group-buff-template-select");
+    select.innerHTML =
+      '<option value="">選択しない</option>' +
+      Object.entries(GROUP_BUFF_TEMPLATES)
+        .map(([key, t]) => `<option value="${key}">${escapeHtml(t.label)}</option>`)
+        .join("");
+    select.value = "";
+  };
+
   // グループ名 suggestions: groups already used by this roster's units, plus any already registered.
   const refreshGroupBuffGroupList = (roster) => {
     const list = document.getElementById("group-buff-quick-group-list");
@@ -1060,6 +1084,7 @@
     refreshGroupBuffGroupList(roster);
     refreshGroupBuffTargetUnitList(roster);
     populateBuffSourcePicker("group-buff-quick-source", "group-buff-quick-source-text", roster);
+    populateGroupBuffTemplateSelect();
   };
 
   const openGroupBuffsModal = () => {
@@ -1568,6 +1593,36 @@
       const textarea = document.getElementById("group-buffs-input");
       textarea.value = textarea.value.trim() ? `${textarea.value.trim()}\n${line}` : line;
       document.getElementById("group-buff-quick-value").value = "";
+    });
+
+    document.getElementById("btn-add-group-buff-template").addEventListener("click", () => {
+      const templateKey = document.getElementById("group-buff-template-select").value;
+      const template = GROUP_BUFF_TEMPLATES[templateKey];
+      if (!template) {
+        alert("テンプレートを選択してください。");
+        return;
+      }
+      const group = document.getElementById("group-buff-quick-group").value.trim();
+      const targetUnit = document.getElementById("group-buff-quick-target-unit").value.trim();
+      if (!group || !targetUnit) {
+        alert("グループ名と対象ユニットを入力してから、テンプレートを追加してください。");
+        return;
+      }
+      const lines = template.options.map((opt) => {
+        const scopeLabel = opt.scope === "ranged" ? "射撃" : opt.scope === "melee" ? "白兵" : "プロフィール";
+        const fieldLabel = opt.scope === "profile" ? W40K.PROFILE_FIELD_LABELS[opt.field] || opt.field : W40K.WEAPON_FIELD_LABELS[opt.field] || opt.field;
+        return [group, opt.name, "数値", targetUnit, scopeLabel, fieldLabel, opt.value].join(", ");
+      });
+      const textarea = document.getElementById("group-buffs-input");
+      const existing = textarea.value
+        .split("\n")
+        .map((l) => l.trim())
+        .filter(Boolean);
+      lines.forEach((line) => {
+        if (!existing.includes(line)) existing.push(line);
+      });
+      textarea.value = existing.join("\n");
+      document.getElementById("group-buff-template-select").value = "";
     });
 
     document.getElementById("roster-import-input").addEventListener("change", (e) => {
