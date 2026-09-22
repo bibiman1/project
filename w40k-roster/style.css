@@ -90,64 +90,6 @@ a {
   border-bottom-color: var(--gold);
 }
 
-/* On a phone (likely how this gets used tableside), the header's marketing copy just eats vertical
-   space above the fold on every tab - shrink it so more of the actual screen (esp. the tracker) is
-   visible without scrolling. */
-@media (max-width: 600px) {
-  .site-header {
-    padding: 0.9rem 1rem 0;
-  }
-
-  .lead {
-    display: none;
-  }
-
-  .site-header h1 {
-    font-size: 1.3rem;
-    margin-bottom: 0.5rem;
-  }
-
-  .eyebrow {
-    margin-bottom: 0.1rem;
-  }
-
-  .tab-btn {
-    padding: 0.6rem 0.3rem;
-    font-size: 0.7rem;
-  }
-
-  .tab-nav {
-    gap: 0.05rem;
-  }
-
-  main {
-    padding: 0.9rem;
-  }
-
-  .tracker-grid {
-    gap: 0.6rem;
-    margin-bottom: 1rem;
-  }
-
-  .tracker-card {
-    padding: 0.7rem 0.8rem;
-  }
-
-  .tracker-card h3 {
-    margin-bottom: 0.4rem;
-  }
-
-  .tracker-sticky-bar {
-    gap: 0.4rem;
-    margin-bottom: 0.7rem;
-    padding: 0.4rem 1px;
-  }
-
-  .tracker-sticky-bar .tracker-card {
-    min-width: 140px;
-  }
-}
-
 /* ---- layout ---- */
 
 main {
@@ -303,6 +245,11 @@ main {
 }
 
 .roster-detail-pane {
+  /* A grid item's default min-width is auto, which refuses to shrink below its content's
+     min-content size (here, a weapon table full of nowrap cells) - so without this, a unit with a
+     long weapon list blows this pane past its grid track's width instead of scrolling internally,
+     widening the whole page sideways on a phone. */
+  min-width: 0;
   background: var(--bg-panel);
   border: 1px solid var(--border);
   border-radius: var(--radius);
@@ -350,6 +297,7 @@ main {
 
 .unit-card {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
   gap: 1rem;
   background: var(--bg-card);
@@ -415,8 +363,16 @@ main {
   color: var(--text);
 }
 
+/* Every column is nowrap for legibility, so a unit with a long weapon name or many weapons can
+   easily need more width than a phone screen has. display:block turns the <table> itself into a
+   horizontally-scrolling box (its rows/cells keep their normal table layout - only the outer box's
+   display changes) so the table scrolls locally instead of widening the whole page sideways. */
 .weapon-table {
+  display: block;
   width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
   margin-top: 0.5rem;
   border-collapse: collapse;
   font-size: 0.78rem;
@@ -580,6 +536,8 @@ main {
 
 .unit-actions {
   display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
   gap: 0.3rem;
 }
 
@@ -757,17 +715,19 @@ main {
   gap: 1.5rem;
 }
 
+/* Same grid-blowout fix as .roster-detail-pane: a grid item's default min-width:auto refuses to
+   shrink below its content's min-content size, so a wide weapon table inside would otherwise push
+   this column past its track's width instead of scrolling internally. */
+.tracker-column {
+  min-width: 0;
+}
+
 @media (max-width: 800px) {
   .tracker-columns {
     grid-template-columns: 1fr;
   }
 }
 
-@media (max-width: 560px) {
-  .profile-grid {
-    grid-template-columns: repeat(4, 1fr);
-  }
-}
 
 .tracker-unit-list {
   display: flex;
@@ -1221,4 +1181,137 @@ details.section-details[open] > summary::before {
   text-align: center;
   color: var(--text-dim);
   padding: 2rem 1rem;
+}
+
+/* ---- mobile phone overrides ----
+   Kept last in the cascade (not just inside a media query) so these narrower-viewport tweaks
+   reliably win over the unconditional rules for the same selectors defined earlier in this file -
+   CSS breaks same-specificity ties by source order, and a media query being "true" does not
+   change that; a media-scoped rule placed BEFORE its unconditional counterpart loses the tie and
+   silently never applies, however narrow the viewport. */
+@media (max-width: 600px) {
+  .site-header {
+    padding: 0.9rem 1rem 0;
+  }
+
+  .lead {
+    display: none;
+  }
+
+  .site-header h1 {
+    font-size: 1.3rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .eyebrow {
+    margin-bottom: 0.1rem;
+  }
+
+  .tab-btn {
+    padding: 0.6rem 0.3rem;
+    font-size: 0.7rem;
+  }
+
+  .tab-nav {
+    gap: 0.05rem;
+  }
+
+  main {
+    padding: 0.9rem;
+  }
+
+  .tracker-grid {
+    gap: 0.6rem;
+    margin-bottom: 1rem;
+  }
+
+  .tracker-card {
+    padding: 0.7rem 0.8rem;
+  }
+
+  .tracker-card h3 {
+    margin-bottom: 0.4rem;
+  }
+
+  .tracker-sticky-bar {
+    gap: 0.4rem;
+    margin-bottom: 0.7rem;
+    padding: 0.4rem 1px;
+  }
+
+  .tracker-sticky-bar .tracker-card {
+    min-width: 140px;
+  }
+
+  .pane-heading {
+    margin: 0.8rem 0 0.5rem;
+  }
+
+  .roster-detail-pane {
+    padding: 0.8rem 0.9rem;
+  }
+
+  .phase-checklist-card {
+    margin-bottom: 1rem;
+  }
+
+  .phase-checklist-items {
+    gap: 0.3rem;
+    margin-bottom: 0.6rem;
+  }
+
+  .phase-checklist-item {
+    padding: 0.4rem 0.6rem;
+  }
+
+  /* CP/VP rows: on a narrow phone, the CP/VP label eating into the row's width used to tip the
+     自分/相手 counter pair into wrapping onto two lines each, leaving "CP"/"VP" stranded and
+     vertically centered next to the gap - tripling the row's height for no reason. Moving the
+     label to its own line above, and putting each 自分/相手 label inline with its counter instead
+     of stacked above it, gives the counters the full row width so they stay side by side. */
+  .score-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.2rem;
+  }
+
+  .score-row-label {
+    min-width: 0;
+  }
+
+  .counter-pair {
+    gap: 0.5rem 0.6rem;
+  }
+
+  .counter-item {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .counter-label {
+    margin-bottom: 0;
+  }
+
+  .counter-row {
+    gap: 0.4rem;
+  }
+
+  .counter-value {
+    font-size: 1.3rem;
+    min-width: 1.5ch;
+  }
+
+  .btn-round {
+    width: 1.9rem;
+    height: 1.9rem;
+    font-size: 1rem;
+  }
+}
+
+
+@media (max-width: 560px) {
+  .profile-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
 }
