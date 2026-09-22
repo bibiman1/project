@@ -423,10 +423,6 @@ main {
   color: var(--text);
 }
 
-.detachment-section {
-  margin-bottom: 0.8rem;
-}
-
 .detachment-name {
   margin: 0;
   font-weight: 600;
@@ -1164,8 +1160,8 @@ details.notes-details > .unit-buff-notes {
   margin-top: 0;
 }
 
-/* ---- collapsible roster-detail section group (aggregates setup blocks so the unit list below reads
-   as the main content, not one more block of equal visual weight) ---- */
+/* ---- collapsible roster-detail sections - each independently foldable via its own ▶/▼ triangle,
+   since a roster with several units and a full ルール設定 can get long ---- */
 
 details.section-details {
   border: 1px solid var(--border);
@@ -1196,6 +1192,14 @@ details.section-details[open] > summary::before {
 
 .section-details-body > *:first-child {
   margin-top: 0;
+}
+
+.section-details-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.5rem;
 }
 
 /* ---- footer ---- */

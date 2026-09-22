@@ -58,64 +58,75 @@
               </div>
             </div>
             <details class="section-details" open>
-              <summary>ルール設定（アーミールール・デタッチメント・策略・バフ）</summary>
+              <summary>アーミールール</summary>
               <div class="section-details-body">
-                <div class="detachment-section">
-                  <div class="pane-heading">
-                    <h3>アーミールール</h3>
-                  </div>
-                  <select id="army-rule-select">
-                    <option value="">未選択</option>
-                    <option value="doctrina_imperatives">命令教条（帝国技術局）</option>
-                  </select>
-                  <details class="hint-details">
-                    <summary>説明</summary>
-                    <p class="hint">選択すると、対戦トラッカーの「命令教条」プルダウンで迎撃命令/征服命令を選んだ時、このロスターの全ユニットに自動適用されます（ユニット側でアビリティを登録する必要はありません）。</p>
-                  </details>
-                </div>
+                <select id="army-rule-select">
+                  <option value="">未選択</option>
+                  <option value="doctrina_imperatives">命令教条（帝国技術局）</option>
+                </select>
+                <details class="hint-details">
+                  <summary>説明</summary>
+                  <p class="hint">選択すると、対戦トラッカーの「命令教条」プルダウンで迎撃命令/征服命令を選んだ時、このロスターの全ユニットに自動適用されます（ユニット側でアビリティを登録する必要はありません）。</p>
+                </details>
+              </div>
+            </details>
 
-                <div class="detachment-section">
-                  <div class="pane-heading">
-                    <h3>デタッチメント</h3>
-                    <button id="btn-edit-detachment" class="btn btn-ghost btn-sm">編集</button>
-                  </div>
-                  <p id="detachment-name" class="detachment-name"></p>
-                  <p id="detachment-rule" class="detachment-rule"></p>
+            <details class="section-details" open>
+              <summary>デタッチメント</summary>
+              <div class="section-details-body">
+                <div class="section-details-actions">
+                  <button id="btn-edit-detachment" class="btn btn-ghost btn-sm">編集</button>
                 </div>
+                <p id="detachment-name" class="detachment-name"></p>
+                <p id="detachment-rule" class="detachment-rule"></p>
+              </div>
+            </details>
 
-                <div class="pane-heading">
-                  <h3>策略</h3>
+            <details class="section-details" open>
+              <summary>策略</summary>
+              <div class="section-details-body">
+                <div class="section-details-actions">
                   <button id="btn-new-stratagem" class="btn btn-primary btn-sm">＋ 策略追加</button>
                 </div>
                 <div id="stratagem-list" class="stratagem-list"></div>
+              </div>
+            </details>
 
-                <div class="pane-heading">
-                  <h3>常時バフ（陣営アビリティ・強化）</h3>
+            <details class="section-details" open>
+              <summary>常時バフ（陣営アビリティ・強化）</summary>
+              <div class="section-details-body">
+                <div class="section-details-actions">
                   <button id="btn-edit-army-buffs" class="btn btn-primary btn-sm">編集</button>
                 </div>
                 <p class="hint">キーワードや強化の有無で自動適用される、常時有効なバフ。ユニット一覧に自動反映されます。</p>
                 <div id="army-buff-list" class="group-buff-list"></div>
+              </div>
+            </details>
 
-                <div class="pane-heading">
-                  <h3>合流バフ</h3>
+            <details class="section-details" open>
+              <summary>合流バフ</summary>
+              <div class="section-details-body">
+                <div class="section-details-actions">
                   <button id="btn-edit-group-buffs" class="btn btn-primary btn-sm">編集</button>
                 </div>
                 <div id="group-buff-list" class="group-buff-list"></div>
               </div>
             </details>
 
-            <div class="pane-heading">
-              <h3>ユニット</h3>
-              <div class="detail-actions">
-                <label class="btn btn-ghost">
-                  📥 CSV読込
-                  <input id="units-csv-import-input" type="file" accept=".csv,text/csv" hidden>
-                </label>
-                <button id="btn-bulk-units" class="btn btn-ghost">📋 一括入力</button>
-                <button id="btn-new-unit" class="btn btn-primary">＋ ユニット追加</button>
+            <details class="section-details" open>
+              <summary>ユニット</summary>
+              <div class="section-details-body">
+                <div class="section-details-actions">
+                  <label class="btn btn-ghost">
+                    📥 CSV読込
+                    <input id="units-csv-import-input" type="file" accept=".csv,text/csv" hidden>
+                  </label>
+                  <button id="btn-bulk-units" class="btn btn-ghost">📋 一括入力</button>
+                  <button id="btn-new-unit" class="btn btn-primary">＋ ユニット追加</button>
+                </div>
+                <div id="unit-list" class="unit-list"></div>
               </div>
-            </div>
-            <div id="unit-list" class="unit-list"></div>
+            </details>
           </div>
         </div>
       </div>
