@@ -50,11 +50,12 @@
   // seed in each module, which only fills in while a library is still empty). Detachments are
   // untouched - there's no Wahapedia-derived seed for them.
   const resetToWahapediaSeed = () => {
-    if (!confirm("武器庫・キーワード帳・アビリティ辞書・ユニットマスタを、現在の内容にかかわらずWahapediaデータで上書きします。よろしいですか？（デタッチメントマスタは対象外です）")) return;
+    if (!confirm("武器庫・キーワード帳・アビリティ辞書・ユニットマスタ・デタッチメントマスタを、現在の内容にかかわらずWahapediaデータで上書きします。よろしいですか？（コア策略は対象外です）")) return;
     W40K.Armory.resetToSeed();
     W40K.Keywords.resetToSeed();
     W40K.Abilities.resetToSeed();
     W40K.UnitLibrary.resetToSeed();
+    W40K.Detachments.resetToSeed();
     alert("上書きしました。");
   };
 
