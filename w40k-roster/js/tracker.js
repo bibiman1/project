@@ -520,22 +520,15 @@
 
     document.getElementById("btn-end-game").addEventListener("click", endGame);
 
-    // 先攻 automatically alternates each battle round (the player who did NOT go first in the
-    // previous round goes first this round) - it's decided once (round 1, or overridden by hand)
-    // and then just flips, never re-rolled. Flipping is its own inverse, so round-dec undoes it the
-    // same way round-inc applies it.
-    const flipFirstPlayer = () => {
-      if (!game.firstPlayer) return;
-      game.firstPlayer = game.firstPlayer === "me" ? "opponent" : "me";
-      game.activeTurn = game.firstPlayer;
-    };
-
+    // 先攻/後攻 is decided once for the whole battle (like which team bats first in baseball) and
+    // never changes round to round - only which half of the round is active does. So a new round
+    // always starts back at 表 (先攻's turn), never flips who 先攻 is.
     document.getElementById("round-dec").addEventListener("click", () => {
       if (!game || game.round <= 1) return;
       game.round -= 1;
       game.checkedItems = {};
       game.doctrinaImperative = null;
-      flipFirstPlayer();
+      game.activeTurn = game.firstPlayer;
       persist();
       render();
     });
@@ -544,17 +537,16 @@
       game.round += 1;
       game.checkedItems = {};
       game.doctrinaImperative = null;
-      flipFirstPlayer();
+      game.activeTurn = game.firstPlayer;
       persist();
       render();
     });
 
-    // 先攻・手番: who has priority (goes first) this battle - decided once (typically round 1) and
-    // then automatically alternates each round via flipFirstPlayer above, not re-rolled - and whose
-    // turn is currently active within the round. Picking a first player also starts their turn
-    // (表); 手番交代 flips to the other player's turn (裏) once their turn ends. The buttons stay
-    // available every round in case of a manual override (e.g. a mission rule). Purely a record for
-    // the player, not wired into any auto-apply logic.
+    // 先攻・手番: who has priority (goes first) this battle - decided once and fixed for the whole
+    // game, and whose turn is currently active within the round. Picking a first player also starts
+    // their turn (表); 手番交代 flips to the other player's turn (裏) once their turn ends, and a new
+    // round resets back to 表 above. The buttons stay available for a manual correction/override.
+    // Purely a record for the player, not wired into any auto-apply logic.
     els.btnFirstMe.addEventListener("click", () => {
       if (!game) return;
       game.firstPlayer = "me";
