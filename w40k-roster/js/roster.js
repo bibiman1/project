@@ -1048,6 +1048,11 @@
   const GROUP_BUFF_TEMPLATES = {
     battle_protocols: {
       label: "戦闘プロトコル（カステラン・ロボットの3択切替）",
+      // Name of the ability as it appears in the ability master - if someone picked it from the
+      // generic single-value "マスタから選択" picker above instead of this template, it lands as one
+      // misleading line named exactly this (only the last matched effect, and not selectable). The
+      // template button below cleans that up automatically before adding its own correct options.
+      sourceAbilityName: "戦闘プロトコル",
       options: [
         { name: "迎撃プロトコル", scope: "ranged", field: "attacks", value: "2" },
         { name: "征服プロトコル", scope: "melee", field: "attacks", value: "2" },
@@ -1617,7 +1622,14 @@
       const existing = textarea.value
         .split("\n")
         .map((l) => l.trim())
-        .filter(Boolean);
+        .filter(Boolean)
+        // Drop any leftover line for this group under the template's own ability name (see the
+        // sourceAbilityName comment above) so re-running the template also fixes a previous mistake.
+        .filter((l) => {
+          if (!template.sourceAbilityName) return true;
+          const [lineGroup, lineName] = l.split(/\t|,/).map((p) => p.trim());
+          return !(lineGroup === group && lineName === template.sourceAbilityName);
+        });
       lines.forEach((line) => {
         if (!existing.includes(line)) existing.push(line);
       });
