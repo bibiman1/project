@@ -679,6 +679,29 @@ main {
   color: var(--gold-bright);
 }
 
+.turn-select-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 0.5rem;
+}
+
+.turn-select-btn.is-active {
+  border-color: var(--gold);
+  color: var(--gold-bright);
+}
+
+.turn-status {
+  margin: 0 0 0.5rem;
+  font-size: 0.85rem;
+  color: var(--text-dim);
+}
+
+.turn-status.is-set {
+  color: var(--gold-bright);
+  font-weight: 600;
+}
+
 .phase-checklist-items {
   display: flex;
   flex-direction: column;

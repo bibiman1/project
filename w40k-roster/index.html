@@ -162,6 +162,16 @@
           </div>
 
           <div class="tracker-card tracker-card-compact">
+            <h3>先攻・手番</h3>
+            <div class="turn-select-row">
+              <button type="button" class="btn btn-sm turn-select-btn" id="btn-first-me" data-first-player="me">先攻: 自分</button>
+              <button type="button" class="btn btn-sm turn-select-btn" id="btn-first-opponent" data-first-player="opponent">先攻: 相手</button>
+            </div>
+            <p id="turn-status" class="turn-status"></p>
+            <button type="button" class="btn btn-sm btn-ghost" id="btn-switch-turn">🔁 手番交代</button>
+          </div>
+
+          <div class="tracker-card tracker-card-compact">
             <h3>命令教条</h3>
             <select id="doctrina-imperative-select">
               <option value="">未選択</option>
