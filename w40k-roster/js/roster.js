@@ -1007,13 +1007,32 @@
     document.getElementById(selectId).addEventListener("change", (e) => {
       const opt = e.target.selectedOptions[0];
       const textEl = document.getElementById(textId);
+      textEl.classList.remove("buff-source-warning");
       if (!opt || !opt.dataset.name) {
         textEl.textContent = "";
         return;
       }
       document.getElementById(ids.name).value = opt.dataset.name;
-      textEl.textContent = opt.dataset.text;
 
+      // This picker can only guess ONE effect per ability/stratagem. An ability with a matching entry
+      // in GROUP_BUFF_TEMPLATES bundles several mutually-exclusive effects in one block of text (e.g.
+      // Battle Protocols' 3-way switch), so guessing here would silently produce one misleading,
+      // unselectable line. Steer to the template button below instead of guessing, and fall back to a
+      // harmless "note" line (no numeric effect at all) if the button is used anyway.
+      const templateEntry = Object.values(GROUP_BUFF_TEMPLATES).find((t) => t.sourceAbilityName === opt.dataset.name);
+      if (templateEntry) {
+        const optionNames = templateEntry.options.map((o) => o.name).join("/");
+        textEl.textContent = ids.hasTemplateSection
+          ? `⚠ このアビリティは複数の選択肢（${optionNames}）をまとめて持っています。この欄では1つの効果しか追加できません。下の「テンプレートから一括登録」から追加してください。`
+          : `⚠ このアビリティは複数の選択肢（${optionNames}）を切り替えるものなので、常時バフとしては表現できません。ロスターの「合流バフ」編集画面の「テンプレートから一括登録」から追加してください。`;
+        textEl.classList.add("buff-source-warning");
+        document.getElementById(ids.kind).value = "note";
+        ids.refreshFieldOptions();
+        document.getElementById(ids.value).value = `${opt.dataset.name}は合流バフの「テンプレートから一括登録」で追加してください`;
+        return;
+      }
+
+      textEl.textContent = opt.dataset.text;
       const guess = guessBuffFromText(opt.dataset.text);
       document.getElementById(ids.kind).value = guess.kind;
       if (guess.scope) document.getElementById(ids.scope).value = guess.scope;
@@ -1573,6 +1592,7 @@
       field: "group-buff-quick-field",
       value: "group-buff-quick-value",
       refreshFieldOptions: refreshGroupBuffFieldOptions,
+      hasTemplateSection: true,
     });
     document.getElementById("group-buff-quick-scope").addEventListener("change", refreshGroupBuffFieldOptions);
     document.getElementById("group-buff-quick-kind").addEventListener("change", refreshGroupBuffFieldOptions);
