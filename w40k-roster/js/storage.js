@@ -60,8 +60,18 @@ W40K.confirmBulkParseFallbacks = (items, fallbackName) => {
 };
 
 // Adds `delta` to the leading integer of a stat string (e.g. "6\"" -> "7\"", "3+" -> "2+"), keeping any suffix.
+// Dice-notation stats (e.g. attacks characteristics written as "D6"/"2D6") have no leading integer to
+// add to, so the delta is instead folded into a trailing "+N"/"-N" modifier (e.g. "D6" -> "D6+2",
+// "D6+1" -> "D6+3", accumulating if one is already there; a net-zero modifier is dropped entirely).
 W40K.applyStatDelta = (str, delta) => {
-  const match = W40K.toHalfWidthDigits(str || "").match(/^(-?\d+)(.*)$/);
+  const s = W40K.toHalfWidthDigits(str || "");
+  const diceMatch = s.match(/^(\d*D\d+)([+-]\d+)?(.*)$/i);
+  if (diceMatch) {
+    const [, dice, existingMod, suffix] = diceMatch;
+    const newMod = (existingMod ? Number(existingMod) : 0) + delta;
+    return `${dice}${newMod === 0 ? "" : newMod > 0 ? `+${newMod}` : newMod}${suffix || ""}`;
+  }
+  const match = s.match(/^(-?\d+)(.*)$/);
   if (!match) return str;
   return `${Number(match[1]) + delta}${match[2] || ""}`;
 };
