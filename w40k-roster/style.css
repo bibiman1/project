@@ -984,6 +984,11 @@ main {
   justify-content: flex-start;
 }
 
+.buff-quick-add-grid .buff-source-text {
+  grid-column: 1 / -1;
+  margin: -0.3rem 0 0;
+}
+
 .form-grid label {
   display: flex;
   flex-direction: column;

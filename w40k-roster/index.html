@@ -283,9 +283,9 @@
       </div>
       <p class="hint">ユニット追加時に使う各種マスタ（辞書・テンプレート）をここでまとめて管理します。マスタを直しても、すでにロスターに追加済みのユニットには自動反映されません（独立コピーのため）。</p>
       <div class="detail-actions">
-        <button id="btn-reset-wahapedia-seed" class="btn btn-ghost">🔄 Wahapediaデータで武器庫・キーワード帳・アビリティ辞書・ユニットマスタを上書き</button>
+        <button id="btn-reset-wahapedia-seed" class="btn btn-ghost">🔄 Wahapediaデータで武器庫・キーワード帳・アビリティ辞書・ユニットマスタ・デタッチメントマスタを上書き</button>
       </div>
-      <p class="hint">現在登録済みの内容（中途半端なものも含む）を、第11版アデプトゥス・メカニカスの全データで丸ごと置き換えます。デタッチメントマスタは対象外です。</p>
+      <p class="hint">現在登録済みの内容（中途半端なものも含む）を、第11版アデプトゥス・メカニカスの全データで丸ごと置き換えます。コア策略（陣営を問わず共通のもの）は対象外です。</p>
 
       <div class="master-data-grid">
         <div class="master-data-card">
@@ -594,6 +594,12 @@
       <div class="buff-quick-add">
         <p class="hint">下のフォームで項目を選んで「＋この内容を追加」を押すと、下のテキスト欄に正しい形式で1行追加されます。慣れたら直接テキスト欄を編集しても構いません。</p>
         <div class="form-grid buff-quick-add-grid">
+          <label>マスタから選択（策略・アビリティ、任意）
+            <select id="army-buff-quick-source">
+              <option value="">選択しない（手入力）</option>
+            </select>
+          </label>
+          <p id="army-buff-quick-source-text" class="hint buff-source-text"></p>
           <label>バフ名
             <input id="army-buff-quick-name" type="text" placeholder="例: レギオ・サイバネティカ強化">
           </label>
@@ -651,6 +657,12 @@
       <div class="buff-quick-add">
         <p class="hint">下のフォームで項目を選んで「＋この内容を追加」を押すと、下のテキスト欄に正しい形式で1行追加されます。慣れたら直接テキスト欄を編集しても構いません。</p>
         <div class="form-grid buff-quick-add-grid">
+          <label>マスタから選択（策略・アビリティ、任意）
+            <select id="group-buff-quick-source">
+              <option value="">選択しない（手入力）</option>
+            </select>
+          </label>
+          <p id="group-buff-quick-source-text" class="hint buff-source-text"></p>
           <label>グループ名
             <input id="group-buff-quick-group" type="text" list="group-buff-quick-group-list" placeholder="例: データスミス部隊">
             <datalist id="group-buff-quick-group-list"></datalist>
