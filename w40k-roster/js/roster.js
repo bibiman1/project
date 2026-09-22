@@ -937,10 +937,42 @@
   const groupBuffsModal = document.getElementById("modal-group-buffs");
   const groupBuffsForm = document.getElementById("form-group-buffs");
 
+  // Best-effort guess at kind/scope/field/value from a picked stratagem/ability's own-words effect
+  // text (own phrasing, so the patterns below are tuned to match it) - explicitly approximate, per the
+  // user: wrong guesses are fine, they'll be hand-corrected. Anything that doesn't match a clear
+  // "<field label>+N" pattern (or a bracketed keyword grant with a clear ranged/melee context) falls
+  // back to kind "note" with the full text as the value, which is always at least non-misleading.
+  const guessBuffFromText = (text) => {
+    if (!text) return { kind: "note", scope: "", field: "", value: "" };
+    for (const label of Object.keys(W40K.PROFILE_FIELD_MAP)) {
+      const m = text.match(new RegExp(`${label}(?:特性)?([+-]\\d+)`));
+      if (m) return { kind: "numeric", scope: "profile", field: label, value: m[1].replace(/^\+/, "") };
+    }
+    const weaponLabelPatterns = [
+      ["攻撃回数", "攻撃回数"],
+      ["技能", "技能"],
+      ["攻撃力", "攻撃力"],
+      ["貫通値?", "貫通"],
+      ["ダメージ", "ダメージ"],
+    ];
+    for (const [pattern, label] of weaponLabelPatterns) {
+      const m = text.match(new RegExp(`${pattern}(?:特性)?([+-]\\d+)`));
+      if (m) {
+        const scope = text.includes("白兵武器") || text.includes("近接武器") ? "melee" : "ranged";
+        return { kind: "numeric", scope, field: label, value: m[1].replace(/^\+/, "") };
+      }
+    }
+    const km = text.match(/「([^」]+)」(?:を得る|を付与)/);
+    if (km) {
+      if (text.includes("白兵武器") || text.includes("近接武器")) return { kind: "keyword", scope: "melee", field: "", value: km[1] };
+      if (text.includes("射撃武器")) return { kind: "keyword", scope: "ranged", field: "", value: km[1] };
+    }
+    return { kind: "note", scope: "", field: "", value: text };
+  };
+
   // Shared by both quick-add forms' "マスタから選択" picker (策略/アビリティ): lets a buff's name be
-  // picked instead of typed from memory, and shows the picked item's effect text as a reading aid.
-  // Only the name gets filled in automatically - the actual numeric/keyword 値 still needs a human
-  // decision, since that can't be reliably parsed back out of free-form rule text.
+  // picked instead of typed from memory, and pre-fills 種類/対象範囲/項目/値 with a best-effort guess
+  // (see guessBuffFromText) that the user can correct by hand.
   const buildBuffSourceOptions = (roster) => {
     const options = [];
     W40K.Detachments.getCoreStratagems().forEach((s) => options.push({ group: "コア策略", name: s.name, text: s.text }));
@@ -969,7 +1001,7 @@
     document.getElementById(textId).textContent = "";
   };
 
-  const wireBuffSourcePicker = (selectId, textId, nameInputId) => {
+  const wireBuffSourcePicker = (selectId, textId, ids) => {
     document.getElementById(selectId).addEventListener("change", (e) => {
       const opt = e.target.selectedOptions[0];
       const textEl = document.getElementById(textId);
@@ -977,8 +1009,15 @@
         textEl.textContent = "";
         return;
       }
-      document.getElementById(nameInputId).value = opt.dataset.name;
+      document.getElementById(ids.name).value = opt.dataset.name;
       textEl.textContent = opt.dataset.text;
+
+      const guess = guessBuffFromText(opt.dataset.text);
+      document.getElementById(ids.kind).value = guess.kind;
+      if (guess.scope) document.getElementById(ids.scope).value = guess.scope;
+      ids.refreshFieldOptions();
+      if (guess.kind === "numeric" && guess.field) document.getElementById(ids.field).value = guess.field;
+      document.getElementById(ids.value).value = guess.value;
     });
   };
 
@@ -1458,7 +1497,14 @@
     document.getElementById("btn-edit-group-buffs").addEventListener("click", () => openGroupBuffsModal());
     document.getElementById("btn-edit-army-buffs").addEventListener("click", () => openArmyBuffsModal());
 
-    wireBuffSourcePicker("army-buff-quick-source", "army-buff-quick-source-text", "army-buff-quick-name");
+    wireBuffSourcePicker("army-buff-quick-source", "army-buff-quick-source-text", {
+      name: "army-buff-quick-name",
+      kind: "army-buff-quick-kind",
+      scope: "army-buff-quick-scope",
+      field: "army-buff-quick-field",
+      value: "army-buff-quick-value",
+      refreshFieldOptions: refreshArmyBuffFieldOptions,
+    });
     document.getElementById("army-buff-quick-scope").addEventListener("change", refreshArmyBuffFieldOptions);
     document.getElementById("army-buff-quick-kind").addEventListener("change", refreshArmyBuffFieldOptions);
     document.getElementById("army-buff-quick-target-type").addEventListener("change", () => {
@@ -1488,7 +1534,14 @@
       document.getElementById("army-buff-quick-value").value = "";
     });
 
-    wireBuffSourcePicker("group-buff-quick-source", "group-buff-quick-source-text", "group-buff-quick-name");
+    wireBuffSourcePicker("group-buff-quick-source", "group-buff-quick-source-text", {
+      name: "group-buff-quick-name",
+      kind: "group-buff-quick-kind",
+      scope: "group-buff-quick-scope",
+      field: "group-buff-quick-field",
+      value: "group-buff-quick-value",
+      refreshFieldOptions: refreshGroupBuffFieldOptions,
+    });
     document.getElementById("group-buff-quick-scope").addEventListener("change", refreshGroupBuffFieldOptions);
     document.getElementById("group-buff-quick-kind").addEventListener("change", refreshGroupBuffFieldOptions);
 
