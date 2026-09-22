@@ -43,6 +43,10 @@
     els.groupBuffCard = document.getElementById("group-buff-card");
     els.groupBuffTrackerList = document.getElementById("group-buff-tracker-list");
     els.doctrinaSelect = document.getElementById("doctrina-imperative-select");
+    els.btnFirstMe = document.getElementById("btn-first-me");
+    els.btnFirstOpponent = document.getElementById("btn-first-opponent");
+    els.btnSwitchTurn = document.getElementById("btn-switch-turn");
+    els.turnStatus = document.getElementById("turn-status");
   };
 
   const persist = () => W40K.save(W40K.KEYS.GAME, game);
@@ -78,6 +82,19 @@
 
     els.roundValue.textContent = game.round;
     els.doctrinaSelect.value = game.doctrinaImperative || "";
+
+    els.btnFirstMe.classList.toggle("is-active", game.firstPlayer === "me");
+    els.btnFirstOpponent.classList.toggle("is-active", game.firstPlayer === "opponent");
+    els.btnSwitchTurn.disabled = !game.firstPlayer;
+    if (!game.firstPlayer) {
+      els.turnStatus.textContent = "先攻（このラウンドで先に番が来る側）を選んでください";
+      els.turnStatus.classList.remove("is-set");
+    } else {
+      const isTop = game.activeTurn === game.firstPlayer;
+      const activeLabel = game.activeTurn === "me" ? "自分" : "相手";
+      els.turnStatus.textContent = `${isTop ? "表" : "裏"}：${activeLabel}の番`;
+      els.turnStatus.classList.add("is-set");
+    }
     els.cpMe.textContent = game.cp.me;
     els.cpOpponent.textContent = game.cp.opponent;
     els.vpMe.textContent = game.vp.me;
@@ -461,6 +478,8 @@
       pointsLimit,
       round: 1,
       doctrinaImperative: null,
+      firstPlayer: null,
+      activeTurn: null,
       cp: { me: 0, opponent: 0 },
       vp: { me: 0, opponent: 0 },
       unitStatus: {},
@@ -501,11 +520,15 @@
 
     document.getElementById("btn-end-game").addEventListener("click", endGame);
 
+    // 先攻/後攻 is decided once for the whole battle (like which team bats first in baseball) and
+    // never changes round to round - only which half of the round is active does. So a new round
+    // always starts back at 表 (先攻's turn), never flips who 先攻 is.
     document.getElementById("round-dec").addEventListener("click", () => {
       if (!game || game.round <= 1) return;
       game.round -= 1;
       game.checkedItems = {};
       game.doctrinaImperative = null;
+      game.activeTurn = game.firstPlayer;
       persist();
       render();
     });
@@ -514,6 +537,33 @@
       game.round += 1;
       game.checkedItems = {};
       game.doctrinaImperative = null;
+      game.activeTurn = game.firstPlayer;
+      persist();
+      render();
+    });
+
+    // 先攻・手番: who has priority (goes first) this battle - decided once and fixed for the whole
+    // game, and whose turn is currently active within the round. Picking a first player also starts
+    // their turn (表); 手番交代 flips to the other player's turn (裏) once their turn ends, and a new
+    // round resets back to 表 above. The buttons stay available for a manual correction/override.
+    // Purely a record for the player, not wired into any auto-apply logic.
+    els.btnFirstMe.addEventListener("click", () => {
+      if (!game) return;
+      game.firstPlayer = "me";
+      game.activeTurn = "me";
+      persist();
+      render();
+    });
+    els.btnFirstOpponent.addEventListener("click", () => {
+      if (!game) return;
+      game.firstPlayer = "opponent";
+      game.activeTurn = "opponent";
+      persist();
+      render();
+    });
+    els.btnSwitchTurn.addEventListener("click", () => {
+      if (!game || !game.firstPlayer) return;
+      game.activeTurn = game.activeTurn === "me" ? "opponent" : "me";
       persist();
       render();
     });
