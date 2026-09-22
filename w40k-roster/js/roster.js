@@ -937,6 +937,51 @@
   const groupBuffsModal = document.getElementById("modal-group-buffs");
   const groupBuffsForm = document.getElementById("form-group-buffs");
 
+  // Shared by both quick-add forms' "マスタから選択" picker (策略/アビリティ): lets a buff's name be
+  // picked instead of typed from memory, and shows the picked item's effect text as a reading aid.
+  // Only the name gets filled in automatically - the actual numeric/keyword 値 still needs a human
+  // decision, since that can't be reliably parsed back out of free-form rule text.
+  const buildBuffSourceOptions = (roster) => {
+    const options = [];
+    W40K.Detachments.getCoreStratagems().forEach((s) => options.push({ group: "コア策略", name: s.name, text: s.text }));
+    const detachment = roster.detachment && roster.detachment.name ? W40K.Detachments.getByName(roster.detachment.name) : null;
+    if (detachment) {
+      detachment.stratagems.forEach((s) => options.push({ group: `${detachment.name}の策略`, name: s.name, text: s.text }));
+    }
+    W40K.parseAbilities(W40K.Abilities.getAll().join("\n")).forEach((a) => options.push({ group: "アビリティ辞書", name: a.name, text: a.text }));
+    return options;
+  };
+
+  const populateBuffSourcePicker = (selectId, textId, roster) => {
+    const select = document.getElementById(selectId);
+    const byGroup = {};
+    buildBuffSourceOptions(roster).forEach((o) => (byGroup[o.group] = byGroup[o.group] || []).push(o));
+    select.innerHTML =
+      '<option value="">選択しない（手入力）</option>' +
+      Object.entries(byGroup)
+        .map(
+          ([group, items]) =>
+            `<optgroup label="${escapeHtml(group)}">` +
+            items.map((o) => `<option value="${escapeHtml(o.name)}" data-name="${escapeHtml(o.name)}" data-text="${escapeHtml(o.text)}">${escapeHtml(o.name)}</option>`).join("") +
+            "</optgroup>"
+        )
+        .join("");
+    document.getElementById(textId).textContent = "";
+  };
+
+  const wireBuffSourcePicker = (selectId, textId, nameInputId) => {
+    document.getElementById(selectId).addEventListener("change", (e) => {
+      const opt = e.target.selectedOptions[0];
+      const textEl = document.getElementById(textId);
+      if (!opt || !opt.dataset.name) {
+        textEl.textContent = "";
+        return;
+      }
+      document.getElementById(nameInputId).value = opt.dataset.name;
+      textEl.textContent = opt.dataset.text;
+    });
+  };
+
   // The 項目(field) options depend on 対象範囲(scope), and only matter when 種類(kind) is 数値. The
   // 値(value) input itself switches to a real number input for 数値, instead of free text - a hand-typed
   // number (e.g. a full-width "２" left behind by IME conversion) has no validation and silently
@@ -973,6 +1018,7 @@
     refreshGroupBuffFieldOptions();
     refreshGroupBuffGroupList(roster);
     refreshGroupBuffTargetUnitList(roster);
+    populateBuffSourcePicker("group-buff-quick-source", "group-buff-quick-source-text", roster);
   };
 
   const openGroupBuffsModal = () => {
@@ -1036,6 +1082,7 @@
   const refreshArmyBuffQuickAdd = (roster) => {
     refreshArmyBuffFieldOptions();
     refreshArmyBuffTargetValueList(roster);
+    populateBuffSourcePicker("army-buff-quick-source", "army-buff-quick-source-text", roster);
   };
 
   const openArmyBuffsModal = () => {
@@ -1411,6 +1458,7 @@
     document.getElementById("btn-edit-group-buffs").addEventListener("click", () => openGroupBuffsModal());
     document.getElementById("btn-edit-army-buffs").addEventListener("click", () => openArmyBuffsModal());
 
+    wireBuffSourcePicker("army-buff-quick-source", "army-buff-quick-source-text", "army-buff-quick-name");
     document.getElementById("army-buff-quick-scope").addEventListener("change", refreshArmyBuffFieldOptions);
     document.getElementById("army-buff-quick-kind").addEventListener("change", refreshArmyBuffFieldOptions);
     document.getElementById("army-buff-quick-target-type").addEventListener("change", () => {
@@ -1440,6 +1488,7 @@
       document.getElementById("army-buff-quick-value").value = "";
     });
 
+    wireBuffSourcePicker("group-buff-quick-source", "group-buff-quick-source-text", "group-buff-quick-name");
     document.getElementById("group-buff-quick-scope").addEventListener("change", refreshGroupBuffFieldOptions);
     document.getElementById("group-buff-quick-kind").addEventListener("change", refreshGroupBuffFieldOptions);
 
