@@ -609,35 +609,6 @@ main {
   font-size: 0.85rem;
 }
 
-/* VP has more content (a 4-field entry grid, a totals line, a collapsible per-round log) than a
-   score-row's default label-beside-content layout can fit on one line, so it always stacks
-   vertically instead of only doing so on mobile like .score-row itself. */
-.score-row-vp {
-  flex-direction: column;
-  align-items: stretch;
-  gap: 0.4rem;
-}
-
-.vp-entry-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 0.5rem 0.8rem;
-}
-
-.vp-entry-grid label {
-  display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
-  font-size: 0.78rem;
-  color: var(--text-dim);
-}
-
-.vp-entry-grid input {
-  width: 100%;
-  padding: 0.35rem;
-  text-align: center;
-}
-
 .vp-totals {
   margin: 0.2rem 0 0;
   font-size: 0.9rem;
@@ -645,28 +616,54 @@ main {
   font-weight: 600;
 }
 
-.vp-round-log-wrap {
+/* Baseball-scoreboard-style tables (主要目標/副次目標): rows = 自分/相手, columns = each round
+   reached so far + a running 計 total. Horizontally scrolls on its own if a long game (many
+   rounds) would otherwise overflow the card on narrow screens. */
+.scoreboard-wrap {
   overflow-x: auto;
 }
 
-.vp-round-log-table {
+.scoreboard-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.78rem;
-  margin-top: 0.4rem;
+  font-size: 0.85rem;
 }
 
-.vp-round-log-table th,
-.vp-round-log-table td {
-  padding: 0.25rem 0.4rem;
+.scoreboard-table th,
+.scoreboard-table td {
+  padding: 0.4rem 0.5rem;
   text-align: center;
   border-bottom: 1px solid var(--border);
   white-space: nowrap;
 }
 
-.vp-round-log-table th {
+.scoreboard-table thead th {
   color: var(--text-dim);
   font-weight: 600;
+  font-size: 0.78rem;
+}
+
+.scoreboard-table tbody th {
+  text-align: left;
+  color: var(--text-dim);
+  font-weight: 600;
+}
+
+.scoreboard-total {
+  color: var(--gold-bright);
+  font-weight: 700;
+}
+
+.scoreboard-stepper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+}
+
+.scoreboard-value {
+  min-width: 1.4rem;
+  font-weight: 700;
 }
 
 .tracker-card {
