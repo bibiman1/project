@@ -37,14 +37,12 @@
     els.roundValue = document.getElementById("round-value");
     els.cpMe = document.getElementById("cp-me");
     els.cpOpponent = document.getElementById("cp-opponent");
-    els.vpRoundNumber = document.getElementById("vp-round-number");
-    els.vpPrimaryMe = document.getElementById("vp-primary-me");
-    els.vpPrimaryOpponent = document.getElementById("vp-primary-opponent");
-    els.vpSecondaryMe = document.getElementById("vp-secondary-me");
-    els.vpSecondaryOpponent = document.getElementById("vp-secondary-opponent");
+    els.baseScoreMe = document.getElementById("basescore-me");
+    els.baseScoreOpponent = document.getElementById("basescore-opponent");
+    els.scoreboardPrimary = document.getElementById("scoreboard-primary");
+    els.scoreboardSecondary = document.getElementById("scoreboard-secondary");
     els.vpTotalMe = document.getElementById("vp-total-me");
     els.vpTotalOpponent = document.getElementById("vp-total-opponent");
-    els.vpRoundLog = document.getElementById("vp-round-log");
     els.unitList = document.getElementById("tracker-unit-list");
     els.logList = document.getElementById("log-list");
     els.phaseTabs = document.getElementById("phase-tabs");
@@ -67,10 +65,13 @@
   const defaultUnitStatus = (unit) => ({ destroyed: false, notes: "", battleShock: false, modelsRemaining: unit.models });
 
   // Shared by the live VP card and the battle report image, so the two never disagree on the total.
+  // Includes バトルレディ's base score - it's a one-off, whole-battle value (not recorded per round like
+  // 主要目標/副次目標), but it still counts toward the final result comparison.
   const getScoreTotals = (game) => {
     const roundNumbers = Object.keys(game.scores || {})
       .map(Number)
       .sort((a, b) => a - b);
+    const base = game.baseScore || { me: 0, opponent: 0 };
     const totals = roundNumbers.reduce(
       (acc, r) => {
         const s = game.scores[r];
@@ -78,9 +79,66 @@
         acc.opponent += (s.primaryOpponent || 0) + (s.secondaryOpponent || 0);
         return acc;
       },
-      { me: 0, opponent: 0 }
+      { me: base.me || 0, opponent: base.opponent || 0 }
     );
     return { roundNumbers, totals };
+  };
+
+  // Shared by the live scoreboard table and the battle report image: rounds reached so far, a
+  // value getter and a row-total getter for one objective type ("primary"/"secondary").
+  const getScoreboardData = (game, kind) => {
+    const scores = game.scores || {};
+    const rounds = [];
+    for (let r = 1; r <= game.round; r++) rounds.push(r);
+    const fieldFor = (who) => `${kind}${who === "me" ? "Me" : "Opponent"}`;
+    const valueAt = (r, who) => (scores[r] && scores[r][fieldFor(who)]) || 0;
+    const totalFor = (who) => rounds.reduce((acc, r) => acc + valueAt(r, who), 0);
+    return { rounds, fieldFor, valueAt, totalFor };
+  };
+
+  // One baseball-scoreboard-style table per objective type (主要目標/副次目標): a row per side, a
+  // column per round reached so far, plus a running 計 column. Only the current round's cells are
+  // editable (via the +/- steppers wired by wireScoreboardSteppers after each render); earlier
+  // rounds are locked-in history, same as the previous per-round entry form was.
+  const buildScoreboardHtml = (game, kind) => {
+    const { rounds, fieldFor, valueAt, totalFor } = getScoreboardData(game, kind);
+
+    const cell = (r, who) => {
+      const value = valueAt(r, who);
+      if (r !== game.round) return `<td>${value}</td>`;
+      return `<td class="scoreboard-cell-editable">
+        <div class="scoreboard-stepper">
+          <button type="button" class="btn btn-round btn-xs" data-score-field="${fieldFor(who)}" data-delta="-1">−</button>
+          <span class="scoreboard-value">${value}</span>
+          <button type="button" class="btn btn-round btn-xs" data-score-field="${fieldFor(who)}" data-delta="1">＋</button>
+        </div>
+      </td>`;
+    };
+
+    return `
+      <thead>
+        <tr><th></th>${rounds.map((r) => `<th>R${r}</th>`).join("")}<th>計</th></tr>
+      </thead>
+      <tbody>
+        <tr><th>自分</th>${rounds.map((r) => cell(r, "me")).join("")}<td class="scoreboard-total">${totalFor("me")}</td></tr>
+        <tr><th>相手</th>${rounds.map((r) => cell(r, "opponent")).join("")}<td class="scoreboard-total">${totalFor("opponent")}</td></tr>
+      </tbody>
+    `;
+  };
+
+  const wireScoreboardSteppers = (tableEl, game) => {
+    tableEl.querySelectorAll("[data-score-field]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const field = btn.dataset.scoreField;
+        const delta = Number(btn.dataset.delta);
+        if (!game.scores[game.round]) {
+          game.scores[game.round] = { primaryMe: 0, primaryOpponent: 0, secondaryMe: 0, secondaryOpponent: 0 };
+        }
+        game.scores[game.round][field] = Math.max(0, (game.scores[game.round][field] || 0) + delta);
+        persist();
+        render();
+      });
+    });
   };
 
   // Cell shows "base→new" (new bolded) when a buff changed it, otherwise just the value. Mirrors roster.js's buffCell.
@@ -133,34 +191,23 @@
     els.cpMe.textContent = game.cp.me;
     els.cpOpponent.textContent = game.cp.opponent;
 
-    // VP is recorded per round (主要目標/副次目標 scored that round), not as a single running total,
-    // so the breakdown by round - and by objective type - survives instead of being lost the moment
-    // it's added to a lump sum. game.scores is keyed by round number; the current round's fields are
-    // directly editable, older rounds are read-only in the ラウンド別の内訳 log below.
+    // VP is recorded per round (主要目標/副次目標 scored that round) as a baseball-scoreboard-style
+    // table per objective type, not a single running total, so the breakdown by round - and by
+    // objective type - survives instead of being lost the moment it's added to a lump sum.
+    // game.scores is keyed by round number; only the current round's cells are editable.
     if (!game.scores) game.scores = {};
-    const emptyScore = { primaryMe: 0, primaryOpponent: 0, secondaryMe: 0, secondaryOpponent: 0 };
-    const currentScore = game.scores[game.round] || emptyScore;
-    els.vpRoundNumber.textContent = game.round;
-    els.vpPrimaryMe.value = currentScore.primaryMe;
-    els.vpPrimaryOpponent.value = currentScore.primaryOpponent;
-    els.vpSecondaryMe.value = currentScore.secondaryMe;
-    els.vpSecondaryOpponent.value = currentScore.secondaryOpponent;
+    if (!game.baseScore) game.baseScore = { me: 0, opponent: 0 };
+    els.baseScoreMe.textContent = game.baseScore.me;
+    els.baseScoreOpponent.textContent = game.baseScore.opponent;
 
-    const { roundNumbers, totals } = getScoreTotals(game);
+    els.scoreboardPrimary.innerHTML = buildScoreboardHtml(game, "primary");
+    els.scoreboardSecondary.innerHTML = buildScoreboardHtml(game, "secondary");
+    wireScoreboardSteppers(els.scoreboardPrimary, game);
+    wireScoreboardSteppers(els.scoreboardSecondary, game);
+
+    const { totals } = getScoreTotals(game);
     els.vpTotalMe.textContent = totals.me;
     els.vpTotalOpponent.textContent = totals.opponent;
-
-    els.vpRoundLog.innerHTML = roundNumbers.length
-      ? `<thead><tr><th>R</th><th>主要(自)</th><th>主要(相)</th><th>副次(自)</th><th>副次(相)</th></tr></thead>
-         <tbody>
-           ${roundNumbers
-             .map((r) => {
-               const s = game.scores[r];
-               return `<tr><td>${r}</td><td>${s.primaryMe || 0}</td><td>${s.primaryOpponent || 0}</td><td>${s.secondaryMe || 0}</td><td>${s.secondaryOpponent || 0}</td></tr>`;
-             })
-             .join("")}
-         </tbody>`
-      : '<tbody><tr><td class="empty-state">まだ記録がありません</td></tr></tbody>';
 
     els.unitList.innerHTML = "";
     if (roster && roster.units.length) {
@@ -543,6 +590,7 @@
       firstPlayer: null,
       activeTurn: null,
       cp: { me: 0, opponent: 0 },
+      baseScore: { me: 0, opponent: 0 },
       scores: {},
       unitStatus: {},
       log: [],
@@ -664,7 +712,7 @@
     const WIDTH = 960;
     const PAD = 40;
     const contentWidth = WIDTH - PAD * 2;
-    const { roundNumbers, totals } = getScoreTotals(game);
+    const { totals } = getScoreTotals(game);
     const units = roster ? roster.units : [];
     const dateStr = new Date().toLocaleDateString("ja-JP", { year: "numeric", month: "long", day: "numeric" });
     const rosterName = roster ? roster.name : "ロスター不明";
@@ -684,6 +732,8 @@
       pen.rule();
       pen.spacer(20);
 
+      const baseScore = game.baseScore || { me: 0, opponent: 0 };
+
       reportCard(pen, (p) => {
         p.text("対戦結果", 15, { weight: 700, color: REPORT_COLORS.textDim });
         p.spacer(8);
@@ -695,33 +745,35 @@
         });
         p.spacer(6);
         const firstLabel = game.firstPlayer === "me" ? "自分" : game.firstPlayer === "opponent" ? "相手" : "未定";
-        p.text(`先攻: ${firstLabel}　　最終CP　自分 ${game.cp.me} ／ 相手 ${game.cp.opponent}`, 16, { color: REPORT_COLORS.text });
+        p.text(
+          `先攻: ${firstLabel}　　最終CP　自分 ${game.cp.me} ／ 相手 ${game.cp.opponent}　　バトルレディ　自分 ${baseScore.me} ／ 相手 ${baseScore.opponent}`,
+          16,
+          { color: REPORT_COLORS.text }
+        );
       });
 
-      if (roundNumbers.length) {
+      // Two baseball-scoreboard-style tables (rows: 自分/相手, columns: R1..終了ラウンド + 計),
+      // mirroring the live スコア tab exactly so the report never disagrees with what's on screen.
+      [
+        { kind: "primary", title: "主要目標スコアボード" },
+        { kind: "secondary", title: "副次目標スコアボード" },
+      ].forEach(({ kind, title }) => {
+        const { rounds, valueAt, totalFor } = getScoreboardData(game, kind);
+        if (!rounds.length) return;
         reportCard(pen, (p) => {
-          p.text("ラウンド別得点", 15, { weight: 700, color: REPORT_COLORS.textDim });
+          p.text(title, 15, { weight: 700, color: REPORT_COLORS.textDim });
           p.spacer(10);
-          const colWidths = [p.width * 0.12, p.width * 0.22, p.width * 0.22, p.width * 0.22, p.width * 0.22];
-          const aligns = ["left", "center", "center", "center", "center"];
-          p.row(["R", "主要(自)", "主要(相)", "副次(自)", "副次(相)"], colWidths, 14, {
-            weight: 700,
-            color: REPORT_COLORS.textDim,
-            aligns,
-          });
+          const labelWidth = p.width * 0.14;
+          const colWidth = (p.width - labelWidth) / (rounds.length + 1);
+          const colWidths = [labelWidth, ...rounds.map(() => colWidth), colWidth];
+          const aligns = ["left", ...rounds.map(() => "center"), "center"];
+          p.row(["", ...rounds.map((r) => `R${r}`), "計"], colWidths, 14, { weight: 700, color: REPORT_COLORS.textDim, aligns });
           p.rule();
           p.spacer(6);
-          roundNumbers.forEach((r) => {
-            const s = game.scores[r];
-            p.row(
-              [String(r), String(s.primaryMe || 0), String(s.primaryOpponent || 0), String(s.secondaryMe || 0), String(s.secondaryOpponent || 0)],
-              colWidths,
-              15,
-              { aligns }
-            );
-          });
+          p.row(["自分", ...rounds.map((r) => String(valueAt(r, "me"))), String(totalFor("me"))], colWidths, 15, { aligns });
+          p.row(["相手", ...rounds.map((r) => String(valueAt(r, "opponent"))), String(totalFor("opponent"))], colWidths, 15, { aligns });
         });
-      }
+      });
 
       if (units.length) {
         reportCard(pen, (p) => {
@@ -891,21 +943,19 @@
         render();
       });
     });
-    // VP fields are typed values for the current round (see render()'s game.scores comment), not
-    // +/-delta buttons, so they're committed on change (blur/Enter) rather than every keystroke.
-    const wireVpField = (el, field) => {
-      el.addEventListener("change", () => {
+    // バトルレディ's base score is entered once for the whole battle (not per round like
+    // 主要目標/副次目標), so it's a plain +/- counter just like CP above.
+    document.querySelectorAll("[data-basescore]").forEach((btn) => {
+      btn.addEventListener("click", () => {
         if (!game) return;
-        if (!game.scores[game.round]) game.scores[game.round] = { primaryMe: 0, primaryOpponent: 0, secondaryMe: 0, secondaryOpponent: 0 };
-        game.scores[game.round][field] = Math.max(0, Number(el.value) || 0);
+        if (!game.baseScore) game.baseScore = { me: 0, opponent: 0 };
+        const side = btn.dataset.basescore;
+        const delta = Number(btn.dataset.delta);
+        game.baseScore[side] = Math.max(0, (game.baseScore[side] || 0) + delta);
         persist();
         render();
       });
-    };
-    wireVpField(els.vpPrimaryMe, "primaryMe");
-    wireVpField(els.vpPrimaryOpponent, "primaryOpponent");
-    wireVpField(els.vpSecondaryMe, "secondaryMe");
-    wireVpField(els.vpSecondaryOpponent, "secondaryOpponent");
+    });
 
     document.getElementById("form-log-entry").addEventListener("submit", (e) => {
       e.preventDefault();
