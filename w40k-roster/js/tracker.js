@@ -66,6 +66,23 @@
 
   const defaultUnitStatus = (unit) => ({ destroyed: false, notes: "", battleShock: false, modelsRemaining: unit.models });
 
+  // Shared by the live VP card and the battle report image, so the two never disagree on the total.
+  const getScoreTotals = (game) => {
+    const roundNumbers = Object.keys(game.scores || {})
+      .map(Number)
+      .sort((a, b) => a - b);
+    const totals = roundNumbers.reduce(
+      (acc, r) => {
+        const s = game.scores[r];
+        acc.me += (s.primaryMe || 0) + (s.secondaryMe || 0);
+        acc.opponent += (s.primaryOpponent || 0) + (s.secondaryOpponent || 0);
+        return acc;
+      },
+      { me: 0, opponent: 0 }
+    );
+    return { roundNumbers, totals };
+  };
+
   // Cell shows "base→new" (new bolded) when a buff changed it, otherwise just the value. Mirrors roster.js's buffCell.
   const buffCell = (base, changed) => (changed !== undefined ? `${escapeHtml(base || "-")}→<strong>${escapeHtml(changed)}</strong>` : escapeHtml(base || "-"));
 
@@ -129,18 +146,7 @@
     els.vpSecondaryMe.value = currentScore.secondaryMe;
     els.vpSecondaryOpponent.value = currentScore.secondaryOpponent;
 
-    const roundNumbers = Object.keys(game.scores)
-      .map(Number)
-      .sort((a, b) => a - b);
-    const totals = roundNumbers.reduce(
-      (acc, r) => {
-        const s = game.scores[r];
-        acc.me += (s.primaryMe || 0) + (s.secondaryMe || 0);
-        acc.opponent += (s.primaryOpponent || 0) + (s.secondaryOpponent || 0);
-        return acc;
-      },
-      { me: 0, opponent: 0 }
-    );
+    const { roundNumbers, totals } = getScoreTotals(game);
     els.vpTotalMe.textContent = totals.me;
     els.vpTotalOpponent.textContent = totals.opponent;
 
@@ -548,8 +554,251 @@
     render();
   };
 
+  // Battle report: a standalone PNG image summarizing the finished (or in-progress) game, so it can
+  // be handed to the opponent. Drawn with the Canvas 2D API directly (no html-to-image dependency)
+  // for reliability across phones/browsers. Layout is measured against a throwaway context first so
+  // the canvas can be created at exactly the content's height, then redrawn for real - canvas
+  // resizing clears pixels, so the final height must be known before the real canvas exists.
+  const REPORT_COLORS = {
+    bg: "#05100a",
+    panel: "#0a1a10",
+    border: "#24462e",
+    gold: "#5be88f",
+    goldBright: "#9dffc4",
+    redBright: "#ff5c5c",
+    text: "#3fdd76",
+    textDim: "#2f8a52",
+  };
+  const REPORT_FONT = '"MS Gothic","Osaka-Mono","Courier New",monospace';
+
+  // Canvas has no CJK-aware line breaking, so wrap per-character once a line exceeds maxWidth -
+  // fine for Japanese (no inter-word spaces to lose) and good enough for the occasional ASCII word.
+  const wrapText = (ctx, str, maxWidth) => {
+    const lines = [];
+    let line = "";
+    for (const ch of String(str)) {
+      const test = line + ch;
+      if (line && ctx.measureText(test).width > maxWidth) {
+        lines.push(line);
+        line = ch;
+      } else {
+        line = test;
+      }
+    }
+    if (line) lines.push(line);
+    return lines;
+  };
+
+  const makePen = (ctx, draw, x0, width) => {
+    const pen = { ctx, draw, x0, width, state: { y: 0 } };
+    const setFont = (size, weight) => { ctx.font = `${weight || 400} ${size}px ${REPORT_FONT}`; };
+    pen.text = (str, size, opts = {}) => {
+      setFont(size, opts.weight);
+      if (draw) {
+        ctx.fillStyle = opts.color || REPORT_COLORS.text;
+        ctx.textAlign = opts.align || "left";
+        ctx.textBaseline = "alphabetic";
+        const x =
+          opts.align === "center" ? x0 + width / 2 : opts.align === "right" ? x0 + width - (opts.indent || 0) : x0 + (opts.indent || 0);
+        ctx.fillText(str, x, pen.state.y + size * 0.85);
+      }
+      pen.state.y += size * (opts.lineHeight || 1.5);
+    };
+    pen.wrapped = (str, size, opts = {}) => {
+      setFont(size, opts.weight);
+      const maxWidth = width - (opts.indent || 0);
+      wrapText(ctx, str, maxWidth).forEach((l) => pen.text(l, size, opts));
+    };
+    pen.spacer = (h) => { pen.state.y += h; };
+    pen.rule = (color) => {
+      if (draw) {
+        ctx.fillStyle = color || REPORT_COLORS.border;
+        ctx.fillRect(x0, pen.state.y, width, 2);
+      }
+      pen.state.y += 2;
+    };
+    pen.row = (cells, colWidths, size, opts = {}) => {
+      setFont(size, opts.weight);
+      if (draw) {
+        ctx.fillStyle = opts.color || REPORT_COLORS.text;
+        ctx.textBaseline = "alphabetic";
+        let cx = x0;
+        cells.forEach((cellText, i) => {
+          const align = (opts.aligns && opts.aligns[i]) || "left";
+          ctx.textAlign = align;
+          const cellX = align === "center" ? cx + colWidths[i] / 2 : align === "right" ? cx + colWidths[i] : cx;
+          ctx.fillText(cellText, cellX, pen.state.y + size * 0.85);
+          cx += colWidths[i];
+        });
+      }
+      pen.state.y += size * (opts.lineHeight || 1.6);
+    };
+    return pen;
+  };
+
+  // Draws bodyFn's content inside a rounded card background sized to fit it exactly - measures
+  // bodyFn's output height with a non-drawing pen first, then (if actually drawing) paints the
+  // background and replays bodyFn for real at the same coordinates.
+  const reportCard = (pen, bodyFn, opts = {}) => {
+    const inset = opts.pad ?? 18;
+    const innerX0 = pen.x0 + inset;
+    const innerWidth = pen.width - inset * 2;
+    const measurePen = makePen(pen.ctx, false, innerX0, innerWidth);
+    bodyFn(measurePen);
+    const cardHeight = measurePen.state.y + inset * 2;
+    const top = pen.state.y;
+    if (pen.draw) {
+      pen.ctx.fillStyle = opts.bg || REPORT_COLORS.panel;
+      pen.ctx.beginPath();
+      if (pen.ctx.roundRect) pen.ctx.roundRect(pen.x0, top, pen.width, cardHeight, 10);
+      else pen.ctx.rect(pen.x0, top, pen.width, cardHeight);
+      pen.ctx.fill();
+    }
+    const bodyPen = makePen(pen.ctx, pen.draw, innerX0, innerWidth);
+    bodyPen.state.y = top + inset;
+    bodyFn(bodyPen);
+    pen.state.y = top + cardHeight + (opts.gap ?? 18);
+  };
+
+  const buildReportCanvas = (roster, game) => {
+    const WIDTH = 960;
+    const PAD = 40;
+    const contentWidth = WIDTH - PAD * 2;
+    const { roundNumbers, totals } = getScoreTotals(game);
+    const units = roster ? roster.units : [];
+    const dateStr = new Date().toLocaleDateString("ja-JP", { year: "numeric", month: "long", day: "numeric" });
+    const rosterName = roster ? roster.name : "ロスター不明";
+    const opponentName = game.opponentName || "対戦相手";
+
+    const buildBody = (pen) => {
+      pen.text("WARHAMMER 40,000 — 対戦記録", 15, { color: REPORT_COLORS.redBright, weight: 700 });
+      pen.spacer(4);
+      pen.wrapped(`${rosterName}  vs  ${opponentName}`, 30, { color: REPORT_COLORS.goldBright, weight: 700 });
+      pen.spacer(4);
+      pen.text(
+        `${game.missionName || "ミッション未設定"} ・ ${game.pointsLimit || "?"}pts ・ 第${game.round}ラウンドで終了 ・ ${dateStr}`,
+        15,
+        { color: REPORT_COLORS.textDim }
+      );
+      pen.spacer(8);
+      pen.rule();
+      pen.spacer(20);
+
+      reportCard(pen, (p) => {
+        p.text("対戦結果", 15, { weight: 700, color: REPORT_COLORS.textDim });
+        p.spacer(8);
+        const winner = totals.me > totals.opponent ? "me" : totals.opponent > totals.me ? "opponent" : null;
+        const resultLabel = winner === "me" ? "🏆 自分の勝利" : winner === "opponent" ? "🏆 相手の勝利" : "引き分け";
+        p.text(`合計VP　自分 ${totals.me}　-　相手 ${totals.opponent}　　${resultLabel}`, 22, {
+          weight: 700,
+          color: REPORT_COLORS.goldBright,
+        });
+        p.spacer(6);
+        const firstLabel = game.firstPlayer === "me" ? "自分" : game.firstPlayer === "opponent" ? "相手" : "未定";
+        p.text(`先攻: ${firstLabel}　　最終CP　自分 ${game.cp.me} ／ 相手 ${game.cp.opponent}`, 16, { color: REPORT_COLORS.text });
+      });
+
+      if (roundNumbers.length) {
+        reportCard(pen, (p) => {
+          p.text("ラウンド別得点", 15, { weight: 700, color: REPORT_COLORS.textDim });
+          p.spacer(10);
+          const colWidths = [p.width * 0.12, p.width * 0.22, p.width * 0.22, p.width * 0.22, p.width * 0.22];
+          const aligns = ["left", "center", "center", "center", "center"];
+          p.row(["R", "主要(自)", "主要(相)", "副次(自)", "副次(相)"], colWidths, 14, {
+            weight: 700,
+            color: REPORT_COLORS.textDim,
+            aligns,
+          });
+          p.rule();
+          p.spacer(6);
+          roundNumbers.forEach((r) => {
+            const s = game.scores[r];
+            p.row(
+              [String(r), String(s.primaryMe || 0), String(s.primaryOpponent || 0), String(s.secondaryMe || 0), String(s.secondaryOpponent || 0)],
+              colWidths,
+              15,
+              { aligns }
+            );
+          });
+        });
+      }
+
+      if (units.length) {
+        reportCard(pen, (p) => {
+          p.text("自軍ユニット状態", 15, { weight: 700, color: REPORT_COLORS.textDim });
+          p.spacer(10);
+          units.forEach((unit) => {
+            const status = game.unitStatus[unit.id] || defaultUnitStatus(unit);
+            const modelsRemaining = status.modelsRemaining ?? unit.models;
+            const icon = status.destroyed ? "💀" : status.battleShock ? "⚠️" : "✅";
+            const countTxt = unit.models > 1 ? ` (${modelsRemaining}/${unit.models}体)` : "";
+            p.text(`${icon} ${unit.name}${countTxt}`, 15, { color: status.destroyed ? REPORT_COLORS.textDim : REPORT_COLORS.text });
+            if (status.notes) p.wrapped(`　　${status.notes}`, 13, { color: REPORT_COLORS.textDim, indent: 20 });
+          });
+        });
+      }
+
+      if (game.log && game.log.length) {
+        reportCard(pen, (p) => {
+          p.text("ラウンドログ", 15, { weight: 700, color: REPORT_COLORS.textDim });
+          p.spacer(10);
+          game.log.forEach((entry) => {
+            p.wrapped(`R${entry.round}　${entry.text}`, 14, { color: REPORT_COLORS.text });
+          });
+        }, { gap: 8 });
+      }
+
+      pen.spacer(6);
+      pen.text("Generated by W40K Roster & Battle Log", 12, { color: REPORT_COLORS.textDim, align: "center" });
+    };
+
+    const measurePen = makePen(document.createElement("canvas").getContext("2d"), false, PAD, contentWidth);
+    measurePen.state.y = PAD;
+    buildBody(measurePen);
+    const totalHeight = Math.ceil(measurePen.state.y + PAD);
+
+    const canvas = document.createElement("canvas");
+    canvas.width = WIDTH;
+    canvas.height = totalHeight;
+    const ctx = canvas.getContext("2d");
+    ctx.fillStyle = REPORT_COLORS.bg;
+    ctx.fillRect(0, 0, WIDTH, totalHeight);
+
+    const drawPen = makePen(ctx, true, PAD, contentWidth);
+    drawPen.state.y = PAD;
+    buildBody(drawPen);
+
+    return canvas;
+  };
+
+  // ASCII-only filename: some browsers silently fall back to a generic "download" name when the
+  // `download` attribute value contains non-ASCII (e.g. Japanese roster/opponent names) on a blob: URL.
+  const reportFileName = (game) => {
+    const now = new Date();
+    const pad = (n) => String(n).padStart(2, "0");
+    const datePart = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}`;
+    return `w40k-battle-report_${datePart}_R${game.round}.png`;
+  };
+
+  const saveReportImage = () => {
+    if (!game) return;
+    const roster = W40K.Roster.getById(game.rosterId);
+    const canvas = buildReportCanvas(roster, game);
+    canvas.toBlob((blob) => {
+      if (!blob) return;
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = reportFileName(game);
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }, "image/png");
+  };
+
   const endGame = () => {
-    if (!confirm("この対戦を終了しますか？記録はクリアされます。")) return;
+    if (!confirm("この対戦を終了しますか？記録はクリアされます。（先に「レポート画像を保存」しておくと安心です）")) return;
     game = null;
     W40K.save(W40K.KEYS.GAME, null);
     render();
@@ -575,6 +824,7 @@
     });
 
     document.getElementById("btn-end-game").addEventListener("click", endGame);
+    document.getElementById("btn-save-report").addEventListener("click", saveReportImage);
 
     // 先攻/後攻 is decided once for the whole battle (like which team bats first in baseball) and
     // never changes round to round - only which half of the round is active does. So a new round
