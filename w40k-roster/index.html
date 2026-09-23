@@ -222,26 +222,29 @@
                 </div>
               </div>
             </div>
-            <div class="score-row">
-              <span class="score-row-label">VP</span>
-              <div class="counter-pair">
-                <div class="counter-item">
-                  <span class="counter-label">自分</span>
-                  <div class="counter-row">
-                    <button class="btn btn-round" data-vp="me" data-delta="-1">−</button>
-                    <span id="vp-me" class="counter-value">0</span>
-                    <button class="btn btn-round" data-vp="me" data-delta="1">＋</button>
-                  </div>
-                </div>
-                <div class="counter-item">
-                  <span class="counter-label">相手</span>
-                  <div class="counter-row">
-                    <button class="btn btn-round" data-vp="opponent" data-delta="-1">−</button>
-                    <span id="vp-opponent" class="counter-value">0</span>
-                    <button class="btn btn-round" data-vp="opponent" data-delta="1">＋</button>
-                  </div>
-                </div>
+            <div class="score-row score-row-vp">
+              <span class="score-row-label">VP（第<span id="vp-round-number">1</span>Rの得点）</span>
+              <div class="vp-entry-grid">
+                <label>主要目標・自分
+                  <input type="number" id="vp-primary-me" min="0" step="1" value="0">
+                </label>
+                <label>主要目標・相手
+                  <input type="number" id="vp-primary-opponent" min="0" step="1" value="0">
+                </label>
+                <label>副次目標・自分
+                  <input type="number" id="vp-secondary-me" min="0" step="1" value="0">
+                </label>
+                <label>副次目標・相手
+                  <input type="number" id="vp-secondary-opponent" min="0" step="1" value="0">
+                </label>
               </div>
+              <p class="vp-totals">合計VP　自分: <strong id="vp-total-me">0</strong>　相手: <strong id="vp-total-opponent">0</strong></p>
+              <details class="hint-details">
+                <summary>ラウンド別の内訳</summary>
+                <div class="vp-round-log-wrap">
+                  <table id="vp-round-log" class="vp-round-log-table"></table>
+                </div>
+              </details>
             </div>
           </div>
 

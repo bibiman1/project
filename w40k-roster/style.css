@@ -596,6 +596,66 @@ main {
   font-size: 0.85rem;
 }
 
+/* VP has more content (a 4-field entry grid, a totals line, a collapsible per-round log) than a
+   score-row's default label-beside-content layout can fit on one line, so it always stacks
+   vertically instead of only doing so on mobile like .score-row itself. */
+.score-row-vp {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.4rem;
+}
+
+.vp-entry-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.5rem 0.8rem;
+}
+
+.vp-entry-grid label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  font-size: 0.78rem;
+  color: var(--text-dim);
+}
+
+.vp-entry-grid input {
+  width: 100%;
+  padding: 0.35rem;
+  text-align: center;
+}
+
+.vp-totals {
+  margin: 0.2rem 0 0;
+  font-size: 0.9rem;
+  color: var(--gold-bright);
+  font-weight: 600;
+}
+
+.vp-round-log-wrap {
+  overflow-x: auto;
+}
+
+.vp-round-log-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.78rem;
+  margin-top: 0.4rem;
+}
+
+.vp-round-log-table th,
+.vp-round-log-table td {
+  padding: 0.25rem 0.4rem;
+  text-align: center;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+.vp-round-log-table th {
+  color: var(--text-dim);
+  font-weight: 600;
+}
+
 .tracker-card {
   background: var(--bg-panel);
   border: 1px solid var(--border);

@@ -33,8 +33,14 @@
     els.roundValue = document.getElementById("round-value");
     els.cpMe = document.getElementById("cp-me");
     els.cpOpponent = document.getElementById("cp-opponent");
-    els.vpMe = document.getElementById("vp-me");
-    els.vpOpponent = document.getElementById("vp-opponent");
+    els.vpRoundNumber = document.getElementById("vp-round-number");
+    els.vpPrimaryMe = document.getElementById("vp-primary-me");
+    els.vpPrimaryOpponent = document.getElementById("vp-primary-opponent");
+    els.vpSecondaryMe = document.getElementById("vp-secondary-me");
+    els.vpSecondaryOpponent = document.getElementById("vp-secondary-opponent");
+    els.vpTotalMe = document.getElementById("vp-total-me");
+    els.vpTotalOpponent = document.getElementById("vp-total-opponent");
+    els.vpRoundLog = document.getElementById("vp-round-log");
     els.unitList = document.getElementById("tracker-unit-list");
     els.logList = document.getElementById("log-list");
     els.phaseTabs = document.getElementById("phase-tabs");
@@ -97,8 +103,46 @@
     }
     els.cpMe.textContent = game.cp.me;
     els.cpOpponent.textContent = game.cp.opponent;
-    els.vpMe.textContent = game.vp.me;
-    els.vpOpponent.textContent = game.vp.opponent;
+
+    // VP is recorded per round (主要目標/副次目標 scored that round), not as a single running total,
+    // so the breakdown by round - and by objective type - survives instead of being lost the moment
+    // it's added to a lump sum. game.scores is keyed by round number; the current round's fields are
+    // directly editable, older rounds are read-only in the ラウンド別の内訳 log below.
+    if (!game.scores) game.scores = {};
+    const emptyScore = { primaryMe: 0, primaryOpponent: 0, secondaryMe: 0, secondaryOpponent: 0 };
+    const currentScore = game.scores[game.round] || emptyScore;
+    els.vpRoundNumber.textContent = game.round;
+    els.vpPrimaryMe.value = currentScore.primaryMe;
+    els.vpPrimaryOpponent.value = currentScore.primaryOpponent;
+    els.vpSecondaryMe.value = currentScore.secondaryMe;
+    els.vpSecondaryOpponent.value = currentScore.secondaryOpponent;
+
+    const roundNumbers = Object.keys(game.scores)
+      .map(Number)
+      .sort((a, b) => a - b);
+    const totals = roundNumbers.reduce(
+      (acc, r) => {
+        const s = game.scores[r];
+        acc.me += (s.primaryMe || 0) + (s.secondaryMe || 0);
+        acc.opponent += (s.primaryOpponent || 0) + (s.secondaryOpponent || 0);
+        return acc;
+      },
+      { me: 0, opponent: 0 }
+    );
+    els.vpTotalMe.textContent = totals.me;
+    els.vpTotalOpponent.textContent = totals.opponent;
+
+    els.vpRoundLog.innerHTML = roundNumbers.length
+      ? `<thead><tr><th>R</th><th>主要(自)</th><th>主要(相)</th><th>副次(自)</th><th>副次(相)</th></tr></thead>
+         <tbody>
+           ${roundNumbers
+             .map((r) => {
+               const s = game.scores[r];
+               return `<tr><td>${r}</td><td>${s.primaryMe || 0}</td><td>${s.primaryOpponent || 0}</td><td>${s.secondaryMe || 0}</td><td>${s.secondaryOpponent || 0}</td></tr>`;
+             })
+             .join("")}
+         </tbody>`
+      : '<tbody><tr><td class="empty-state">まだ記録がありません</td></tr></tbody>';
 
     els.unitList.innerHTML = "";
     if (roster && roster.units.length) {
@@ -481,7 +525,7 @@
       firstPlayer: null,
       activeTurn: null,
       cp: { me: 0, opponent: 0 },
-      vp: { me: 0, opponent: 0 },
+      scores: {},
       unitStatus: {},
       log: [],
       currentPhase: PHASES[0],
@@ -585,16 +629,21 @@
         render();
       });
     });
-    document.querySelectorAll("[data-vp]").forEach((btn) => {
-      btn.addEventListener("click", () => {
+    // VP fields are typed values for the current round (see render()'s game.scores comment), not
+    // +/-delta buttons, so they're committed on change (blur/Enter) rather than every keystroke.
+    const wireVpField = (el, field) => {
+      el.addEventListener("change", () => {
         if (!game) return;
-        const side = btn.dataset.vp;
-        const delta = Number(btn.dataset.delta);
-        game.vp[side] = Math.max(0, game.vp[side] + delta);
+        if (!game.scores[game.round]) game.scores[game.round] = { primaryMe: 0, primaryOpponent: 0, secondaryMe: 0, secondaryOpponent: 0 };
+        game.scores[game.round][field] = Math.max(0, Number(el.value) || 0);
         persist();
         render();
       });
-    });
+    };
+    wireVpField(els.vpPrimaryMe, "primaryMe");
+    wireVpField(els.vpPrimaryOpponent, "primaryOpponent");
+    wireVpField(els.vpSecondaryMe, "secondaryMe");
+    wireVpField(els.vpSecondaryOpponent, "secondaryOpponent");
 
     document.getElementById("form-log-entry").addEventListener("submit", (e) => {
       e.preventDefault();
