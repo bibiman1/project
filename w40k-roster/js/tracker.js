@@ -560,16 +560,16 @@
   // the canvas can be created at exactly the content's height, then redrawn for real - canvas
   // resizing clears pixels, so the final height must be known before the real canvas exists.
   const REPORT_COLORS = {
-    bg: "#14100f",
-    panel: "#1e1917",
-    border: "#3a2f26",
-    gold: "#c9a24b",
-    goldBright: "#e6c368",
-    redBright: "#b83a3a",
-    text: "#ede4d3",
-    textDim: "#a89c8a",
+    bg: "#05100a",
+    panel: "#0a1a10",
+    border: "#24462e",
+    gold: "#5be88f",
+    goldBright: "#9dffc4",
+    redBright: "#ff5c5c",
+    text: "#3fdd76",
+    textDim: "#2f8a52",
   };
-  const REPORT_FONT = '"Hiragino Sans","Yu Gothic","Segoe UI",sans-serif';
+  const REPORT_FONT = '"MS Gothic","Osaka-Mono","Courier New",monospace';
 
   // Canvas has no CJK-aware line breaking, so wrap per-character once a line exceeds maxWidth -
   // fine for Japanese (no inter-word spaces to lose) and good enough for the occasional ASCII word.
