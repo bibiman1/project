@@ -552,6 +552,10 @@ main {
   margin-bottom: 1rem;
 }
 
+.tracker-title {
+  margin-bottom: 1rem;
+}
+
 .tracker-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));

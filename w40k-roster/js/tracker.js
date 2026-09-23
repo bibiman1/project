@@ -27,9 +27,13 @@
   const cacheEls = () => {
     els.setup = document.getElementById("tracker-setup");
     els.active = document.getElementById("tracker-active");
+    els.scoreSetup = document.getElementById("score-setup");
+    els.scoreActive = document.getElementById("score-active");
     els.rosterSelect = document.getElementById("game-roster-select");
     els.heading = document.getElementById("tracker-heading");
     els.meta = document.getElementById("tracker-meta");
+    els.scoreHeading = document.getElementById("score-heading");
+    els.scoreMeta = document.getElementById("score-meta");
     els.roundValue = document.getElementById("round-value");
     els.cpMe = document.getElementById("cp-me");
     els.cpOpponent = document.getElementById("cp-opponent");
@@ -76,15 +80,23 @@
     if (!game) {
       els.setup.hidden = false;
       els.active.hidden = true;
+      els.scoreSetup.hidden = false;
+      els.scoreActive.hidden = true;
       refreshRosterOptions();
       return;
     }
     els.setup.hidden = true;
     els.active.hidden = false;
+    els.scoreSetup.hidden = true;
+    els.scoreActive.hidden = false;
 
     const roster = W40K.Roster.getById(game.rosterId);
-    els.heading.textContent = `${roster ? roster.name : "ロスター不明"} vs ${game.opponentName || "対戦相手"}`;
+    const headingText = `${roster ? roster.name : "ロスター不明"} vs ${game.opponentName || "対戦相手"}`;
+    const metaText = `${game.missionName || "ミッション未設定"} ・ ${game.pointsLimit || "?"} pts ・ 第${game.round}R`;
+    els.heading.textContent = headingText;
     els.meta.textContent = `${game.missionName || "ミッション未設定"} ・ ${game.pointsLimit || "?"} pts`;
+    els.scoreHeading.textContent = headingText;
+    els.scoreMeta.textContent = metaText;
 
     els.roundValue.textContent = game.round;
     els.doctrinaSelect.value = game.doctrinaImperative || "";
