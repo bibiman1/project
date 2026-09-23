@@ -17,6 +17,7 @@
     <nav class="tab-nav" role="tablist">
       <button class="tab-btn is-active" data-tab="roster" role="tab" aria-selected="true">📋 ロスター</button>
       <button class="tab-btn" data-tab="tracker" role="tab" aria-selected="false">⚔️ 対戦トラッカー</button>
+      <button class="tab-btn" data-tab="score" role="tab" aria-selected="false">🎯 スコア</button>
       <button class="tab-btn" data-tab="rules" role="tab" aria-selected="false">📖 ルール早見</button>
       <button class="tab-btn" data-tab="armory" role="tab" aria-selected="false">🗂️ マスタデータ</button>
     </nav>
@@ -200,55 +201,6 @@
 
         <div class="tracker-grid">
           <div class="tracker-card">
-            <h3>得点管理</h3>
-            <div class="score-row">
-              <span class="score-row-label">CP</span>
-              <div class="counter-pair">
-                <div class="counter-item">
-                  <span class="counter-label">自分</span>
-                  <div class="counter-row">
-                    <button class="btn btn-round" data-cp="me" data-delta="-1">−</button>
-                    <span id="cp-me" class="counter-value">0</span>
-                    <button class="btn btn-round" data-cp="me" data-delta="1">＋</button>
-                  </div>
-                </div>
-                <div class="counter-item">
-                  <span class="counter-label">相手</span>
-                  <div class="counter-row">
-                    <button class="btn btn-round" data-cp="opponent" data-delta="-1">−</button>
-                    <span id="cp-opponent" class="counter-value">0</span>
-                    <button class="btn btn-round" data-cp="opponent" data-delta="1">＋</button>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="score-row score-row-vp">
-              <span class="score-row-label">VP（第<span id="vp-round-number">1</span>Rの得点）</span>
-              <div class="vp-entry-grid">
-                <label>主要目標・自分
-                  <input type="number" id="vp-primary-me" min="0" step="1" value="0">
-                </label>
-                <label>主要目標・相手
-                  <input type="number" id="vp-primary-opponent" min="0" step="1" value="0">
-                </label>
-                <label>副次目標・自分
-                  <input type="number" id="vp-secondary-me" min="0" step="1" value="0">
-                </label>
-                <label>副次目標・相手
-                  <input type="number" id="vp-secondary-opponent" min="0" step="1" value="0">
-                </label>
-              </div>
-              <p class="vp-totals">合計VP　自分: <strong id="vp-total-me">0</strong>　相手: <strong id="vp-total-opponent">0</strong></p>
-              <details class="hint-details">
-                <summary>ラウンド別の内訳</summary>
-                <div class="vp-round-log-wrap">
-                  <table id="vp-round-log" class="vp-round-log-table"></table>
-                </div>
-              </details>
-            </div>
-          </div>
-
-          <div class="tracker-card">
             <h3>策略使用</h3>
             <select id="stratagem-use-select"></select>
             <button id="btn-use-stratagem" class="btn btn-primary btn-use-stratagem">使用してCP消費</button>
@@ -285,6 +237,69 @@
               <button type="submit" class="btn btn-ghost">追加</button>
             </form>
             <ul id="log-list" class="log-list"></ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SCORE TAB -->
+    <section id="tab-score" class="tab-panel" role="tabpanel" aria-labelledby="score">
+      <div id="score-setup" class="tracker-setup">
+        <p class="empty-state">「対戦トラッカー」タブで対戦を開始すると、ここでスコアを記録できます。</p>
+      </div>
+
+      <div id="score-active" class="tracker-active" hidden>
+        <div class="tracker-title">
+          <h2 id="score-heading"></h2>
+          <p id="score-meta" class="meta-line"></p>
+        </div>
+
+        <div class="tracker-card">
+          <h3>得点管理</h3>
+          <div class="score-row">
+            <span class="score-row-label">CP</span>
+            <div class="counter-pair">
+              <div class="counter-item">
+                <span class="counter-label">自分</span>
+                <div class="counter-row">
+                  <button class="btn btn-round" data-cp="me" data-delta="-1">−</button>
+                  <span id="cp-me" class="counter-value">0</span>
+                  <button class="btn btn-round" data-cp="me" data-delta="1">＋</button>
+                </div>
+              </div>
+              <div class="counter-item">
+                <span class="counter-label">相手</span>
+                <div class="counter-row">
+                  <button class="btn btn-round" data-cp="opponent" data-delta="-1">−</button>
+                  <span id="cp-opponent" class="counter-value">0</span>
+                  <button class="btn btn-round" data-cp="opponent" data-delta="1">＋</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="score-row score-row-vp">
+            <span class="score-row-label">VP（第<span id="vp-round-number">1</span>Rの得点）</span>
+            <div class="vp-entry-grid">
+              <label>主要目標・自分
+                <input type="number" id="vp-primary-me" min="0" step="1" value="0">
+              </label>
+              <label>主要目標・相手
+                <input type="number" id="vp-primary-opponent" min="0" step="1" value="0">
+              </label>
+              <label>副次目標・自分
+                <input type="number" id="vp-secondary-me" min="0" step="1" value="0">
+              </label>
+              <label>副次目標・相手
+                <input type="number" id="vp-secondary-opponent" min="0" step="1" value="0">
+              </label>
+            </div>
+            <p class="vp-totals">合計VP　自分: <strong id="vp-total-me">0</strong>　相手: <strong id="vp-total-opponent">0</strong></p>
+            <details class="hint-details">
+              <summary>ラウンド別の内訳</summary>
+              <div class="vp-round-log-wrap">
+                <table id="vp-round-log" class="vp-round-log-table"></table>
+              </div>
+            </details>
           </div>
         </div>
       </div>
