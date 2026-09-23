@@ -233,7 +233,16 @@ W40K.computeUnitBuffs = (roster, unit, options) => {
       applyModifier("征服命令", { kind: "numeric", scope: "melee", field: "skill", value: -1 });
       applyModifier("征服命令", { kind: "keyword", scope: "ranged", value: "アサルト" });
       buffNotes.push("征服命令: 白兵武器の技能+1、射撃武器に[アサルト]を得る");
-      buffNotes.push("征服命令(条件付き・要手動反映): バトルラインか、自軍バトルライン6\"以内なら、攻撃の貫通値+1");
+      // The conditional AP+1 bonus applies whenever the unit is itself BATTLELINE, no positional data
+      // needed - so auto-apply it in that case instead of leaving it as a manual reminder. The "within
+      // 6\" of a friendly BATTLELINE unit" half of the condition still has no positional data to check,
+      // so that case (a non-BATTLELINE unit) still falls back to a text-only reminder.
+      if ((unit.keywords || "").includes("バトルライン")) {
+        applyModifier("征服命令(バトルライン)", { kind: "numeric", scope: "melee", field: "ap", value: -1 });
+        buffNotes.push("征服命令(バトルライン自動適用): 白兵武器の貫通値+1");
+      } else {
+        buffNotes.push("征服命令(条件付き・要手動反映): 自軍バトルライン6\"以内なら、攻撃の貫通値+1");
+      }
     }
   }
 
