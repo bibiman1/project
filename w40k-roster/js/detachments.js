@@ -4,9 +4,10 @@
 (() => {
   const uid = () => W40K.uid();
 
-  // The 7 official 11th-edition Adeptus Mechanicus detachments (Faction Pack v1.2), extracted from
-  // Wahapedia (docs/wahapedia-cache branch) and translated to own-words Japanese, same source/policy
-  // as js/unitlibrary-seed.js. Correctable any time via "デタッチメントマスタ編集" without losing data.
+  // The 7 official 11th-edition Adeptus Mechanicus detachments (see docs/rules-notes.md for which
+  // Faction Pack revision this reflects), extracted from Wahapedia (docs/wahapedia-cache branch) and
+  // translated to own-words Japanese, same source/policy as js/unitlibrary-seed.js. Correctable any
+  // time via "デタッチメントマスタ編集" without losing data.
   const SEED = [
     {
       name: "ラドゾーン軍団",
