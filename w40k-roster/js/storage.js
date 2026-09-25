@@ -244,6 +244,17 @@ W40K.computeUnitBuffs = (roster, unit, options) => {
         buffNotes.push("征服命令(条件付き・要手動反映): 自軍バトルライン6\"以内なら、攻撃の貫通値+1");
       }
     }
+
+    // エラディケーション・コホートの「殺戮命令」: どちらの命令教条が有効かに応じて友軍スキタリの
+    // 命中/ウーンドロールの1がリロール可になる。これも命令教条のラウンド選択に連動する効果なので、
+    // ruleModifiers（キーワード一致のみで判定する仕組み）ではなくここで一緒に扱う。
+    if (roster.detachment && roster.detachment.name === "エラディケーション・コホート" && (unit.keywords || "").includes("スキタリ")) {
+      if (doctrinaImperative === "protector") {
+        buffNotes.push("殺戮命令: 攻撃の命中ロールの1をリロール可");
+      } else if (doctrinaImperative === "conqueror") {
+        buffNotes.push("殺戮命令: 攻撃のウーンドロールの1をリロール可");
+      }
+    }
   }
 
   // Detachment-wide rule: some detachment rules are simple flat stat buffs for any unit matching a
