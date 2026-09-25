@@ -15,7 +15,8 @@
     bare: { img: "s_pine2", w: 64, h: 96, top: 17, bottom: 77, solid: [12, 8] },
     car: { img: "s_car", w: 96, h: 64, top: 10, bottom: 57, solid: [64, 22] },
     houtou: { img: "s_houtou", w: 160, h: 128, top: 10, bottom: 118, solid: [118, 44] },
-    tires: { img: "s_tires", w: 48, h: 48, top: 12, bottom: 37, solid: [22, 10] },
+    tires: { img: "s_tires", w: 64, h: 48, top: 8, bottom: 40, solid: [44, 12] },
+    irori: { img: "k_irori", w: 96, h: 96, top: 7, bottom: 90, solid: [66, 40] },
     sign: { img: "s_sign", w: 32, h: 64, top: 2, bottom: 62, solid: [8, 6] },
     shard: { img: "s_shard", w: 32, h: 32, top: 4, bottom: 26 },
     kamado: { img: "k_kamado", w: 128, h: 64, top: 4, bottom: 60, solid: [72, 26] },
@@ -51,25 +52,36 @@
   // ---- 峠道: 曲がりくねった道を北へのぼると、富士山が見えてくる ----
   const ROAD_COLS = 15;
   const ROAD_ROWS = 60;
-  const ROAD_PATH = [[59, 7], [50, 7], [50, 3], [42, 3], [42, 11], [33, 11], [33, 4], [25, 4], [25, 10], [17, 10], [17, 6], [10, 6], [10, 14]];
+  // 道が通る点(行, 列)。この点をなめらかな曲線(Catmull-Rom)でつなぐ
+  const ROAD_POINTS = [[61, 7], [55, 7], [50, 5.5], [46, 3.5], [42, 4], [39, 7], [36, 10.5], [32, 11], [28, 9], [25, 5], [21, 3.5], [17, 5], [14, 8.5], [11.5, 11], [10.5, 13], [10.5, 16]];
+  const ROAD_WIDTH = 1.5; // 中心線から道の端まで(マス)
+
+  function catmullRom(points, step) {
+    const out = [];
+    for (let i = 0; i < points.length - 1; i++) {
+      const p0 = points[Math.max(0, i - 1)];
+      const p1 = points[i];
+      const p2 = points[i + 1];
+      const p3 = points[Math.min(points.length - 1, i + 2)];
+      for (let t = 0; t < 1; t += step) {
+        const t2 = t * t;
+        const t3 = t2 * t;
+        const f = (a, b, c, d) => 0.5 * (2 * b + (-a + c) * t + (2 * a - 5 * b + 4 * c - d) * t2 + (-a + 3 * b - 3 * c + d) * t3);
+        out.push([f(p0[0], p1[0], p2[0], p3[0]), f(p0[1], p1[1], p2[1], p3[1])]);
+      }
+    }
+    out.push(points[points.length - 1]);
+    return out;
+  }
+
+  const ROAD_CURVE = catmullRom(ROAD_POINTS, 0.05);
 
   function roadGrid() {
     const g = [];
     for (let r = 0; r < ROAD_ROWS; r++) g.push(Array(ROAD_COLS).fill(r < 8 ? "#" : "."));
-    const paint = (r, c) => {
-      for (let dr = -1; dr <= 1; dr++)
-        for (let dc = -1; dc <= 1; dc++) {
-          const rr = r + dr;
-          const cc = c + dc;
-          if (rr >= 8 && rr < ROAD_ROWS && cc >= 0 && cc < ROAD_COLS) g[rr][cc] = "=";
-        }
-    };
-    for (let i = 0; i < ROAD_PATH.length - 1; i++) {
-      const [r0, c0] = ROAD_PATH[i];
-      const [r1, c1] = ROAD_PATH[i + 1];
-      const steps = Math.max(Math.abs(r1 - r0), Math.abs(c1 - c0));
-      for (let s = 0; s <= steps; s++) {
-        paint(Math.round(r0 + ((r1 - r0) * s) / steps), Math.round(c0 + ((c1 - c0) * s) / steps));
+    for (let r = 8; r < ROAD_ROWS; r++) {
+      for (let c = 0; c < ROAD_COLS; c++) {
+        if (ROAD_CURVE.some(([pr, pc]) => Math.hypot(pr - r, pc - c) <= ROAD_WIDTH)) g[r][c] = "=";
       }
     }
     return g.map((row) => row.join(""));
@@ -94,6 +106,74 @@
       }
       run += len;
     }
+  }
+
+  // 曲がった道を1ドット単位で描いた下絵(一度だけ作る)。
+  // マス目のタイルだと縁が階段になるので、道は曲線に沿って円を押していって描く。
+  function buildRoadLayer(tileImg, curve, cols, rows, fromRow) {
+    const W = cols * T;
+    const H = rows * T;
+    const tex = document.createElement("canvas");
+    tex.width = T;
+    tex.height = T;
+    const tctx = tex.getContext("2d");
+    tctx.drawImage(tileImg, 2 * T, 1 * T, T, T, 0, 0, T, T); // 全面が道のタイル(角 0000)
+    const texData = tctx.getImageData(0, 0, T, T).data;
+    const mask = new Uint8Array(W * H); // 0: なし 1: 雪の土手 2: 道
+    const INNER = 44;
+    const OUTER = 48;
+    const pts = [];
+    for (let i = 0; i < curve.length - 1; i++) {
+      const [r0, c0] = curve[i];
+      const [r1, c1] = curve[i + 1];
+      const x0 = (c0 + 0.5) * T;
+      const y0 = (r0 + 0.5) * T;
+      const x1 = (c1 + 0.5) * T;
+      const y1 = (r1 + 0.5) * T;
+      const n = Math.max(1, Math.ceil(Math.hypot(x1 - x0, y1 - y0) / 2));
+      for (let k = 0; k < n; k++) pts.push([x0 + ((x1 - x0) * k) / n, y0 + ((y1 - y0) * k) / n]);
+    }
+    const stamp = (r, v) => {
+      for (const [px, py] of pts) {
+        for (let y = Math.max(fromRow * T, Math.floor(py - r)); y <= Math.min(H - 1, py + r); y++) {
+          for (let x = Math.max(0, Math.floor(px - r)); x <= Math.min(W - 1, px + r); x++) {
+            if ((x + 0.5 - px) ** 2 + (y + 0.5 - py) ** 2 <= r * r && mask[y * W + x] < v) mask[y * W + x] = v;
+          }
+        }
+      }
+    };
+    stamp(INNER, 2);
+    stamp(OUTER, 1);
+    const out = document.createElement("canvas");
+    out.width = W;
+    out.height = H;
+    const octx = out.getContext("2d");
+    const img = octx.createImageData(W, H);
+    const d = img.data;
+    for (let y = 0; y < H; y++) {
+      for (let x = 0; x < W; x++) {
+        const m = mask[y * W + x];
+        if (!m) continue;
+        const o = (y * W + x) * 4;
+        if (m === 2) {
+          const t = ((y % T) * T + (x % T)) * 4;
+          d[o] = texData[t];
+          d[o + 1] = texData[t + 1];
+          d[o + 2] = texData[t + 2];
+        } else {
+          // 土手: 道に近い側は影、雪との境目は輪郭
+          const edge = x > 0 && x < W - 1 && y > 0 && y < H - 1 && [mask[o / 4 - 1], mask[o / 4 + 1], mask[o / 4 - W], mask[o / 4 + W]].includes(0);
+          const inner = [mask[o / 4 - 1], mask[o / 4 + 1], mask[o / 4 - W], mask[o / 4 + W]].includes(2);
+          const c = edge ? [150, 184, 204] : inner ? [196, 218, 230] : [238, 246, 250];
+          d[o] = c[0];
+          d[o + 1] = c[1];
+          d[o + 2] = c[2];
+        }
+        d[o + 3] = 255;
+      }
+    }
+    octx.putImageData(img, 0, 0);
+    return out;
   }
 
   function nearRoad(grid, r, c, d) {
@@ -134,12 +214,18 @@
     legend: {
       "#": { solid: true, none: true },
       ".": { wang: "road" },
-      "=": { wang: "road", lowerOf: ["road"] },
+      "=": { wang: "road" }, // 道そのものは drawGround で描く
     },
     wang: { road: { img: "wang_road", size: 32, lookup: WANG16 } },
     backdrop: { img: "fuji", x: 0, y: 16, scale: 2 },
-    drawGround(ctx, ox, oy) {
-      centerLine(ctx, ox, oy, ROAD_PATH.map(([r, c]) => [(c + 0.5) * T, (r + 0.5) * T]).concat([[15.5 * T, 10.5 * T]]));
+    drawGround(ctx, ox, oy, img) {
+      if (!this.layer) {
+        const tile = img("wang_road");
+        if (!tile) return;
+        this.layer = buildRoadLayer(tile, ROAD_CURVE, ROAD_COLS, ROAD_ROWS, 8);
+      }
+      ctx.drawImage(this.layer, ox, oy);
+      centerLine(ctx, ox, oy, ROAD_CURVE.filter(([r]) => r > 8).map(([r, c]) => [(c + 0.5) * T, (r + 0.5) * T]));
     },
     spawns: {
       start: { x: 7.5 * T, y: 58.5 * T, facing: "north" },
@@ -161,11 +247,11 @@
       { id: "toLake", x: 14.3 * T, y: 8 * T, w: T, h: 4 * T, warp: { map: "lake", spawn: "west" } },
     ],
     objects: [
-      at("sign", 9.6 * T, 51.9 * T),
-      at("sign", 1.4 * T, 41.9 * T),
-      at("sign", 13.4 * T, 34.9 * T),
-      at("sign", 2.4 * T, 24.9 * T),
-      at("tires", 7.2 * T, 45.4 * T),
+      // カーブの外側の標識(道の上に来るものは置かない)
+      ...[[48.9, 1.5], [37.9, 13.4], [26.9, 8.6], [19.9, 1.3], [13.9, 12.4]]
+        .filter(([r, c]) => roadMapGrid[Math.floor(r)][Math.floor(c)] === ".")
+        .map(([r, c]) => at("sign", c * T, r * T)),
+      at("tires", 7 * T, 45.5 * T),
       Object.assign(
         {
           id: "pi",
@@ -183,7 +269,7 @@
             api.bubble("pi", "どけ");
           },
           interact(api) {
-            api.bubble("pi", "おれのだ");
+            api.bubble("pi", "古タイヤをみつけたらおしえろ", 3600);
           },
         },
         {}
@@ -321,9 +407,12 @@
     spawns: { door: { x: 3.5 * T, y: 8.4 * T, facing: "north" } },
     triggers: [{ id: "out", x: 2 * T, y: 9.4 * T, w: 3 * T, h: T, warp: { map: "lake", spawn: "door" } }],
     objects: [
-      at("kamado", 3 * T, 3.9 * T, {
+      at("kamado", 3 * T, 3.9 * T),
+      // 囲炉裏。自在鉤に吊った土鍋で、土星を煮ている(水に浮くから)
+      at("irori", 11.9 * T, 7.4 * T, {
         id: "pot",
-        range: 40,
+        headY: 40,
+        range: 44,
         interact(api) {
           api.show("v_pot");
         },
@@ -346,7 +435,7 @@
         },
       }),
       // ちゃんの座布団
-      at("zabuton", 9.5 * T, 4.4 * T, {
+      at("zabuton", 8.3 * T, 4.4 * T, {
         id: "chair",
         sortDy: -20,
         range: 30,
@@ -361,18 +450,15 @@
             api.show("v_table", () => {
               api.setFlag("ate");
               api.later(500, () =>
-                api.show("v_road", () => {
-                  api.mutter("だざいおさむん", 3000);
-                  api.later(2600, () => api.exit());
-                })
+                api.show("v_road", () => api.later(700, () => api.exit()))
               );
             })
           );
         },
       }),
-      at("chabudai", 9.5 * T, 6.3 * T),
+      at("chabudai", 8.3 * T, 6.3 * T),
       // きーの小さな座布団
-      at("zabutonS", 9.5 * T, 7.7 * T, { sortDy: -20 }),
+      at("zabutonS", 8.3 * T, 7.7 * T, { sortDy: -20 }),
       {
         id: "noren",
         x: 3.5 * T,
@@ -419,6 +505,7 @@
         k_zabuton_s: "k_zabuton_s.png",
         k_tansu: "k_tansu.png",
         k_post: "k_post.png",
+        k_irori: "k_irori.png",
         i_radio: "i_radio.png",
         v_window: "v_window.png",
         v_table: "v_table.png",
