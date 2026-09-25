@@ -152,6 +152,7 @@ button.gallery-hint:focus-visible {
 
 .fragment-text {
   margin: 0;
+  white-space: pre-line;
   font-size: 14px;
   line-height: 1.6;
 }
@@ -298,6 +299,34 @@ button.gallery-hint:focus-visible {
 .field-status {
   width: min(960px, 100%);
   text-align: right;
+}
+
+.inventory-text[hidden] {
+  display: none;
+}
+
+.inventory-text {
+  margin: 0 0 4px;
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.fade-overlay {
+  position: absolute;
+  inset: 0;
+  background: #f4f7f9;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 450ms ease;
+}
+
+.fade-overlay.on {
+  opacity: 1;
+}
+
+.story-title[hidden] {
+  display: none;
 }
 
 .progress-text {
