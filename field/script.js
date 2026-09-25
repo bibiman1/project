@@ -429,8 +429,11 @@
       state: gameState,
       save: saveState,
       exit: exitWorld,
+      fade: (fn) => transition(fn),
     },
   });
+
+  if (/[?&]debug\b/.test(location.search)) window.bogiDebug = { rpg, gameState, enterWorld: (id) => enterWorld(FRAGMENTS.find((f) => f.world === id)) };
 
   const fadeOverlay = document.getElementById("fadeOverlay");
   let transitioning = false;
