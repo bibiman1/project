@@ -404,6 +404,8 @@
         }
       }
 
+      if (map.drawGround) map.drawGround(ctx, ox, oy);
+
       // y順に並べて、手前のものほど後に描く
       const drawables = visibleObjects().map((o) => ({ y: o.y + (o.sortDy || 0), o }));
       drawables.push({ y: player.y, player: true });

@@ -457,6 +457,7 @@
     if (!def || transitioning) return;
     transition(() => {
       worldFrag = frag;
+      dismissIntro();
       fragmentBox.hidden = true;
       galleryHint.hidden = true;
       currentNear = null;

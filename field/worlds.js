@@ -18,9 +18,12 @@
     tires: { img: "s_tires", w: 48, h: 48, top: 12, bottom: 37, solid: [22, 10] },
     sign: { img: "s_sign", w: 32, h: 64, top: 2, bottom: 62, solid: [8, 6] },
     shard: { img: "s_shard", w: 32, h: 32, top: 4, bottom: 26 },
-    table: { img: "i_table", w: 96, h: 64, top: 7, bottom: 57, solid: [78, 26] },
-    chair: { img: "i_chair", w: 32, h: 48, top: 5, bottom: 43, solid: [20, 10] },
-    stool: { img: "i_stool", w: 32, h: 32, top: 6, bottom: 26, solid: [16, 8] },
+    kamado: { img: "k_kamado", w: 128, h: 64, top: 4, bottom: 60, solid: [72, 26] },
+    post: { img: "k_post", w: 32, h: 64, top: 3, bottom: 60, solid: [16, 8] },
+    tansu: { img: "k_tansu", w: 64, h: 64, top: 8, bottom: 57, solid: [50, 20] },
+    chabudai: { img: "k_table", w: 96, h: 64, top: 6, bottom: 58, solid: [60, 22] },
+    zabuton: { img: "k_zabuton", w: 32, h: 32, top: 6, bottom: 27 },
+    zabutonS: { img: "k_zabuton_s", w: 32, h: 32, top: 7, bottom: 25 },
     radio: { img: "i_radio", w: 32, h: 32, top: 5, bottom: 27 },
   };
 
@@ -72,6 +75,27 @@
     return g.map((row) => row.join(""));
   }
 
+  // センターライン: 道の中心を点線でなぞる
+  function centerLine(ctx, ox, oy, points) {
+    ctx.fillStyle = "#e7c34a";
+    const DASH = 10;
+    const GAP = 8;
+    let run = 0;
+    for (let i = 0; i < points.length - 1; i++) {
+      const [x0, y0] = points[i];
+      const [x1, y1] = points[i + 1];
+      const len = Math.hypot(x1 - x0, y1 - y0);
+      for (let d = 0; d < len; d += 2) {
+        if ((run + d) % (DASH + GAP) < DASH) {
+          const x = Math.round(x0 + ((x1 - x0) * d) / len + ox);
+          const y = Math.round(y0 + ((y1 - y0) * d) / len + oy);
+          ctx.fillRect(x - 1, y - 1, 2, 2);
+        }
+      }
+      run += len;
+    }
+  }
+
   function nearRoad(grid, r, c, d) {
     for (let dr = -d; dr <= d; dr++)
       for (let dc = -d; dc <= d; dc++) {
@@ -114,6 +138,9 @@
     },
     wang: { road: { img: "wang_road", size: 32, lookup: WANG16 } },
     backdrop: { img: "fuji", x: 0, y: 16, scale: 2 },
+    drawGround(ctx, ox, oy) {
+      centerLine(ctx, ox, oy, ROAD_PATH.map(([r, c]) => [(c + 0.5) * T, (r + 0.5) * T]).concat([[15.5 * T, 10.5 * T]]));
+    },
     spawns: {
       start: { x: 7.5 * T, y: 58.5 * T, facing: "north" },
       pass: { x: 13.2 * T, y: 10.6 * T, facing: "west" },
@@ -146,9 +173,9 @@
           w: 64,
           h: 64,
           x: 8.6 * T,
-          y: 45.3 * T - 13,
-          sortDy: 13,
-          headY: 12,
+          y: 45.3 * T - 15,
+          sortDy: 15,
+          headY: 14,
           solid: { w: 18, h: 8, dy: 9 },
           range: 36,
           nearRange: 56,
@@ -208,6 +235,9 @@
       ice: { img: "wang_ice", size: 32, lookup: WANG16 },
     },
     backdrop: { img: "fuji", x: 0, y: 16, scale: 2 },
+    drawGround(ctx, ox, oy) {
+      centerLine(ctx, ox, oy, [[-T, 18 * T], [16 * T, 18 * T]]);
+    },
     spawns: {
       west: { x: 0.9 * T, y: 18 * T, facing: "east" },
       door: { x: 9.3 * T, y: 17 * T, facing: "south" },
@@ -263,54 +293,50 @@
     ],
   };
 
-  // ---- ほうとう屋の中 ----
+  // ---- ほうとう屋の中(古民家): 左が土間とかまど、右が板の間とちゃぶ台 ----
+  const TANSU_FOOT = [12 * T, 2.9 * T];
   const SHOP = {
     tile: T,
     bg: "#140f12",
     map: [
       "XUUUUUUUUUUUUUX",
       "XLLLLLLLLLLLLLX",
-      "XfffffffffffffX",
-      "XfffffffffffffX",
-      "XfffffffffffffX",
-      "XfffffffffffffX",
-      "XfffffffffffffX",
-      "XffffffdddffffX",
-      "XffffffdddffffX",
-      "XXXXXXXdddXXXXX",
+      "XdddddffffffffX",
+      "XdddddffffffffX",
+      "XdddddffffffffX",
+      "XdddddffffffffX",
+      "XdddddffffffffX",
+      "XdddddffffffffX",
+      "XdddddffffffffX",
+      "XXdddXXXXXXXXXX",
     ],
     legend: {
-      X: { solid: true, color: "#2b1d17" },
-      U: { solid: true, img: "i_wall", crop: [0, 0] },
-      L: { solid: true, img: "i_wall", crop: [0, 32] },
+      X: { solid: true, color: "#1e1511" },
+      U: { solid: true, img: "k_wall", crop: [0, 0] },
+      L: { solid: true, img: "k_wall", crop: [0, 32] },
       f: { wang: "floor" },
       d: { wang: "floor", lowerOf: ["floor"] },
     },
     wang: { floor: { img: "wang_floor", size: 32, lookup: WANG16 } },
-    spawns: { door: { x: 8.5 * T, y: 8.4 * T, facing: "north" } },
-    triggers: [{ id: "out", x: 7 * T, y: 9.4 * T, w: 3 * T, h: T, warp: { map: "lake", spawn: "door" } }],
+    spawns: { door: { x: 3.5 * T, y: 8.4 * T, facing: "north" } },
+    triggers: [{ id: "out", x: 2 * T, y: 9.4 * T, w: 3 * T, h: T, warp: { map: "lake", spawn: "door" } }],
     objects: [
-      {
+      at("kamado", 3 * T, 3.9 * T, {
         id: "pot",
-        img: "i_counter",
-        w: 128,
-        h: 64,
-        x: 7.5 * T,
-        y: 1 * T,
-        headY: 10,
-        iy: 40,
-        range: 34,
+        range: 40,
         interact(api) {
           api.show("v_pot");
         },
-      },
-      at("radio", 12.5 * T, 2.6 * T, {
+      }),
+      at("post", 6 * T, 3 * T),
+      at("post", 6 * T, 8.9 * T),
+      at("tansu", TANSU_FOOT[0], TANSU_FOOT[1]),
+      // たんすの上のラジオ
+      Object.assign(at("radio", TANSU_FOOT[0] + 6, TANSU_FOOT[1] - 38), {
         id: "radio",
-        range: 34,
-        draw(ctx, sx, sy) {
-          ctx.fillStyle = "#5a3b28";
-          ctx.fillRect(sx - 18, sy + 11, 36, 4);
-        },
+        sortDy: 60,
+        iy: 49,
+        range: 40,
         interact(api) {
           api.bubble("radio", "……あすの金星は、晴れ……", 3600);
           if (!api.hasWord("金星の天気予報")) {
@@ -319,9 +345,11 @@
           }
         },
       }),
-      at("chair", 7.5 * T, 4.4 * T, {
+      // ちゃんの座布団
+      at("zabuton", 9.5 * T, 4.4 * T, {
         id: "chair",
-        range: 36,
+        sortDy: -20,
+        range: 30,
         interact(api) {
           if (!api.flag("memory")) {
             api.mutter("……");
@@ -342,19 +370,20 @@
           );
         },
       }),
-      at("table", 7.5 * T, 6.1 * T),
-      at("stool", 7.5 * T, 7.2 * T),
+      at("chabudai", 9.5 * T, 6.3 * T),
+      // きーの小さな座布団
+      at("zabutonS", 9.5 * T, 7.7 * T, { sortDy: -20 }),
       {
         id: "noren",
-        x: 8.5 * T,
+        x: 3.5 * T,
         y: 9 * T,
         w: 1,
         h: 1,
         sortDy: 40,
         draw(ctx, sx, sy) {
-          ctx.fillStyle = "#8c2230";
+          ctx.fillStyle = "#1f2e52";
           ctx.fillRect(sx - 46, sy - 2, 92, 10);
-          ctx.fillStyle = "#6b1824";
+          ctx.fillStyle = "#16213d";
           for (let i = -46; i < 46; i += 23) ctx.fillRect(sx + i + 21, sy - 2, 2, 10);
         },
       },
@@ -383,18 +412,20 @@
         s_tires: "s_tires.png",
         s_sign: "s_sign.png",
         s_shard: "s_shard.png",
-        i_wall: "i_wall.png",
-        i_counter: "i_counter.png",
-        i_table: "i_table.png",
-        i_chair: "i_chair.png",
-        i_stool: "i_stool.png",
+        k_wall: "k_wall.png",
+        k_kamado: "k_kamado.png",
+        k_table: "k_table.png",
+        k_zabuton: "k_zabuton.png",
+        k_zabuton_s: "k_zabuton_s.png",
+        k_tansu: "k_tansu.png",
+        k_post: "k_post.png",
         i_radio: "i_radio.png",
         v_window: "v_window.png",
         v_table: "v_table.png",
         v_road: "v_road.png",
         v_pot: "v_pot.png",
       },
-      playerSprite: { img: "ki", cell: 64, frames: 7, footY: 19 },
+      playerSprite: { img: "ki", cell: 64, frames: 7, footY: 17 },
       start: "road",
       startSpawn: "start",
       maps: { road: ROAD, lake: LAKE, shop: SHOP },
