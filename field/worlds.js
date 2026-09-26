@@ -16,11 +16,11 @@
     car: { img: "s_car", w: 96, h: 64, top: 10, bottom: 57, solid: [64, 22] },
     houtou: { img: "s_houtou", w: 160, h: 128, top: 10, bottom: 118, solid: [118, 44] },
     tires: { img: "s_tires", w: 64, h: 48, top: 8, bottom: 40, solid: [44, 12] },
-    irori: { img: "k_irori", w: 128, h: 160, top: 0, bottom: 149, solid: [96, 76] },
+    irori: { img: "k_irori", w: 128, h: 176, top: 0, bottom: 174, solid: [96, 84] },
     sign: { img: "s_sign_r", w: 32, h: 64, top: 1, bottom: 62, solid: [8, 6] },
     signL: { img: "s_sign_l", w: 32, h: 64, top: 1, bottom: 62, solid: [8, 6] },
     shard: { img: "s_shard", w: 32, h: 32, top: 4, bottom: 26 },
-    kamado: { img: "k_kamado", w: 128, h: 64, top: 4, bottom: 60, solid: [72, 26] },
+    stove: { img: "k_stove", w: 64, h: 144, top: 0, bottom: 133, solid: [34, 14] }, // 鋳鉄のだるまストーブ
     post: { img: "k_post", w: 32, h: 64, top: 3, bottom: 60, solid: [16, 8] },
     tansu: { img: "k_tansu", w: 64, h: 64, top: 8, bottom: 57, solid: [50, 20] },
     chabudai: { img: "k_table", w: 96, h: 64, top: 6, bottom: 58, solid: [60, 22] },
@@ -551,7 +551,8 @@
     spawns: { door: { x: 3.5 * T, y: 8.4 * T, facing: "north" } },
     triggers: [{ id: "out", x: 2 * T, y: 9.4 * T, w: 3 * T, h: T, warp: { map: "lake", spawn: "door" } }],
     objects: [
-      at("kamado", 3 * T, 3.9 * T),
+      // 土間: 鋳鉄のだるまストーブ(上にやかん、煙突は天井へ)
+      at("stove", 3 * T, 3.9 * T),
       // 囲炉裏。自在鉤に吊った土鍋で、土星を煮ている(水に浮くから)
       at("irori", 11.4 * T, 7.6 * T, {
         id: "pot",
@@ -1437,7 +1438,7 @@
         s_sign_l: "s_sign_l.png",
         s_shard: "s_shard.png",
         k_wall: "k_wall.png",
-        k_kamado: "k_kamado.png",
+        k_stove: "k_stove.png",
         k_table: "k_table.png",
         k_zabuton: "k_zabuton.png",
         k_zabuton_s: "k_zabuton_s.png",
