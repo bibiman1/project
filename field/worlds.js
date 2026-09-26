@@ -290,14 +290,14 @@
       west: { x: 0.9 * T, y: 18 * T, facing: "east" },
       door: { x: 9.3 * T, y: 17 * T, facing: "south" },
     },
-    triggers: [{ id: "toRoad", x: -T, y: 16.5 * T, w: 1.3 * T, h: 3 * T, warp: { map: "road", spawn: "pass" } }],
+    // 左の端から、ワインディングロードへ戻る
+    triggers: [{ id: "toRoad", x: -T, y: 16.5 * T, w: 1.6 * T, h: 3 * T, warp: { map: "road", spawn: "pass" } }],
     objects: [
       at("car", 2.6 * T, 16.7 * T, {
         id: "car",
         range: 44,
         interact(api) {
           api.mutter("ちゃん");
-          if (api.flag("memory")) return;
           api.later(1300, () => api.show("v_window", () => api.setFlag("memory")));
         },
       }),
@@ -407,13 +407,11 @@
             return;
           }
           api.mutter("ちゃん");
-          if (api.flag("ate")) return;
+          // 何度でも見られる。はじめて見たときに断片の条件を満たす
           api.later(1300, () =>
             api.show("v_table", () => {
               api.setFlag("ate");
-              api.later(500, () =>
-                api.show("v_road", () => api.clear())
-              );
+              api.later(500, () => api.show("v_road", () => api.clear()));
             })
           );
         },
