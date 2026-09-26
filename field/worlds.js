@@ -18,6 +18,7 @@
     tires: { img: "s_tires", w: 64, h: 48, top: 8, bottom: 40, solid: [44, 12] },
     irori: { img: "k_irori", w: 128, h: 176, top: 0, bottom: 174, solid: [96, 84] },
     sign: { img: "s_sign_r", w: 32, h: 64, top: 1, bottom: 62, solid: [8, 6] },
+    closed: { img: "s_closed", w: 64, h: 48, top: 1, bottom: 47, solid: [54, 8] }, // 冬期通行止の看板
     signL: { img: "s_sign_l", w: 32, h: 64, top: 1, bottom: 62, solid: [8, 6] },
     shard: { img: "s_shard", w: 32, h: 32, top: 4, bottom: 26 },
     stove: { img: "k_stove", w: 64, h: 144, top: 0, bottom: 133, solid: [34, 14] }, // 鋳鉄のだるまストーブ
@@ -440,6 +441,7 @@
   ];
 
   const houtou = at("houtou", 12 * T, 16.4 * T, { id: "houtou" });
+  const GATE_X = 13.6 * T; // ほうとう屋の先の冬期通行止ゲート
 
   const LAKE = {
     tile: T,
@@ -460,13 +462,42 @@
     slippery(api, x, y) {
       return homeward(api) && y > 17 * T && y < 19 * T ? HOMEWARD_SLIP : false;
     },
+    // ほうとう屋の先は冬期通行止: ゲートで行けない(ぶつかるとはじかれる)
+    rails: [[[GATE_X, 8 * T], [GATE_X, 22 * T]]],
     drawGround(ctx, ox, oy, img, api) {
       if (api && homeward(api)) {
         ctx.fillStyle = "rgba(243, 246, 249, 0.88)";
         ctx.fillRect(ox, 17 * T + oy, 16 * T, 2 * T);
-        return;
+      } else {
+        centerLine(ctx, ox, oy, [[-T, 18 * T], [GATE_X - 6, 18 * T]]);
       }
-      centerLine(ctx, ox, oy, [[-T, 18 * T], [16 * T, 18 * T]]);
+      // ゲートの先: 除雪されず、深い雪に埋もれた道
+      const gx = GATE_X + ox;
+      const g = ctx.createLinearGradient(gx, 0, gx + 1.2 * T, 0);
+      g.addColorStop(0, "rgba(244, 247, 250, 0.7)");
+      g.addColorStop(1, "rgba(244, 247, 250, 1)");
+      ctx.fillStyle = g;
+      ctx.fillRect(gx, 16.8 * T + oy, 16 * T - GATE_X, 2.4 * T);
+      // ゲートバー(道を横切る、黄と黒のしま)と支柱
+      const y0 = 16.6 * T + oy;
+      const y1 = 19.4 * T + oy;
+      for (let y = y0; y < y1; y += 8) {
+        ctx.fillStyle = Math.floor((y - y0) / 8) % 2 ? "#1e1e22" : "#f0c020";
+        ctx.fillRect(gx - 3, y - 10, 6, Math.min(8, y1 - y));
+      }
+      ctx.strokeStyle = "#1a1a1e";
+      ctx.lineWidth = 1;
+      ctx.strokeRect(gx - 3.5, y0 - 10.5, 7, y1 - y0 + 1);
+      ctx.fillStyle = "#f7f9fb"; // バーに積もった雪
+      ctx.fillRect(gx - 4, y0 - 12, 8, 3);
+      for (const py of [y0, y1]) {
+        ctx.fillStyle = "#8a9099";
+        ctx.fillRect(gx - 4, py - 16, 8, 18);
+        ctx.fillStyle = "#b8bec6";
+        ctx.fillRect(gx - 4, py - 16, 2, 18);
+        ctx.fillStyle = "#f7f9fb";
+        ctx.fillRect(gx - 5, py - 18, 10, 3);
+      }
     },
     spawns: {
       west: { x: 0.9 * T, y: 18 * T, facing: "east" },
@@ -512,6 +543,14 @@
           api.warp("shop", "door");
         },
       },
+      // 冬期通行止の看板(道ばた)
+      at("closed", 12.6 * T, 20.3 * T, {
+        id: "closed",
+        range: 40,
+        interact(api) {
+          api.mutter("……");
+        },
+      }),
       at("pine", 13.6 * T, 9 * T),
       at("pine", 12.2 * T, 8.8 * T),
       at("bare", 14.4 * T, 11 * T),
@@ -1435,6 +1474,7 @@
         s_houtou: "s_houtou.png",
         s_tires: "s_tires.png",
         s_sign_r: "s_sign_r.png",
+        s_closed: "s_closed.png",
         s_sign_l: "s_sign_l.png",
         s_shard: "s_shard.png",
         k_wall: "k_wall.png",
