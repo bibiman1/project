@@ -166,6 +166,79 @@
     return trees;
   }
 
+
+  // ガードレール: 点列にそって、支柱と白いレールを描く(3/4見下ろしなので、レールは少し上に浮かせる)
+  function guardrail(ctx, ox, oy, pts) {
+    if (pts.length < 2) return;
+    const H = 7;
+    ctx.save();
+    ctx.translate(ox, oy);
+    ctx.fillStyle = "#4f5863"; // 支柱
+    let run = 0;
+    for (let i = 0; i < pts.length - 1; i++) {
+      const [x0, y0] = pts[i];
+      const [x1, y1] = pts[i + 1];
+      const len = Math.hypot(x1 - x0, y1 - y0);
+      for (let d = (20 - (run % 20)) % 20; d < len; d += 20) {
+        const x = x0 + ((x1 - x0) * d) / len;
+        const y = y0 + ((y1 - y0) * d) / len;
+        ctx.fillRect(Math.round(x) - 1, Math.round(y) - H, 3, H + 2);
+      }
+      run += len;
+    }
+    const line = (dy, col, w) => {
+      ctx.strokeStyle = col;
+      ctx.lineWidth = w;
+      ctx.beginPath();
+      pts.forEach(([x, y], i) => (i ? ctx.lineTo(x, y - dy) : ctx.moveTo(x, y - dy)));
+      ctx.stroke();
+    };
+    ctx.lineJoin = "round";
+    line(H - 1, "#4f5863", 6);
+    line(H - 1, "#f4f7f9", 3);
+    line(H - 2, "#aab4bd", 1);
+    ctx.restore();
+  }
+  // 峠道のガードレール: カーブの外側にだけ
+  const ROAD_RAILS = (() => {
+    const px = ROAD_CURVE.map(([r, c]) => [(c + 0.5) * T, (r + 0.5) * T]);
+    const off = ROAD_WIDTH * T + 10;
+    const runs = [];
+    let cur = [];
+    const K = 5;
+    for (let i = K; i < px.length - K; i++) {
+      const [ax, ay] = px[i - K];
+      const [bx, by] = px[i];
+      const [cx, cy] = px[i + K];
+      const tx = cx - ax;
+      const ty = cy - ay;
+      const tl = Math.hypot(tx, ty) || 1;
+      const nx = -ty / tl;
+      const ny = tx / tl;
+      const l1 = Math.hypot(bx - ax, by - ay) || 1;
+      const l2 = Math.hypot(cx - bx, cy - by) || 1;
+      const turn = ((bx - ax) * (cy - by) - (by - ay) * (cx - bx)) / (l1 * l2); // 曲がる向き(sin)
+      const outer = turn > 0 ? -1 : 1;
+      const ok = by > 12.5 * T && by < 58 * T && Math.abs(turn) > 0.12;
+      if (ok) {
+        const p = [bx + nx * off * outer, by + ny * off * outer];
+        if (cur.length && cur.side !== outer) {
+          runs.push(cur);
+          cur = [];
+        }
+        cur.side = outer;
+        cur.push(p);
+      } else if (cur.length) {
+        runs.push(cur);
+        cur = [];
+      }
+    }
+    if (cur.length) runs.push(cur);
+    return runs.filter((r) => r.length > 4);
+  })();
+  // 峠の待避所(行と列)。崖の縁にガードレール、谷の向こうに富士山
+  const LAYBY = { c0: 3.5, c1: 13.5, r0: 8.35, r1: 11 };
+
   const roadMapGrid = roadGrid();
 
   const ROAD = {
@@ -184,8 +257,40 @@
       if (typeof img !== "function") return; // 古い rpg.js と混ざったとき(キャッシュ)に止まらないように
       const tile = img("wang_road");
       if (!tile) return;
-      drawRoadVector(ctx, ox, oy, tile, this);
-      centerLine(ctx, ox, oy, ROAD_CURVE.filter(([r]) => r > 8).map(([r, c]) => [(c + 0.5) * T, (r + 0.5) * T]));
+      // 谷の靄: 背景の森の裾をぼかし、崖の縁へつなぐ
+      const g = ctx.createLinearGradient(0, 6.9 * T + oy, 0, 8.05 * T + oy);
+      g.addColorStop(0, "rgba(238, 242, 246, 0)");
+      g.addColorStop(1, "rgba(238, 242, 246, 0.95)");
+      ctx.fillStyle = g;
+      ctx.fillRect(ox, 6.9 * T + oy, ROAD_COLS * T, 1.15 * T);
+      // 崖の縁(雪の土手)
+      ctx.fillStyle = "#d6e4ec";
+      ctx.fillRect(ox, 8 * T + oy, ROAD_COLS * T, 5);
+      ctx.fillStyle = "#b8ccd8";
+      ctx.fillRect(ox, 8 * T + 5 + oy, ROAD_COLS * T, 2);
+      // 待避所: 道からふくらんだ舗装
+      {
+        const { c0, c1, r0, r1 } = LAYBY;
+        ctx.save();
+        ctx.translate(ox, oy);
+        ctx.fillStyle = "#c4dae6";
+        ctx.beginPath();
+        ctx.roundRect(c0 * T - 4, r0 * T - 4, (c1 - c0) * T + 8, (r1 - r0) * T + 8, 18);
+        ctx.fill();
+        ctx.restore();
+        drawRoadVector(ctx, ox, oy, tile, this); // 道と待避所の舗装をつなげる
+        ctx.save();
+        ctx.translate(ox, oy);
+        ctx.fillStyle = this.pattern;
+        ctx.beginPath();
+        ctx.roundRect(c0 * T, r0 * T, (c1 - c0) * T, (r1 - r0) * T, 14);
+        ctx.fill();
+        ctx.restore();
+      }
+      centerLine(ctx, ox, oy, ROAD_CURVE.filter(([r]) => r > 10.9).map(([r, c]) => [(c + 0.5) * T, (r + 0.5) * T]));
+      // ガードレール: 待避所の崖側と、峠道のカーブの外側
+      guardrail(ctx, ox, oy, [[LAYBY.c0 * T - 2, 8.55 * T], [LAYBY.c1 * T + 2, 8.55 * T]]);
+      ROAD_RAILS.forEach((run) => guardrail(ctx, ox, oy, run));
     },
     spawns: {
       start: { x: 7.5 * T, y: 58.5 * T, facing: "north" },
@@ -214,6 +319,18 @@
         .filter(([r, c]) => roadMapGrid[Math.floor(r)][Math.floor(c)] === ".")
         .map(([r, c]) => at("sign", c * T, r * T)),
       at("tires", 7 * T, 45.5 * T),
+      // 待避所のガードレール: 調べると、何回でも富士山の全景を見わたせる
+      {
+        id: "lookout",
+        x: 8 * T,
+        y: 8.6 * T,
+        w: 4 * T,
+        h: 8,
+        range: 60,
+        interact(api) {
+          api.pan(0, 2600);
+        },
+      },
       Object.assign(
         {
           id: "pi",
