@@ -555,19 +555,26 @@
     tv: { img: "tv", w: 48, h: 48, top: 6, bottom: 43, solid: [30, 12] },
     iv: { img: "iv", w: 32, h: 64, top: 3, bottom: 62, solid: [12, 6] },
     legshelf: { img: "legshelf", w: 64, h: 64, top: 3, bottom: 56, solid: [46, 14] },
-    nursedesk: { img: "nursedesk", w: 96, h: 64, top: 9, bottom: 56, solid: [52, 18] },
+    nursedesk: { img: "nursedesk", w: 64, h: 32, top: 1, bottom: 31, solid: [36, 14] },
     oxyvase: { img: "oxyvase", w: 32, h: 32, top: 5, bottom: 31 },
     starchart: { img: "starchart", w: 32, h: 32, top: 0, bottom: 30 },
     photo_wedding: { img: "photo_wedding", w: 32, h: 32, top: 0, bottom: 30 },
     photo_fighter: { img: "photo_fighter", w: 32, h: 32, top: 0, bottom: 30 },
     d_family: { img: "d_family", w: 96, h: 64, top: 9, bottom: 51, solid: [56, 14] },
     d_visitors: { img: "d_visitors", w: 64, h: 64, top: 6, bottom: 60 },
-    tansu: { img: "tansu", w: 48, h: 64, top: 13, bottom: 56, solid: [36, 12] },
-    futon: { img: "futon", w: 48, h: 32, top: 6, bottom: 28 },
+    tansu: { img: "tansu", w: 32, h: 64, top: 3, bottom: 61, solid: [28, 12] },
+    futon: { img: "futon", w: 32, h: 64, top: 8, bottom: 56 },
     hibachi: { img: "hibachi", w: 32, h: 32, top: 6, bottom: 28, solid: [18, 8] },
     tricycle: { img: "tricycle", w: 32, h: 32, top: 5, bottom: 27 },
     kyodai: { img: "kyodai", w: 32, h: 48, top: 5, bottom: 47, solid: [22, 8] },
-    stairs: { img: "stairs", w: 64, h: 64, top: 0, bottom: 62 },
+    stairs: { img: "stairs", w: 64, h: 64, top: 0, bottom: 64 },
+    door: { img: "door", w: 32, h: 64, top: 10, bottom: 56 },
+    bed_f: { img: "bed_f", w: 32, h: 64, top: 5, bottom: 59, solid: [26, 40] },
+    bonsai1: { img: "bonsai1", w: 32, h: 32, top: 3, bottom: 29, solid: [16, 8] },
+    bonsai2: { img: "bonsai2", w: 32, h: 32, top: 3, bottom: 31, solid: [16, 8] },
+    bonsai3: { img: "bonsai3", w: 32, h: 32, top: 3, bottom: 31, solid: [16, 8] },
+    bonsai4: { img: "bonsai4", w: 32, h: 32, top: 2, bottom: 30, solid: [16, 8] },
+    bonsai5: { img: "bonsai5", w: 32, h: 32, top: 4, bottom: 29, solid: [16, 8] },
     cot: { img: "cot", w: 32, h: 32, top: 2, bottom: 32, solid: [20, 10] },
     radio: { img: "radio", w: 32, h: 32, top: 5, bottom: 27 },
     d_uketsuke: { img: "d_uketsuke", w: 64, h: 64, top: 7, bottom: 58 },
@@ -577,7 +584,7 @@
     d_band1: { img: "d_band1", w: 64, h: 64, top: 14, bottom: 51 },
     d_band2: { img: "d_band2", w: 64, h: 64, top: 6, bottom: 59 },
     d_wheel: { img: "d_wheel", w: 64, h: 64, top: 7, bottom: 59, solid: [26, 10] },
-    d_bedman: { img: "d_bedman", w: 48, h: 64, top: 11, bottom: 55, solid: [36, 40] },
+    d_bedman: { img: "d_bedman", w: 32, h: 64, top: 8, bottom: 61, solid: [26, 40] },
     d_scope: { img: "d_scope", w: 64, h: 64, top: 3, bottom: 60, solid: [30, 12] },
   };
 
@@ -768,7 +775,8 @@
     ],
   };
 
-  // ---- 講堂(舞台、作品展示) ----
+  // ---- 講堂(舞台、客席の車椅子、作品展示) ----
+  // マップチップに揃える: 物の中心は升目の中心、足もとは升目の境目に置く
   const HALL = {
     tile: T,
     bg: "#1c1411",
@@ -804,141 +812,116 @@
       { id: "toWard", x: 15.4 * T, y: 7 * T, w: T, h: 2 * T, warp: { map: "ward", spawn: "west" } },
     ],
     objects: [
-      hat("stage", 8 * T, 4.3 * T),
-      dead("d_band1", "band1", 6.6 * T, 3.5 * T, "v_stage", (api) => {
+      hat("stage", 8 * T, 5 * T),
+      dead("d_band1", "band1", 6.5 * T, 4.2 * T, "v_stage", (api) => {
         stamp(api, "stage");
         hiHeyWin(api, ["band1", "band2", "carver"]);
       }, { sortDy: 60, iy: 60, range: 56 }),
-      dead("d_band2", "band2", 9.4 * T, 3.5 * T, "v_stage", (api) => {
+      dead("d_band2", "band2", 9.5 * T, 4.2 * T, "v_stage", (api) => {
         stamp(api, "stage");
         hiHeyWin(api, ["band2", "band1", "carver"]);
       }, { sortDy: 60, iy: 60, range: 56 }),
-      hat("wheelchair", 6 * T, 6.4 * T),
-      hat("wheelchair", 8 * T, 6.4 * T),
-      hat("wheelchair", 10 * T, 6.4 * T),
-      hat("exhibit1", 3.4 * T, 8.6 * T),
+      // 客席: 車椅子を一列に
+      ...[5.5, 6.5, 7.5, 8.5, 9.5, 10.5].map((c) => hat("wheelchair", c * T, 7 * T)),
+      // 作品展示: 盆栽をずらりと二列
+      ...[1.5, 2.5, 3.5, 4.5, 5.5].map((c, i) => hat(`bonsai${(i % 5) + 1}`, c * T, 9 * T)),
+      ...[1.5, 2.5, 3.5, 4.5, 5.5].map((c, i) => hat(`bonsai${((i + 2) % 5) + 1}`, c * T, 10.6 * T)),
       // 作りかけのおたかポッポ(手すさび)が並ぶ台
-      hat("exhibit2", 11.4 * T, 8.6 * T, {
+      hat("exhibit2", 11.5 * T, 9.5 * T, {
         id: "exhibit2",
         range: 36,
         interact(api) {
           api.mutter("ちゃん");
         },
       }),
-      dead("d_carver", "carver", 13.6 * T, 9.8 * T, "v_carver", (api) => stamp(api, "exhibit")),
+      dead("d_carver", "carver", 13.5 * T, 10.5 * T, "v_carver", (api) => stamp(api, "exhibit")),
     ],
   };
 
-  // ---- 病棟(談話室、病室、詰所、家族の個室、屋上への階段) ----
-  // 家族の個室(列の範囲)。廃兵院は生活の場で、家族と暮らしていた
-  const FAMILY_ROOMS = [[25, 30], [31, 36]];
-  function partition(col) {
-    return {
-      x: col * T,
-      y: 3.5 * T,
-      w: 6,
-      h: 3 * T,
-      sortDy: 1.5 * T,
-      solid: { w: 6, h: 3 * T, dy: 0 },
-      draw(ctx, sx, sy) {
-        ctx.fillStyle = "#3a261b";
-        ctx.fillRect(sx - 3, sy - 1.5 * T - 18, 6, 3 * T + 18);
-        ctx.fillStyle = "#5b3d2a";
-        ctx.fillRect(sx - 2, sy - 1.5 * T - 18, 2, 3 * T + 18);
-      },
-    };
+  // 畳を敷く(横長の畳を、段ごとにずらして)
+  function tatami(ctx, x0, y0, cols, rows) {
+    const w = cols * T;
+    const h = rows * T;
+    ctx.fillStyle = "#c2a86e";
+    ctx.fillRect(x0, y0, w, h);
+    ctx.fillStyle = "rgba(120, 96, 50, 0.25)";
+    for (let x = x0 + 1; x < x0 + w; x += 3) ctx.fillRect(x, y0, 1, h); // い草の目
+    ctx.fillStyle = "#3d5238";
+    for (let r = 0; r < rows; r++) {
+      const y = y0 + r * T;
+      ctx.fillRect(x0, y, w, 2);
+      for (let x = x0 + (r % 2 ? T : 0); x <= x0 + w; x += 2 * T) ctx.fillRect(Math.min(x, x0 + w - 2), y, 2, T);
+    }
+    ctx.fillRect(x0, y0 + h - 2, w, 2);
   }
+
+  // ---- 病棟(談話室、病室、窓辺、詰所、個室のドア、屋上への階段) ----
+  const WARD_W = 38;
   const WARD = {
     tile: T,
     bg: "#1c1411",
     tintMul: "#f0c09a",
     tint: "rgba(255, 150, 70, 0.08)",
     map: [
-      "UuUuUuUuUuUuUuUuUuUuUuUuUuUuUuUuUuUuUu",
-      "LlLlLlLlLlLlLlLlLlLlLlLlLlLlLlLlLlLlLl",
-      "X,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,X",
-      "X,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,X",
-      "X,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,X",
-      "......................................",
-      "......................................",
-      "X....................................X",
-      "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
-    ].map((r, i) => (i === 5 || i === 6 ? "." + r.slice(1, -1) + "X" : r)),
+      "Uu".repeat(WARD_W / 2),
+      "Ll".repeat(WARD_W / 2),
+      ...[2, 3, 4, 5].map((r) => (r >= 4 ? "." : "X") + ".".repeat(WARD_W - 2) + "X"),
+      "X".repeat(WARD_W),
+    ],
     legend: {
       X: { solid: true, color: "#2a1d17", lowerOf: ["ward"] },
-      U: { solid: true, img: "wall", crop: [0, 0] },
-      L: { solid: true, img: "wall", crop: [0, 32] },
-      u: { solid: true, img: "wall2", crop: [0, 0] },
-      l: { solid: true, img: "wall2", crop: [0, 32] },
+      U: { solid: true, img: "wall", crop: [0, 0], lowerOf: ["ward"] },
+      L: { solid: true, img: "wall", crop: [0, 32], lowerOf: ["ward"] },
+      u: { solid: true, img: "wall2", crop: [0, 0], lowerOf: ["ward"] },
+      l: { solid: true, img: "wall2", crop: [0, 32], lowerOf: ["ward"] },
       ".": { wang: "ward", lowerOf: ["ward"] },
-      ",": { wang: "ward" },
     },
     wang: { ward: { img: "wang_ward", size: 32, lookup: WANG16 } },
-    // 家族の個室: 畳を敷いて、板の仕切りで区切る
-    drawGround(ctx, ox, oy) {
-      FAMILY_ROOMS.forEach(([c0, c1]) => {
-        const x0 = c0 * T + ox;
-        const y0 = 2 * T + oy;
-        const w = (c1 - c0) * T;
-        const h = 3 * T;
-        ctx.fillStyle = "#c2a86e";
-        ctx.fillRect(x0, y0, w, h);
-        ctx.fillStyle = "rgba(120, 96, 50, 0.25)";
-        for (let x = x0 + 1; x < x0 + w; x += 3) ctx.fillRect(x, y0, 1, h); // い草の目
-        // 畳の縁: 横長の畳を、段ごとにずらして敷く
-        ctx.fillStyle = "#3d5238";
-        for (let r = 0; r < 3; r++) {
-          const y = y0 + r * T;
-          ctx.fillRect(x0, y, w, 2);
-          for (let x = x0 + (r % 2 ? T : 0); x <= x0 + w; x += 2 * T) ctx.fillRect(Math.min(x, x0 + w - 2), y, 2, T);
-        }
-        ctx.fillRect(x0, y0 + h - 2, w, 2);
-      });
+    spawns: {
+      west: { x: 1 * T, y: 5 * T, facing: "east" },
+      room1: { x: 27.5 * T, y: 2.8 * T, facing: "south" },
+      room2: { x: 31.5 * T, y: 2.8 * T, facing: "south" },
     },
-    spawns: { west: { x: 1 * T, y: 6 * T, facing: "east" } },
-    triggers: [{ id: "toHall", x: -T, y: 5 * T, w: 1.5 * T, h: 2 * T, warp: { map: "hall", spawn: "east" } }],
+    triggers: [
+      { id: "toHall", x: -T, y: 4 * T, w: 1.5 * T, h: 2 * T, warp: { map: "hall", spawn: "east" } },
+      // 個室のドア: 入ると部屋に切り替わる
+      { id: "toRoom1", x: 27.1 * T, y: 1.9 * T, w: 0.8 * T, h: 0.45 * T, warp: { map: "room1", spawn: "door" } },
+      { id: "toRoom2", x: 31.1 * T, y: 1.9 * T, w: 0.8 * T, h: 0.45 * T, warp: { map: "room2", spawn: "door" } },
+    ],
     objects: [
       // 談話室: 誰もいないのに「バナナ農園」を映しているテレビ
-      hat("tv", 3 * T, 3.2 * T, {
+      hat("tv", 2.5 * T, 3 * T, {
         id: "tv",
         range: 40,
         interact(api) {
           api.bubble("tv", "……バナナ農園……", 3000);
         },
       }),
-      dead("d_wheel", "wheel", 5.6 * T, 6.9 * T, "v_wheel"),
-      // 病室
-      hat("oxyvase", 7.6 * T, 2.9 * T),
-      // 個室の壁: 宇宙軍の礼装と花嫁の写真
-      hat("photo_wedding", 33.2 * T, 1.9 * T, {
-        id: "photo_wedding",
-        sortDy: -40,
-        iy: 20,
-        range: 40,
-        interact(api) {
-          api.show("v_photo_wedding");
-        },
-      }),
-      dead("d_bedman", "bedman", 9.2 * T, 4.3 * T, "v_bed"),
-      hat("iv", 10.8 * T, 3.6 * T, {
+      dead("d_wheel", "wheel", 4.5 * T, 5 * T, "v_wheel"),
+      // 病室: 壁ぎわにベッドを並べる
+      hat("bed_f", 7.5 * T, 4 * T),
+      hat("oxyvase", 8.5 * T, 3 * T),
+      dead("d_bedman", "bedman", 9.5 * T, 4 * T, "v_bed"),
+      hat("iv", 10.5 * T, 3.9 * T, {
         id: "iv",
         range: 34,
         interact(api) {
           api.bubble("iv", "ちりん", 1800);
         },
       }),
-      hat("starchart", 12.5 * T, 1.9 * T, { sortDy: -40 }),
-      // 窓辺: 空の一点を向いた望遠鏡。枕元に、焦げたぼぎのマスコット(コックピットの御守り)
-      hat("cot", 14 * T, 4 * T, {
+      hat("bed_f", 11.5 * T, 4 * T),
+      hat("starchart", 12.5 * T, 1.95 * T, { sortDy: -40 }),
+      // 窓辺: 枕元に焦げたぼぎのマスコット(コックピットの御守り)。空の一点を向いた望遠鏡
+      hat("cot", 13.5 * T, 3 * T, {
         id: "charm",
         range: 34,
         interact(api) {
           api.show("v_cockpit");
         },
       }),
-      dead("d_scope", "scope", 15.6 * T, 4.2 * T, "v_cockpit"),
+      dead("d_scope", "scope", 15 * T, 4 * T, "v_cockpit"),
       // 望遠鏡: 覗くと、月のまわりに輪
-      hat("telescope", 17.2 * T, 3.4 * T, {
+      hat("telescope", 16.5 * T, 3.5 * T, {
         id: "telescope",
         range: 36,
         interact(api) {
@@ -946,7 +929,7 @@
         },
       }),
       // 窓辺の壁: クラシックな宇宙戦闘機の写真
-      hat("photo_fighter", 16.4 * T, 1.9 * T, {
+      hat("photo_fighter", 15.5 * T, 1.95 * T, {
         id: "photo_fighter",
         sortDy: -40,
         iy: 20,
@@ -955,23 +938,15 @@
           api.show("v_photo_fighter");
         },
       }),
-      // 叩くと木琴のように鳴る義足の棚
-      hat("legshelf", 12 * T, 7.9 * T, {
-        id: "legshelf",
-        range: 40,
-        interact(api) {
-          api.bubble("legshelf", "ぽろん　ぽろん", 2200);
-        },
-      }),
       // 詰所: ナースコールを押すと、遠くでプロペラの音(ぼぎボマー)。ラジオは金星の天気予報
-      hat("nursedesk", 20.5 * T, 3.8 * T, {
+      hat("nursedesk", 20 * T, 3 * T, {
         id: "nursecall",
         range: 44,
         interact(api) {
           api.bubble("nursecall", "……ぶうううん……", 3000);
         },
       }),
-      hat("radio", 22.4 * T, 3.2 * T, {
+      hat("radio", 22.5 * T, 3 * T, {
         id: "radio",
         range: 34,
         interact(api) {
@@ -982,20 +957,22 @@
           }
         },
       }),
+      // 叩くと木琴のように鳴る義足の棚
+      hat("legshelf", 24 * T, 3.4 * T, {
+        id: "legshelf",
+        range: 40,
+        interact(api) {
+          api.bubble("legshelf", "ぽろん　ぽろん", 2200);
+        },
+      }),
+      // 家族の個室のドア(廃兵院は生活の場。家族と暮らしていた)
+      hat("door", 27.5 * T, 2 * T, { sortDy: -40 }),
+      hat("door", 31.5 * T, 2 * T, { sortDy: -40 }),
       // 屋上への階段: 景品をもらったら上がれる
-      // 家族の個室: 卓袱台を囲む一家。三輪車、箪笥、鏡台
-      partition(24.9),
-      hat("tansu", 25.9 * T, 2.9 * T),
-      hat("kyodai", 29.2 * T, 2.9 * T),
-      dead("d_family", "family", 27.5 * T, 4.2 * T, "v_family"),
-      hat("tricycle", 26.2 * T, 4.8 * T),
-      partition(30.5),
-      // 隣の個室: たたんだ布団、火鉢、壁に結婚写真
-      hat("futon", 32 * T, 2.9 * T),
-      hat("hibachi", 34.4 * T, 3.9 * T),
-      partition(36.1),
-      hat("stairs", 37 * T, 4.4 * T, {
+      hat("stairs", 36 * T, 2 * T, {
         id: "stairs",
+        sortDy: -40,
+        iy: 44,
         range: 44,
         interact(api) {
           if (!api.hasItem("宇宙船殻用単結晶")) {
@@ -1013,6 +990,56 @@
       }),
     ],
   };
+
+  // ---- 個室(畳の部屋。ドアから入り、下の出口から廊下へ戻る) ----
+  function familyRoom(backSpawn, objects) {
+    return {
+      tile: T,
+      bg: "#1c1411",
+      tintMul: "#f0c09a",
+      tint: "rgba(255, 150, 70, 0.08)",
+      map: ["PAWAPAWAP", "papwapawp", "X.......X", "X.......X", "X.......X", "X.......X", "XXXX.XXXX"],
+      legend: {
+        X: { solid: true, color: "#2a1d17" },
+        P: { solid: true, img: "rwall_p", crop: [0, 0] },
+        p: { solid: true, img: "rwall_p", crop: [0, 32] },
+        A: { solid: true, img: "rwall", crop: [0, 0] },
+        a: { solid: true, img: "rwall", crop: [0, 32] },
+        W: { solid: true, img: "rwall_w", crop: [0, 0] },
+        w: { solid: true, img: "rwall_w", crop: [0, 32] },
+        ".": { color: "#c2a86e" },
+      },
+      drawGround(ctx, ox, oy) {
+        tatami(ctx, T + ox, 2 * T + oy, 7, 4);
+        ctx.fillStyle = "#6b4a33"; // 出口の敷居
+        ctx.fillRect(4 * T + ox, 6 * T + oy, T, 4);
+      },
+      spawns: { door: { x: 4.5 * T, y: 5.4 * T, facing: "north" } },
+      triggers: [{ id: "out", x: 4 * T, y: 6.4 * T, w: T, h: T, warp: { map: "ward", spawn: backSpawn } }],
+      objects,
+    };
+  }
+  // 卓袱台を囲む一家。箪笥、鏡台、三輪車
+  const ROOM1 = familyRoom("room1", [
+    hat("tansu", 1.5 * T, 3 * T),
+    hat("kyodai", 7.5 * T, 3 * T),
+    dead("d_family", "family", 4.5 * T, 4 * T, "v_family"),
+    hat("tricycle", 2.5 * T, 5 * T),
+  ]);
+  // たたんだ布団、火鉢、壁に結婚写真(宇宙軍の礼装と花嫁)
+  const ROOM2 = familyRoom("room2", [
+    hat("futon", 2.5 * T, 5 * T),
+    hat("hibachi", 6.5 * T, 4 * T),
+    hat("photo_wedding", 4.5 * T, 1.95 * T, {
+      id: "photo_wedding",
+      sortDy: -40,
+      iy: 20,
+      range: 40,
+      interact(api) {
+        api.show("v_photo_wedding");
+      },
+    }),
+  ]);
 
   window.BOGI_WORLDS = {
     // 懲罰空間(ハブ)。ここから断片の世界に入り、戻ってくる
@@ -1082,7 +1109,7 @@
       name: "廃兵院",
       assetBase: "./assets/worlds/haihei/",
       images: Object.fromEntries(
-        ["facade", "arch", "yakisoba", "wataame", "shateki", "uketsuke", "wheelchair", "ginkgo", "stage", "exhibit1", "exhibit2", "bed", "telescope", "tv", "iv", "legshelf", "nursedesk", "oxyvase", "starchart", "photo_wedding", "photo_fighter", "d_family", "d_visitors", "tansu", "futon", "hibachi", "tricycle", "kyodai", "stairs", "cot", "radio", "wall", "wall2", "wang_yard", "wang_ward",
+        ["facade", "arch", "yakisoba", "wataame", "shateki", "uketsuke", "wheelchair", "ginkgo", "stage", "exhibit1", "exhibit2", "bed", "telescope", "tv", "iv", "legshelf", "nursedesk", "oxyvase", "starchart", "photo_wedding", "photo_fighter", "d_family", "d_visitors", "tansu", "futon", "hibachi", "tricycle", "kyodai", "stairs", "door", "bed_f", "bonsai1", "bonsai2", "bonsai3", "bonsai4", "bonsai5", "rwall", "rwall_p", "rwall_w", "cot", "radio", "wall", "wall2", "wang_yard", "wang_ward",
           "d_uketsuke", "d_shateki", "d_yakisoba", "d_carver", "d_band1", "d_band2", "d_wheel", "d_bedman", "d_scope",
           "v_uketsuke", "v_yakisoba", "v_stall", "v_carver", "v_stage", "v_wheel", "v_bed", "v_cockpit", "v_roof", "v_photo_wedding", "v_photo_fighter", "v_view", "v_moon", "v_family", "v_wataame"]
           .map((k) => [k, `${k}.png`])
@@ -1091,7 +1118,7 @@
       playerSprite: { img: "ki", cell: 64, frames: 7, footY: 17 },
       start: "yard",
       startSpawn: "gate",
-      maps: { yard: YARD, hall: HALL, ward: WARD },
+      maps: { yard: YARD, hall: HALL, ward: WARD, room1: ROOM1, room2: ROOM2 },
     },
   };
 })();
