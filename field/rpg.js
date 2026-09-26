@@ -114,6 +114,10 @@
         image(key) {
           return img(key);
         },
+        // その断片の世界を終えたか
+        cleared(id) {
+          return host.state.cleared.includes(id);
+        },
         warp(mapId, spawn) {
           host.fade(() => loadMap(mapId, spawn));
         },
@@ -256,6 +260,7 @@
         }
       }
       bubbles = bubbles.filter((b) => b.until > clock);
+      for (const o of map.objects) if (o.update) o.update(dt, t, world.api);
       if (toast && toast.until < clock) toast = null;
 
       if (pan) {
@@ -296,6 +301,7 @@
 
       // 範囲に入ると発火する仕掛け(出入口、景色が開ける場所など)
       for (const tr of map.triggers || []) {
+        if (tr.enabled && !tr.enabled(world.api)) continue;
         const inside =
           player.x > tr.x && player.x < tr.x + tr.w && player.y > tr.y && player.y < tr.y + tr.h;
         if (inside && !tr.inside) {
@@ -426,6 +432,18 @@
         else drawObject(d.o, ox, oy, t);
       }
 
+      if (map.drawOverlay) map.drawOverlay(ctx, ox, oy, t, world.api);
+      // 夕方などの色: tintMul は掛け合わせ(暗く、色をのせる)、tint は上から薄く重ねる
+      if (map.tintMul) {
+        ctx.globalCompositeOperation = "multiply";
+        ctx.fillStyle = map.tintMul;
+        ctx.fillRect(0, 0, vw, vh);
+        ctx.globalCompositeOperation = "source-over";
+      }
+      if (map.tint) {
+        ctx.fillStyle = map.tint;
+        ctx.fillRect(0, 0, vw, vh);
+      }
       if (map.snow) drawSnow();
       for (const b of bubbles) drawBubble(b, ox, oy);
       if (nearObj && !busy()) drawActionMark(nearObj, ox, oy, t);

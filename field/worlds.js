@@ -456,10 +456,12 @@
   }
 
   // 断片: 台座の上の小さな模型。触れると、その断片の世界に入る
-  function fragment(id, title, text, icon, col, row) {
+  // requires: この断片が現れる前に終えておく断片の世界
+  function fragment(id, title, text, icon, col, row, requires) {
     const fx = col * T;
     const fy = row * T;
     const found = (api) => api.flag(`found.${id}`);
+    const present = (api) => !requires || api.cleared(requires);
     return {
       object: {
         id: `frag_${id}`,
@@ -470,6 +472,7 @@
         headY: 86,
         solid: { w: 44, h: 18, dy: -8 },
         range: 46,
+        hidden: (api) => !present(api),
         canInteract: found,
         interact(api) {
           api.enterWorld(id);
@@ -500,6 +503,7 @@
         y: fy - 44,
         w: 100,
         h: 80,
+        enabled: present,
         run(api) {
           if (found(api)) return;
           api.setFlag(`found.${id}`);
@@ -510,7 +514,10 @@
     };
   }
 
-  const VOID_FRAGMENTS = [fragment("lake", "凍った湖と富士山", "きーが見た風景。", "frag_lake", 22, 12)];
+  const VOID_FRAGMENTS = [
+    fragment("lake", "凍った湖と富士山", "きーが見た風景。", "frag_lake", 22, 12),
+    fragment("haihei", "廃兵院", "Hi Hey Win！", "frag_haihei", 33, 21, "lake"),
+  ];
 
   const VOID = {
     tile: T,
@@ -529,18 +536,406 @@
     objects: VOID_FRAGMENTS.map((f) => f.object),
   };
 
+  // ======== 廃兵院(Hi Hey Win！) ========
+  // フィールドは今(夕方)。死人に話しかけると、生きていた頃の文化祭の日の思い出(一枚絵)が起きる。
+  // リリカルで、物悲しいが怖くない。サナトリウムのように穏やか。激戦があったことは匂わせるだけ。
+  const HS = {
+    facade: { img: "facade", w: 320, h: 160, top: 13, bottom: 147 },
+    arch: { img: "arch", w: 128, h: 96, top: 3, bottom: 93 },
+    yakisoba: { img: "yakisoba", w: 96, h: 80, top: 7, bottom: 74, solid: [56, 22] },
+    wataame: { img: "wataame", w: 96, h: 80, top: 1, bottom: 79, solid: [70, 22] },
+    shateki: { img: "shateki", w: 128, h: 96, top: 2, bottom: 92, solid: [100, 28] },
+    uketsuke: { img: "uketsuke", w: 96, h: 64, top: 4, bottom: 60, solid: [64, 20] },
+    ginkgo: { img: "ginkgo", w: 64, h: 96, top: 5, bottom: 91, solid: [14, 8] },
+    stage: { img: "stage", w: 256, h: 96, top: 2, bottom: 96, solid: [156, 64] },
+    exhibit1: { img: "exhibit1", w: 96, h: 48, top: 5, bottom: 48, solid: [80, 18] },
+    exhibit2: { img: "exhibit2", w: 96, h: 48, top: 6, bottom: 48, solid: [84, 18] },
+    wheelchair: { img: "wheelchair", w: 32, h: 32, top: 2, bottom: 30, solid: [18, 8] },
+    telescope: { img: "telescope", w: 32, h: 48, top: 8, bottom: 48, solid: [16, 8] },
+    tv: { img: "tv", w: 48, h: 48, top: 6, bottom: 43, solid: [30, 12] },
+    iv: { img: "iv", w: 32, h: 64, top: 3, bottom: 62, solid: [12, 6] },
+    legshelf: { img: "legshelf", w: 64, h: 64, top: 3, bottom: 56, solid: [46, 14] },
+    nursedesk: { img: "nursedesk", w: 96, h: 64, top: 9, bottom: 56, solid: [52, 18] },
+    oxyvase: { img: "oxyvase", w: 32, h: 32, top: 5, bottom: 31 },
+    starchart: { img: "starchart", w: 32, h: 32, top: 0, bottom: 30 },
+    stairs: { img: "stairs", w: 64, h: 64, top: 0, bottom: 62 },
+    cot: { img: "cot", w: 32, h: 32, top: 2, bottom: 32, solid: [20, 10] },
+    radio: { img: "radio", w: 32, h: 32, top: 5, bottom: 27 },
+    d_uketsuke: { img: "d_uketsuke", w: 64, h: 64, top: 7, bottom: 59 },
+    d_shateki: { img: "d_shateki", w: 64, h: 64, top: 5, bottom: 60, solid: [24, 10] },
+    d_yakisoba: { img: "d_yakisoba", w: 64, h: 64, top: 7, bottom: 58, solid: [24, 10] },
+    d_carver: { img: "d_carver", w: 64, h: 64, top: 4, bottom: 59, solid: [28, 10] },
+    d_band1: { img: "d_band1", w: 64, h: 64, top: 4, bottom: 61 },
+    d_band2: { img: "d_band2", w: 64, h: 64, top: 1, bottom: 62 },
+    d_wheel: { img: "d_wheel", w: 64, h: 64, top: 8, bottom: 55, solid: [26, 10] },
+    d_bedman: { img: "d_bedman", w: 48, h: 64, top: 3, bottom: 62, solid: [36, 40] },
+    d_scope: { img: "d_scope", w: 64, h: 64, top: 2, bottom: 62, solid: [30, 12] },
+  };
+
+  function hat(kind, fx, fy, extra) {
+    const s = HS[kind];
+    const o = { img: s.img, w: s.w, h: s.h, x: fx, y: fy - (s.bottom - s.h / 2), sortDy: s.bottom - s.h / 2, headY: s.h / 2 - s.top };
+    if (s.solid) o.solid = { w: s.solid[0], h: s.solid[1], dy: o.sortDy - s.solid[1] / 2 };
+    return Object.assign(o, extra || {});
+  }
+
+  // スタンプラリー(屋台・展示・舞台)
+  const STAMPS = ["stall", "exhibit", "stage"];
+  function stampCount(api) {
+    return STAMPS.filter((k) => api.flag(`stamp.${k}`)).length;
+  }
+  function stamp(api, key) {
+    if (api.flag(`stamp.${key}`)) return;
+    api.setFlag(`stamp.${key}`);
+    const n = stampCount(api);
+    api.toast(`スタンプ ${"●".repeat(n)}${"○".repeat(STAMPS.length - n)}`);
+  }
+  // 死人: 話しかけると、その人との思い出
+  function dead(kind, id, fx, fy, memory, after, extra) {
+    return hat(kind, fx, fy, Object.assign({
+      id,
+      range: 40,
+      interact(api) {
+        api.show(memory, () => after && after(api));
+      },
+    }, extra || {}));
+  }
+  // 掛け声: その場にいる死人たちから、いっせいに
+  function hiHeyWin(api, ids) {
+    ids.forEach((id, i) => api.later(i * 180, () => api.bubble(id, "Hi Hey Win！", 2600)));
+  }
+
+  // 万国旗(色あせた三角の旗を、たるませて吊る)
+  function bunting(ctx, ox, oy, x0, y0, x1, y1, t) {
+    const cols = ["#c8766a", "#d6b46a", "#7fa7b8", "#9cb07a", "#c99ab2"];
+    const len = Math.hypot(x1 - x0, y1 - y0);
+    const n = Math.floor(len / 12);
+    ctx.strokeStyle = "rgba(60, 40, 30, 0.7)";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    for (let i = 0; i <= n; i++) {
+      const k = i / n;
+      const x = x0 + (x1 - x0) * k + ox;
+      const y = y0 + (y1 - y0) * k + Math.sin(k * Math.PI) * 18 + oy;
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+    for (let i = 0; i < n; i++) {
+      const k = (i + 0.5) / n;
+      const x = Math.round(x0 + (x1 - x0) * k + ox);
+      const y = Math.round(y0 + (y1 - y0) * k + Math.sin(k * Math.PI) * 18 + oy);
+      const sway = Math.round(Math.sin(t * 2 + i) * 1);
+      ctx.fillStyle = cols[i % cols.length];
+      ctx.beginPath();
+      ctx.moveTo(x - 4, y);
+      ctx.lineTo(x + 4, y);
+      ctx.lineTo(x + sway, y + 8);
+      ctx.closePath();
+      ctx.fill();
+    }
+  }
+
+  // ひとりでに競争している、からの車椅子
+  function racer(id, row, speed, phase) {
+    const x0 = 3.5 * T;
+    const x1 = 14.5 * T;
+    return {
+      id,
+      x: x0,
+      y: row * T - 14,
+      w: 32,
+      h: 32,
+      sortDy: 14,
+      dir: 1,
+      update(dt, t) {
+        const span = x1 - x0;
+        const p = ((t * speed + phase) % (span * 2) + span * 2) % (span * 2);
+        this.dir = p < span ? 1 : -1;
+        this.x = x0 + (p < span ? p : span * 2 - p);
+      },
+      draw(ctx, sx, sy, t, api) {
+        const im = api.image("wheelchair");
+        if (!im) return;
+        ctx.save();
+        ctx.translate(sx, sy + Math.round(Math.sin(t * 12 + phase) * 1));
+        ctx.scale(this.dir, 1);
+        ctx.drawImage(im, -16, -16);
+        ctx.restore();
+      },
+    };
+  }
+
+  // ---- 中庭(門、受付、屋台) ----
+  function yardGrid() {
+    const g = [];
+    for (let r = 0; r < 20; r++) {
+      const row = [];
+      for (let c = 0; c < 18; c++) {
+        let ch = ",";
+        if (r < 5) ch = "G";
+        else if ((c === 8 || c === 9) && r >= 5) ch = ".";
+        else if (r >= 9 && r <= 15 && c >= 3 && c <= 14) ch = ".";
+        row.push(ch);
+      }
+      g.push(row.join(""));
+    }
+    return g;
+  }
+
+  const YARD = {
+    tile: T,
+    bg: "#3d5a2e",
+    tintMul: "#f2b48a",
+    tint: "rgba(255, 150, 70, 0.10)",
+    map: yardGrid(),
+    legend: {
+      ".": { wang: "yard", lowerOf: ["yard"] },
+      ",": { wang: "yard" },
+      G: { wang: "yard", solid: true },
+    },
+    wang: { yard: { img: "wang_yard", size: 32, lookup: WANG16 } },
+    spawns: {
+      gate: { x: 9 * T, y: 18.6 * T, facing: "north" },
+      door: { x: 9 * T, y: 6 * T, facing: "south" },
+    },
+    onEnter(api) {
+      if (api.flag("heard")) return;
+      api.setFlag("heard");
+      api.later(900, () => api.mutter("はい　へい　うぃん", 3200));
+    },
+    triggers: [{ id: "toHall", x: 8 * T, y: 4.6 * T, w: 2 * T, h: 0.8 * T, warp: { map: "hall", spawn: "south" } }],
+    drawOverlay(ctx, ox, oy, t) {
+      bunting(ctx, ox, oy, 3 * T, 4.2 * T, 3.5 * T, 17.5 * T, t);
+      bunting(ctx, ox, oy, 15 * T, 4.2 * T, 14.5 * T, 17.5 * T, t);
+      bunting(ctx, ox, oy, 2 * T, 8.5 * T, 16 * T, 8.5 * T, t);
+      bunting(ctx, ox, oy, 2 * T, 12.5 * T, 16 * T, 12.5 * T, t);
+    },
+    objects: [
+      hat("facade", 9 * T, 5 * T),
+      hat("ginkgo", 1.2 * T, 7 * T),
+      hat("ginkgo", 16.8 * T, 7.4 * T),
+      hat("ginkgo", 1.4 * T, 17 * T),
+      hat("ginkgo", 16.6 * T, 16.8 * T),
+      hat("arch", 9 * T, 19.6 * T, { sortDy: 60 }),
+      hat("uketsuke", 12.6 * T, 17.2 * T),
+      dead("d_uketsuke", "uketsuke", 12.6 * T, 16.5 * T, "v_uketsuke", null, {
+        sortDy: 20,
+        range: 64, // 受付の机ごしに話しかける
+        interact(api) {
+          if (!api.flag("card")) {
+            api.show("v_uketsuke", () => {
+              api.setFlag("card");
+              api.giveItem("スタンプ台紙");
+            });
+          } else if (stampCount(api) === STAMPS.length && !api.flag("prize")) {
+            api.setFlag("prize");
+            api.giveItem("宇宙船殻用単結晶");
+          } else {
+            api.show("v_uketsuke");
+          }
+        },
+      }),
+      hat("yakisoba", 4.5 * T, 11.2 * T),
+      dead("d_yakisoba", "yakisoba", 6.2 * T, 11.6 * T, "v_yakisoba"),
+      hat("wataame", 4.5 * T, 15.4 * T),
+      hat("shateki", 13.2 * T, 11.2 * T, {
+        // 景品棚の、見たことのないもの(鈴木商店の宇宙船殻用単結晶)。景品として受け取ると消える
+        draw(ctx, sx, sy, t, api) {
+          if (api.flag("prize")) return;
+          const a = 0.55 + Math.sin(t * 3) * 0.35;
+          ctx.fillStyle = `rgba(170, 230, 255, ${a})`;
+          ctx.fillRect(sx + 28, sy - 26, 4, 6);
+          ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
+          ctx.fillRect(sx + 29, sy - 25, 1, 2);
+        },
+      }),
+      dead("d_shateki", "shateki", 15.6 * T, 11.7 * T, "v_stall", (api) => stamp(api, "stall")),
+      racer("racer1", 13.3, 46, 0),
+      racer("racer2", 14.1, 61, 90),
+      racer("racer3", 14.9, 38, 200),
+    ],
+  };
+
+  // ---- 講堂(舞台、作品展示) ----
+  const HALL = {
+    tile: T,
+    bg: "#1c1411",
+    tintMul: "#f0c09a",
+    tint: "rgba(255, 150, 70, 0.08)",
+    map: [
+      "UUUUUUUUUUUUUUUU",
+      "LLLLLLLLLLLLLLLL",
+      "X..............X",
+      "X..............X",
+      "X..............X",
+      "X..............X",
+      "X..............X",
+      "X...............",
+      "X...............",
+      "X..............X",
+      "X..............X",
+      "XXXXXXX..XXXXXXX",
+    ],
+    legend: {
+      X: { solid: true, color: "#2a1d17", lowerOf: ["ward"] },
+      U: { solid: true, img: "wall2", crop: [0, 0], lowerOf: ["ward"] },
+      L: { solid: true, img: "wall2", crop: [0, 32], lowerOf: ["ward"] },
+      ".": { wang: "ward", lowerOf: ["ward"] },
+    },
+    wang: { ward: { img: "wang_ward", size: 32, lookup: WANG16 } },
+    spawns: {
+      south: { x: 8 * T, y: 10.4 * T, facing: "north" },
+      east: { x: 15 * T, y: 8 * T, facing: "west" },
+    },
+    triggers: [
+      { id: "toYard", x: 7 * T, y: 11.3 * T, w: 2 * T, h: T, warp: { map: "yard", spawn: "door" } },
+      { id: "toWard", x: 15.4 * T, y: 7 * T, w: T, h: 2 * T, warp: { map: "ward", spawn: "west" } },
+    ],
+    objects: [
+      hat("stage", 8 * T, 4.3 * T),
+      dead("d_band1", "band1", 6.6 * T, 3.5 * T, "v_stage", (api) => {
+        stamp(api, "stage");
+        hiHeyWin(api, ["band1", "band2", "carver"]);
+      }, { sortDy: 60, iy: 60, range: 56 }),
+      dead("d_band2", "band2", 9.4 * T, 3.5 * T, "v_stage", (api) => {
+        stamp(api, "stage");
+        hiHeyWin(api, ["band2", "band1", "carver"]);
+      }, { sortDy: 60, iy: 60, range: 56 }),
+      hat("wheelchair", 6 * T, 6.4 * T),
+      hat("wheelchair", 8 * T, 6.4 * T),
+      hat("wheelchair", 10 * T, 6.4 * T),
+      hat("exhibit1", 3.4 * T, 8.6 * T),
+      // 作りかけのおたかポッポ(手すさび)が並ぶ台
+      hat("exhibit2", 11.4 * T, 8.6 * T, {
+        id: "exhibit2",
+        range: 36,
+        interact(api) {
+          api.mutter("ちゃん");
+        },
+      }),
+      dead("d_carver", "carver", 13.6 * T, 9.8 * T, "v_carver", (api) => stamp(api, "exhibit")),
+    ],
+  };
+
+  // ---- 病棟(談話室、病室、詰所、屋上への階段) ----
+  const WARD = {
+    tile: T,
+    bg: "#1c1411",
+    tintMul: "#f0c09a",
+    tint: "rgba(255, 150, 70, 0.08)",
+    map: [
+      "UuUuUuUuUuUuUuUuUuUuUuUuUu",
+      "LlLlLlLlLlLlLlLlLlLlLlLlLl",
+      "X,,,,,,,,,,,,,,,,,,,,,,,,X",
+      "X,,,,,,,,,,,,,,,,,,,,,,,,X",
+      "X,,,,,,,,,,,,,,,,,,,,,,,,X",
+      "..........................",
+      "..........................",
+      "X........................X",
+      "XXXXXXXXXXXXXXXXXXXXXXXXXX",
+    ].map((r, i) => (i === 5 || i === 6 ? "." + r.slice(1, -1) + "X" : r)),
+    legend: {
+      X: { solid: true, color: "#2a1d17", lowerOf: ["ward"] },
+      U: { solid: true, img: "wall", crop: [0, 0] },
+      L: { solid: true, img: "wall", crop: [0, 32] },
+      u: { solid: true, img: "wall2", crop: [0, 0] },
+      l: { solid: true, img: "wall2", crop: [0, 32] },
+      ".": { wang: "ward", lowerOf: ["ward"] },
+      ",": { wang: "ward" },
+    },
+    wang: { ward: { img: "wang_ward", size: 32, lookup: WANG16 } },
+    spawns: { west: { x: 1 * T, y: 6 * T, facing: "east" } },
+    triggers: [{ id: "toHall", x: -T, y: 5 * T, w: 1.5 * T, h: 2 * T, warp: { map: "hall", spawn: "east" } }],
+    objects: [
+      // 談話室: 誰もいないのに「バナナ農園」を映しているテレビ
+      hat("tv", 3 * T, 3.2 * T, {
+        id: "tv",
+        range: 40,
+        interact(api) {
+          api.bubble("tv", "……バナナ農園……", 3000);
+        },
+      }),
+      dead("d_wheel", "wheel", 5.6 * T, 6.9 * T, "v_wheel"),
+      // 病室
+      hat("oxyvase", 7.6 * T, 2.9 * T),
+      dead("d_bedman", "bedman", 9.2 * T, 4.3 * T, "v_bed"),
+      hat("iv", 10.8 * T, 3.6 * T, {
+        id: "iv",
+        range: 34,
+        interact(api) {
+          api.bubble("iv", "ちりん", 1800);
+        },
+      }),
+      hat("starchart", 12.5 * T, 1.9 * T, { sortDy: -40 }),
+      // 窓辺: 空の一点を向いた望遠鏡。枕元に、焦げたぼぎのマスコット(コックピットの御守り)
+      hat("cot", 14 * T, 4 * T, {
+        id: "charm",
+        range: 34,
+        interact(api) {
+          api.show("v_cockpit");
+        },
+      }),
+      dead("d_scope", "scope", 15.6 * T, 4.2 * T, "v_cockpit"),
+      hat("telescope", 17.2 * T, 3.4 * T),
+      // 叩くと木琴のように鳴る義足の棚
+      hat("legshelf", 12 * T, 7.9 * T, {
+        id: "legshelf",
+        range: 40,
+        interact(api) {
+          api.bubble("legshelf", "ぽろん　ぽろん", 2200);
+        },
+      }),
+      // 詰所: ナースコールを押すと、遠くでプロペラの音(ぼぎボマー)。ラジオは金星の天気予報
+      hat("nursedesk", 20.5 * T, 3.8 * T, {
+        id: "nursecall",
+        range: 44,
+        interact(api) {
+          api.bubble("nursecall", "……ぶうううん……", 3000);
+        },
+      }),
+      hat("radio", 22.4 * T, 3.2 * T, {
+        id: "radio",
+        range: 34,
+        interact(api) {
+          api.bubble("radio", "……あすの金星は、晴れ……", 3600);
+          if (!api.hasWord("金星の天気予報")) {
+            api.learnWord("金星の天気予報");
+            api.toast("金星の天気予報");
+          }
+        },
+      }),
+      // 屋上への階段: 景品をもらったら上がれる
+      hat("stairs", 24.4 * T, 4.4 * T, {
+        id: "stairs",
+        range: 44,
+        interact(api) {
+          if (!api.hasItem("宇宙船殻用単結晶")) {
+            api.mutter("……");
+            return;
+          }
+          api.show("v_roof", () => {
+            api.mutter("はい　へい　うぃん", 3000);
+            api.later(2600, () => api.exit());
+          });
+        },
+      }),
+    ],
+  };
+
   window.BOGI_WORLDS = {
     // 懲罰空間(ハブ)。ここから断片の世界に入り、戻ってくる
     void: {
       id: "void",
       name: "懲罰空間",
       hub: true,
-      fragments: ["lake"],
+      fragments: ["lake", "haihei"],
       assetBase: "./assets/worlds/void/",
       images: {
         wang_void: "wang_void.png",
         pedestal: "pedestal.png",
         frag_lake: "frag_lake.png",
+        frag_haihei: "frag_haihei.png",
         ki: "./assets/worlds/lake/ki_walk.png",
       },
       playerSprite: { img: "ki", cell: 64, frames: 7, footY: 17 },
@@ -587,6 +982,25 @@
       start: "road",
       startSpawn: "start",
       maps: { road: ROAD, lake: LAKE, shop: SHOP },
+    },
+    // 断片: 廃兵院(Hi Hey Win！)。きーの記憶の世界。凍った湖と富士山を終えると、懲罰空間に現れる
+    // 条件: スタンプを3つ集めて景品をもらう → 屋上から文化祭を見る → 懲罰空間に帰る
+    // 次の世界へのカギ: 道具「宇宙船殻用単結晶」
+    haihei: {
+      id: "haihei",
+      name: "廃兵院",
+      assetBase: "./assets/worlds/haihei/",
+      images: Object.fromEntries(
+        ["facade", "arch", "yakisoba", "wataame", "shateki", "uketsuke", "wheelchair", "ginkgo", "stage", "exhibit1", "exhibit2", "bed", "telescope", "tv", "iv", "legshelf", "nursedesk", "oxyvase", "starchart", "stairs", "cot", "radio", "wall", "wall2", "wang_yard", "wang_ward",
+          "d_uketsuke", "d_shateki", "d_yakisoba", "d_carver", "d_band1", "d_band2", "d_wheel", "d_bedman", "d_scope",
+          "v_uketsuke", "v_yakisoba", "v_stall", "v_carver", "v_stage", "v_wheel", "v_bed", "v_cockpit", "v_roof"]
+          .map((k) => [k, `${k}.png`])
+          .concat([["ki", "./assets/worlds/lake/ki_walk.png"]])
+      ),
+      playerSprite: { img: "ki", cell: 64, frames: 7, footY: 17 },
+      start: "yard",
+      startSpawn: "gate",
+      maps: { yard: YARD, hall: HALL, ward: WARD },
     },
   };
 })();
