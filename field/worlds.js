@@ -436,7 +436,118 @@
     ],
   };
 
+  // ---- 懲罰空間: 何もない、白い空間。断片に近づくと、何もなかった場所に何かが見えてくる ----
+  const VOID_COLS = 44;
+  const VOID_ROWS = 36;
+
+  function voidGrid() {
+    // 床のところどころに、うっすら段差のある場所(まばらに)
+    const g = [];
+    for (let r = 0; r < VOID_ROWS; r++) g.push(Array(VOID_COLS).fill("."));
+    const blobs = [[6, 7, 2], [9, 33, 3], [20, 5, 2], [27, 36, 2], [31, 14, 3], [4, 20, 1], [16, 38, 1]];
+    for (const [br, bc, rad] of blobs) {
+      for (let r = br - rad; r <= br + rad; r++)
+        for (let c = bc - rad - 1; c <= bc + rad + 1; c++) {
+          if (r < 0 || c < 0 || r >= VOID_ROWS || c >= VOID_COLS) continue;
+          if (Math.hypot((r - br) * 1.3, c - bc) <= rad + 0.6 * rand(r, c, 9)) g[r][c] = ",";
+        }
+    }
+    return g.map((row) => row.join(""));
+  }
+
+  // 断片: 台座の上の小さな模型。触れると、その断片の世界に入る
+  function fragment(id, title, text, icon, col, row) {
+    const fx = col * T;
+    const fy = row * T;
+    const found = (api) => api.flag(`found.${id}`);
+    return {
+      object: {
+        id: `frag_${id}`,
+        x: fx,
+        y: fy,
+        w: 1,
+        h: 1,
+        headY: 86,
+        solid: { w: 44, h: 18, dy: -8 },
+        range: 46,
+        canInteract: found,
+        interact(api) {
+          api.enterWorld(id);
+        },
+        draw(ctx, sx, sy, t, api) {
+          const p = api.player();
+          const d = Math.hypot(p.x - fx, p.y - fy);
+          const a = found(api) ? 1 : Math.max(0, Math.min(1, (190 - d) / 90));
+          if (a <= 0) return;
+          const ped = api.image("pedestal");
+          const ico = api.image(icon);
+          ctx.save();
+          ctx.globalAlpha = a;
+          const glow = ctx.createRadialGradient(sx, sy - 40, 4, sx, sy - 40, 60);
+          glow.addColorStop(0, "rgba(200, 225, 240, 0.55)");
+          glow.addColorStop(1, "rgba(200, 225, 240, 0)");
+          ctx.fillStyle = glow;
+          ctx.fillRect(sx - 60, sy - 100, 120, 120);
+          if (ped) ctx.drawImage(ped, sx - 32, sy - 58);
+          if (ico) ctx.drawImage(ico, sx - 24, sy - 86 + Math.round(Math.sin(t * 2) * 2));
+          ctx.restore();
+        },
+      },
+      // 最初に触れたとき: 断片の名前と言葉を出して、そのまま中へ
+      trigger: {
+        id: `touch_${id}`,
+        x: fx - 50,
+        y: fy - 44,
+        w: 100,
+        h: 80,
+        run(api) {
+          if (found(api)) return;
+          api.setFlag(`found.${id}`);
+          api.say([{ title, text }], () => api.enterWorld(id));
+        },
+      },
+      spawn: { x: fx, y: fy + 1.6 * T, facing: "south" },
+    };
+  }
+
+  const VOID_FRAGMENTS = [fragment("lake", "凍った湖と富士山", "きーが見た風景。", "frag_lake", 22, 12)];
+
+  const VOID = {
+    tile: T,
+    bg: "#f7f7f9",
+    map: voidGrid(),
+    legend: {
+      ".": { wang: "void", lowerOf: ["void"] },
+      ",": { wang: "void" },
+    },
+    wang: { void: { img: "wang_void", size: 32, lookup: WANG16 } },
+    spawns: Object.assign(
+      { start: { x: 22 * T, y: 26 * T, facing: "north" } },
+      ...VOID_FRAGMENTS.map((f) => ({ [`from_${f.object.id.slice(5)}`]: f.spawn }))
+    ),
+    triggers: VOID_FRAGMENTS.map((f) => f.trigger),
+    objects: VOID_FRAGMENTS.map((f) => f.object),
+  };
+
   window.BOGI_WORLDS = {
+    // 懲罰空間(ハブ)。ここから断片の世界に入り、戻ってくる
+    void: {
+      id: "void",
+      name: "懲罰空間",
+      hub: true,
+      fragments: ["lake"],
+      assetBase: "./assets/worlds/void/",
+      images: {
+        wang_void: "wang_void.png",
+        pedestal: "pedestal.png",
+        frag_lake: "frag_lake.png",
+        ki: "./assets/worlds/lake/ki_walk.png",
+      },
+      playerSprite: { img: "ki", cell: 64, frames: 7, footY: 17 },
+      start: "void",
+      startSpawn: "start",
+      maps: { void: VOID },
+    },
     // 断片: 凍った湖と富士山(きーの記憶の世界)
     // 条件: ちゃんの車の窓をのぞく → ほうとう屋で、ちゃんの席を見る → 懲罰空間に帰る
     // 次の世界へのカギ: 道具「氷のかけら」、ことば「金星の天気予報」

@@ -8,7 +8,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="mobile-web-app-capable" content="yes">
   <title>ぼぎだぢ - 懲罰空間</title>
-  <link rel="stylesheet" href="./style.css?v=9">
+  <link rel="stylesheet" href="./style.css?v=10">
 </head>
 <body>
   <header class="field-header">
@@ -23,36 +23,11 @@
 
       <div id="introHint" class="intro-hint">……ここには、まだ何もない。</div>
 
-      <div id="fragmentBox" class="fragment-box" hidden>
-        <p id="fragmentTitle" class="fragment-title"></p>
-        <p id="fragmentText" class="fragment-text"></p>
-      </div>
-
-      <div id="completeToast" class="complete-toast" hidden>断片が出そろった。まだ、この先がある。</div>
-
-      <button type="button" id="galleryHint" class="fragment-box gallery-hint" hidden>
-        <p class="fragment-title">書庫</p>
-        <p id="galleryHintText" class="fragment-text">タップ / Enterキーで中に入る</p>
-      </button>
-
       <div id="storyOverlay" class="story-overlay" hidden>
         <div class="story-card">
           <p id="storyTitle" class="story-title"></p>
           <p id="storyText" class="story-text"></p>
           <p class="story-hint">クリック / Enterキーで進む</p>
-        </div>
-      </div>
-
-      <div id="lockOverlay" class="story-overlay lock-overlay" hidden>
-        <div class="story-card lock-card">
-          <p class="story-title">書庫の扉 - ナンバー錠</p>
-          <p class="lock-desc">4桁の番号を合わせると開くようだ。</p>
-          <input id="lockInput" class="lock-input" type="tel" inputmode="numeric" pattern="[0-9]*" maxlength="4" autocomplete="off" placeholder="----">
-          <p id="lockError" class="lock-error" hidden>番号が違うようだ。</p>
-          <div class="lock-actions">
-            <button type="button" id="lockCancel" class="lock-btn lock-btn-cancel">閉じる</button>
-            <button type="button" id="lockSubmit" class="lock-btn lock-btn-submit">開ける</button>
-          </div>
         </div>
       </div>
 
@@ -63,7 +38,7 @@
 
     <div class="field-status">
       <p id="inventoryText" class="inventory-text" hidden></p>
-      <p id="progressText" class="progress-text">見つけた断片: 0 / 5</p>
+      <p id="progressText" class="progress-text"></p>
     </div>
   </main>
 
@@ -78,8 +53,8 @@
     <small>© Character Project</small>
   </footer>
 
-  <script src="./rpg.js?v=9"></script>
-  <script src="./worlds.js?v=9"></script>
-  <script src="./script.js?v=9"></script>
+  <script src="./rpg.js?v=10"></script>
+  <script src="./worlds.js?v=10"></script>
+  <script src="./script.js?v=10"></script>
 </body>
 </html>

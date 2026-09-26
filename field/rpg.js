@@ -104,6 +104,16 @@
           if (!host.state.words.includes(word)) host.state.words.push(word);
           host.save();
         },
+        // 別の世界へ(懲罰空間の断片から)
+        enterWorld(id) {
+          host.enterWorld(id);
+        },
+        player() {
+          return { x: player.x, y: player.y };
+        },
+        image(key) {
+          return img(key);
+        },
         warp(mapId, spawn) {
           host.fade(() => loadMap(mapId, spawn));
         },
@@ -116,7 +126,7 @@
       return api;
     }
 
-    function enter(def) {
+    function enter(def, spawnName) {
       world = def;
       world.api = makeApi();
       for (const [k, src] of Object.entries(def.images)) {
@@ -126,7 +136,7 @@
       cutscene = null;
       pan = null;
       toast = null;
-      loadMap(def.start, def.startSpawn);
+      loadMap(def.start, spawnName || def.startSpawn);
     }
 
     function loadMap(mapId, spawnName) {
@@ -307,6 +317,7 @@
       let best = Infinity;
       for (const o of visibleObjects()) {
         if (!o.interact && !o.near) continue;
+        if (o.canInteract && !o.canInteract(world.api)) continue;
         // 距離は足もと(描画の基準点)からはかる
         const ix = o.x + (o.ix || 0);
         const iy = o.y + (o.iy != null ? o.iy : o.sortDy || 0);
@@ -568,6 +579,9 @@
       interact,
       get active() {
         return !!world;
+      },
+      get isHub() {
+        return !!(world && world.hub);
       },
       get worldName() {
         return world ? world.name : "";

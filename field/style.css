@@ -114,34 +114,6 @@ body {
   box-shadow: var(--shadow);
 }
 
-button.gallery-hint[hidden] {
-  display: none;
-}
-
-button.gallery-hint {
-  all: unset;
-  box-sizing: border-box;
-  position: absolute;
-  left: 16px;
-  right: 16px;
-  bottom: 16px;
-  display: block;
-  width: auto;
-  padding: 16px 20px 14px;
-  border: 1px solid var(--line);
-  border-radius: 14px;
-  background: var(--paper);
-  box-shadow: var(--shadow);
-  font-family: inherit;
-  text-align: left;
-  cursor: pointer;
-}
-
-button.gallery-hint:hover,
-button.gallery-hint:focus-visible {
-  border-color: var(--accent);
-}
-
 .fragment-title {
   margin: 0 0 6px;
   color: var(--accent);
@@ -193,71 +165,6 @@ button.gallery-hint:focus-visible {
   cursor: default;
 }
 
-.lock-overlay {
-  cursor: default;
-}
-
-.lock-card {
-  width: min(360px, 100%);
-  text-align: center;
-}
-
-.lock-desc {
-  margin: 0 0 14px;
-  color: var(--muted);
-  font-size: 13px;
-}
-
-.lock-input {
-  width: 100%;
-  padding: 12px;
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  background: var(--bg);
-  color: var(--ink);
-  font-size: 28px;
-  font-weight: 800;
-  letter-spacing: 0.5em;
-  text-align: center;
-}
-
-.lock-input:focus {
-  outline: 2px solid var(--accent);
-  outline-offset: 1px;
-}
-
-.lock-error {
-  margin: 10px 0 0;
-  color: var(--accent);
-  font-size: 13px;
-  font-weight: 700;
-  text-align: center;
-}
-
-.lock-actions {
-  display: flex;
-  justify-content: center;
-  gap: 10px;
-  margin-top: 16px;
-}
-
-.lock-btn {
-  padding: 9px 20px;
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  background: var(--paper);
-  color: var(--ink);
-  font-size: 13px;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.lock-btn-submit {
-  border-color: var(--accent);
-  background: var(--accent);
-  color: #fff;
-}
-
 .story-title {
   margin: 0 0 10px;
   color: var(--accent);
@@ -279,21 +186,6 @@ button.gallery-hint:focus-visible {
   color: var(--muted);
   font-size: 12px;
   text-align: right;
-}
-
-.complete-toast {
-  position: absolute;
-  left: 50%;
-  top: 20px;
-  transform: translateX(-50%);
-  padding: 8px 16px;
-  border-radius: 999px;
-  background: rgba(183, 68, 42, 0.92);
-  color: #fff;
-  font-size: 13px;
-  font-weight: 700;
-  white-space: nowrap;
-  pointer-events: none;
 }
 
 .field-status {
