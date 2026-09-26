@@ -953,6 +953,57 @@
     };
   }
 
+  // 松葉杖だけが歩いている(使っていた人は見えない)。杖を前について、からだを振り出す歩き方
+  function crutchWalker(id, row, x0, x1, speed) {
+    const S = 26; // ひと足の幅
+    return {
+      id,
+      x: x0,
+      y: row * T,
+      w: 32,
+      h: 48,
+      sortDy: 0,
+      dir: 1,
+      update(dt, t) {
+        const span = x1 - x0;
+        const p = (t * speed) % (span * 2);
+        this.dir = p < span ? 1 : -1;
+        this.x = x0 + (p < span ? p : span * 2 - p);
+        this.d = (p % S + S) % S;
+      },
+      draw(ctx, sx, sy, t, api) {
+        const im = api.image("crutch");
+        if (!im) return;
+        // 杖の先の、脇からの前後のずれ: 地面についているあいだは後ろへ流れ、浮いたら前へ振り出す
+        const d = this.d || 0;
+        const stance = 0.7 * S;
+        let rel;
+        let lift = 0;
+        if (d < stance) rel = 0.35 * S - d;
+        else {
+          const u = (d - stance) / (S - stance);
+          rel = -0.35 * S + u * 0.7 * S;
+          lift = Math.sin(u * Math.PI) * 2;
+        }
+        const ang = -Math.atan2(rel * this.dir, 40);
+        const bob = d < stance ? -Math.sin((d / stance) * Math.PI) * 2 : 0;
+        // 地面の影(杖の先と、見えない人の足もと)
+        ctx.fillStyle = "rgba(40, 30, 20, 0.18)";
+        ctx.beginPath();
+        ctx.ellipse(sx, sy, 9, 3, 0, 0, Math.PI * 2);
+        ctx.fill();
+        for (const [dx, dy, dark] of [[3, -5, true], [0, 1, false]]) {
+          ctx.save();
+          ctx.translate(Math.round(sx + dx * this.dir), Math.round(sy - 40 + dy + bob));
+          ctx.rotate(ang);
+          if (dark) ctx.filter = "brightness(0.7)";
+          ctx.drawImage(im, -6, -2 - lift);
+          ctx.restore();
+        }
+      },
+    };
+  }
+
   // ---- 中庭(門、受付、屋台) ----
   function yardGrid() {
     const g = [];
@@ -1057,9 +1108,8 @@
         },
       }),
       dead("d_shateki", "shateki", 15.6 * T, 11.7 * T, "v_stall", (api) => stamp(api, "stall")),
-      racer("racer1", 13.3, 46, 0),
-      racer("racer2", 14.1, 61, 90),
-      racer("racer3", 14.9, 38, 200),
+      racer("racer1", 14.1, 40, 90),
+      crutchWalker("crutches", 12.6, 5 * T, 12 * T, 12),
     ],
   };
 
@@ -1539,7 +1589,7 @@
       name: "廃兵院",
       assetBase: "./assets/worlds/haihei/",
       images: Object.fromEntries(
-        ["facade", "arch", "yakisoba", "wataame", "shateki", "uketsuke", "wheelchair", "ginkgo", "stage", "exhibit1", "exhibit2", "bed", "telescope", "tv_on", "tv_off", "iv", "legshelf", "oxyvase", "starchart", "photo_wedding", "photo_fighter", "d_family", "d_visitors", "tansu", "futon", "hibachi", "tricycle", "kyodai", "stairs", "door", "bed_f", "bonsai1", "bonsai2", "bonsai3", "bonsai4", "bonsai5", "rwall", "rwall_p", "rwall_w", "wall_in", "wheelchair_back", "prosthetic_rack", "workbench", "arm_stand", "deskphoto", "sunset", "noticeboard", "v_board", "guestbook", "v_guestbook", "wx_bed", "wx_chair", "wx_gramophone", "wx_lamp", "wx_teatable", "wx_rug", "rwallx", "rwallx_p", "rwallx_w", "art_fuji", "art_moon", "art_ginkgo", "art_blob", "art_self", "art_group", "art_banana", "art_squad", "art_roof", "cot", "radio", "wall", "wall2", "wang_yard", "wang_ward",
+        ["facade", "arch", "yakisoba", "wataame", "shateki", "uketsuke", "wheelchair", "crutch", "ginkgo", "stage", "exhibit1", "exhibit2", "bed", "telescope", "tv_on", "tv_off", "iv", "legshelf", "oxyvase", "starchart", "photo_wedding", "photo_fighter", "d_family", "d_visitors", "tansu", "futon", "hibachi", "tricycle", "kyodai", "stairs", "door", "bed_f", "bonsai1", "bonsai2", "bonsai3", "bonsai4", "bonsai5", "rwall", "rwall_p", "rwall_w", "wall_in", "wheelchair_back", "prosthetic_rack", "workbench", "arm_stand", "deskphoto", "sunset", "noticeboard", "v_board", "guestbook", "v_guestbook", "wx_bed", "wx_chair", "wx_gramophone", "wx_lamp", "wx_teatable", "wx_rug", "rwallx", "rwallx_p", "rwallx_w", "art_fuji", "art_moon", "art_ginkgo", "art_blob", "art_self", "art_group", "art_banana", "art_squad", "art_roof", "cot", "radio", "wall", "wall2", "wang_yard", "wang_ward",
           "d_uketsuke", "d_shateki", "d_yakisoba", "d_carver", "d_band1", "d_band2", "d_band3", "d_band4", "d_band5", "d_wheel", "d_bedman", "d_scope",
           "v_uketsuke", "v_yakisoba", "v_stall", "v_carver", "v_stage", "v_wheel", "v_bed", "v_cockpit", "v_photo_wedding", "v_photo_fighter", "v_view", "v_moon", "v_family", "v_wataame", "v_art_fuji", "v_art_moon", "v_art_ginkgo", "v_art_blob", "v_art_self", "v_art_group", "v_art_banana", "v_art_squad", "v_art_roof", "v_tv"]
           .map((k) => [k, `${k}.png`])

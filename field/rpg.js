@@ -37,11 +37,27 @@
     function loadImage(key, src) {
       if (images[key]) return;
       const img = new Image();
-      images[key] = { img, loaded: false };
+      images[key] = { img, loaded: false, done: false };
       img.onload = () => {
         images[key].loaded = true;
+        images[key].done = true;
+      };
+      img.onerror = () => {
+        images[key].done = true; // 読めなくても待ち続けない
       };
       img.src = src;
+    }
+
+    // いまの世界の画像がすべて読み終わったら cb を呼ぶ(最長 maxMs まで待つ)
+    function whenReady(cb, maxMs = 8000) {
+      const t0 = performance.now();
+      const keys = world ? Object.keys(world.images) : [];
+      const check = () => {
+        const ok = keys.every((k) => !images[k] || images[k].done);
+        if (ok || performance.now() - t0 > maxMs) cb();
+        else setTimeout(check, 50);
+      };
+      check();
     }
 
     function img(key) {
@@ -656,6 +672,7 @@
     return {
       enter,
       leave,
+      whenReady,
       update,
       draw,
       interact,

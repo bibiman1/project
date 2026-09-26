@@ -207,7 +207,7 @@ body {
 .fade-overlay {
   position: absolute;
   inset: 0;
-  background: #f4f7f9;
+  background: #0c0b10;
   opacity: 0;
   pointer-events: none;
   transition: opacity 450ms ease;
