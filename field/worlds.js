@@ -571,7 +571,7 @@
     art_group: { img: "art_group", w: 32, h: 32, top: 4, bottom: 23 },
     art_banana: { img: "art_banana", w: 32, h: 32, top: 4, bottom: 23 },
     art_squad: { img: "art_squad", w: 32, h: 32, top: 4, bottom: 23 },
-    d_family: { img: "d_family", w: 96, h: 64, top: 9, bottom: 51, solid: [56, 14] },
+    d_family: { img: "d_family", w: 96, h: 64, top: 12, bottom: 57, solid: [60, 14] },
     d_visitors: { img: "d_visitors", w: 64, h: 64, top: 6, bottom: 60 },
     tansu: { img: "tansu", w: 32, h: 64, top: 3, bottom: 61, solid: [28, 12] },
     futon: { img: "futon", w: 32, h: 64, top: 8, bottom: 56 },
@@ -592,11 +592,14 @@
     d_shateki: { img: "d_shateki", w: 64, h: 64, top: 7, bottom: 58, solid: [24, 10] },
     d_yakisoba: { img: "d_yakisoba", w: 64, h: 64, top: 11, bottom: 53, solid: [24, 10] },
     d_carver: { img: "d_carver", w: 64, h: 64, top: 8, bottom: 59, solid: [28, 10] },
-    d_band1: { img: "d_band1", w: 64, h: 64, top: 6, bottom: 60 },
-    d_band2: { img: "d_band2", w: 64, h: 64, top: 6, bottom: 58 },
-    d_band3: { img: "d_band3", w: 64, h: 64, top: 6, bottom: 59 },
     d_wheel: { img: "d_wheel", w: 64, h: 64, top: 7, bottom: 59, solid: [26, 10] },
     d_bedman: { img: "d_bedman", w: 32, h: 64, top: 8, bottom: 61, solid: [26, 40] },
+    d_band1: { img: "d_band1", w: 48, h: 64, top: 8, bottom: 58 },
+    d_band2: { img: "d_band2", w: 48, h: 64, top: 3, bottom: 61 },
+    d_band3: { img: "d_band3", w: 48, h: 64, top: 9, bottom: 57 },
+    d_band4: { img: "d_band4", w: 48, h: 64, top: 6, bottom: 60 },
+    d_band5: { img: "d_band5", w: 48, h: 64, top: 7, bottom: 60 },
+    deskphoto: { img: "deskphoto", w: 32, h: 48, top: 5, bottom: 44, solid: [26, 10] },
     d_scope: { img: "d_scope", w: 64, h: 64, top: 3, bottom: 60, solid: [30, 12] },
   };
 
@@ -825,15 +828,17 @@
     ],
     objects: [
       hat("stage", 8 * T, 5 * T),
-      // 舞台の楽団: アコーディオン、ラッパ、太鼓
+      // 舞台の楽団(思い出の絵と同じ5人): アコーディオン、マンドリン、車椅子の大太鼓、ギター、歌
       ...[
-        ["d_band1", "band1", 6],
-        ["d_band2", "band2", 8],
-        ["d_band3", "band3", 10],
-      ].map(([kind, id, c]) =>
+        ["d_band1", "band1", 5],
+        ["d_band2", "band2", 6.5],
+        ["d_band3", "band3", 8],
+        ["d_band4", "band4", 9.5],
+        ["d_band5", "band5", 11],
+      ].map(([kind, id, c], i, all) =>
         dead(kind, id, c * T, 4.6 * T, "v_stage", (api) => {
           stamp(api, "stage");
-          hiHeyWin(api, [id, ...["band1", "band2", "band3"].filter((b) => b !== id), "carver"]);
+          hiHeyWin(api, [id, ...all.map((b) => b[1]).filter((b) => b !== id), "carver"]);
         }, { sortDy: 60, iy: 60, range: 56 })
       ),
       // 客席: 車椅子を一列に
@@ -1021,16 +1026,36 @@
     hat("bed_f", 7.5 * T, 4 * T),
     hat("starchart", 6.5 * T, 1.95 * T, { sortDy: -40 }),
   ]);
-  // 窓辺の部屋: 枕元に焦げたぼぎのマスコット(コックピットの御守り)、宇宙戦闘機の写真
+  // 窓辺の部屋: 机の上のコックピットの写真(焦げたぼぎのマスコット)、ロッキングチェアのガイコツ、宇宙戦闘機の写真
   const ROOM_WINDOW = room("window", "wood", [
-    hat("cot", 1.5 * T, 3 * T, {
+    // 机の上の写真: コックピット(焦げたぼぎのマスコットが下がっている)
+    hat("deskphoto", 1.5 * T, 3.2 * T, {
       id: "charm",
       range: 34,
       interact(api) {
         api.show("v_cockpit");
       },
     }),
-    dead("d_scope", "scope", 3.5 * T, 4.2 * T, "v_cockpit"),
+    // ロッキングチェアで、ゆっくり揺れている
+    hat("d_scope", 4.5 * T, 4.4 * T, {
+      id: "scope",
+      img: null,
+      range: 40,
+      draw(ctx, sx, sy, t, api) {
+        const im = api.image("d_scope");
+        if (!im) return;
+        const s = HS.d_scope;
+        const a = Math.sin(t * 1.4) * 0.07;
+        ctx.save();
+        ctx.translate(sx, sy + s.bottom - s.h / 2);
+        ctx.rotate(a);
+        ctx.drawImage(im, -s.w / 2, -s.bottom, s.w, s.h);
+        ctx.restore();
+      },
+      interact(api) {
+        api.bubble("scope", "ぎい……　ぎい……", 2600);
+      },
+    }),
     wallPhoto("photo_fighter", 4.5 * T, "v_photo_fighter"),
   ]);
   // 義肢装具室: 木の義足が掛かったラック(叩くと木琴のように鳴る)、作りかけの機械の義手の作業台、義手のスタンド
@@ -1082,26 +1107,16 @@
       ".": { wang: "ward", lowerOf: ["ward"] },
     },
     wang: { ward: { img: "wang_ward", size: 32, lookup: WANG16 } },
-    drawGround(ctx, ox, oy) {
+    drawGround(ctx, ox, oy, img) {
       const W = 14 * T;
-      // 夕空と、遠い山なみ(高原)
-      const g = ctx.createLinearGradient(0, oy, 0, 3 * T + oy);
-      g.addColorStop(0, "#6c5a8e");
-      g.addColorStop(0.55, "#e79a78");
-      g.addColorStop(1, "#f3c08c");
-      ctx.fillStyle = g;
-      ctx.fillRect(ox, oy, W, 3 * T);
-      const ridge = (base, amp, col, seed) => {
-        ctx.fillStyle = col;
-        ctx.beginPath();
-        ctx.moveTo(ox, 3 * T + oy);
-        for (let x = 0; x <= W; x += 8) ctx.lineTo(x + ox, base + oy - amp * (0.5 + 0.5 * Math.sin(x / 37 + seed) * Math.cos(x / 91 + seed * 2)));
-        ctx.lineTo(W + ox, 3 * T + oy);
-        ctx.fill();
-      };
-      ridge(2.1 * T, 34, "#8a7aa6", 1);
-      ridge(2.6 * T, 26, "#5e6a7a", 3);
-      ridge(3 * T, 14, "#3f4f45", 5); // からまつ林
+      // 夕日が山なみの向こうへ落ちていく(高原の夕焼け)
+      const sun = typeof img === "function" && img("sunset");
+      if (sun) {
+        const x0 = ox + (W - sun.width) / 2;
+        ctx.drawImage(sun, 0, 0, 1, sun.height, ox, oy, x0 - ox, 3 * T); // 左右は端の色をのばす
+        ctx.drawImage(sun, sun.width - 1, 0, 1, sun.height, x0 + sun.width, oy, W - sun.width - (x0 - ox), 3 * T);
+        ctx.drawImage(sun, x0, oy, sun.width, 3 * T);
+      }
       // 手すり
       ctx.fillStyle = "#5a3b28";
       ctx.fillRect(T + ox, 3 * T - 4 + oy, 12 * T, 4);
@@ -1238,8 +1253,8 @@
       name: "廃兵院",
       assetBase: "./assets/worlds/haihei/",
       images: Object.fromEntries(
-        ["facade", "arch", "yakisoba", "wataame", "shateki", "uketsuke", "wheelchair", "ginkgo", "stage", "exhibit1", "exhibit2", "bed", "telescope", "tv", "iv", "legshelf", "nursedesk", "oxyvase", "starchart", "photo_wedding", "photo_fighter", "d_family", "d_visitors", "tansu", "futon", "hibachi", "tricycle", "kyodai", "stairs", "door", "bed_f", "bonsai1", "bonsai2", "bonsai3", "bonsai4", "bonsai5", "rwall", "rwall_p", "rwall_w", "prosthetic_rack", "workbench", "arm_stand", "art_fuji", "art_moon", "art_ginkgo", "art_blob", "art_self", "art_group", "art_banana", "art_squad", "cot", "radio", "wall", "wall2", "wang_yard", "wang_ward",
-          "d_uketsuke", "d_shateki", "d_yakisoba", "d_carver", "d_band1", "d_band2", "d_band3", "d_wheel", "d_bedman", "d_scope",
+        ["facade", "arch", "yakisoba", "wataame", "shateki", "uketsuke", "wheelchair", "ginkgo", "stage", "exhibit1", "exhibit2", "bed", "telescope", "tv", "iv", "legshelf", "nursedesk", "oxyvase", "starchart", "photo_wedding", "photo_fighter", "d_family", "d_visitors", "tansu", "futon", "hibachi", "tricycle", "kyodai", "stairs", "door", "bed_f", "bonsai1", "bonsai2", "bonsai3", "bonsai4", "bonsai5", "rwall", "rwall_p", "rwall_w", "prosthetic_rack", "workbench", "arm_stand", "deskphoto", "sunset", "art_fuji", "art_moon", "art_ginkgo", "art_blob", "art_self", "art_group", "art_banana", "art_squad", "cot", "radio", "wall", "wall2", "wang_yard", "wang_ward",
+          "d_uketsuke", "d_shateki", "d_yakisoba", "d_carver", "d_band1", "d_band2", "d_band3", "d_band4", "d_band5", "d_wheel", "d_bedman", "d_scope",
           "v_uketsuke", "v_yakisoba", "v_stall", "v_carver", "v_stage", "v_wheel", "v_bed", "v_cockpit", "v_roof", "v_photo_wedding", "v_photo_fighter", "v_view", "v_moon", "v_family", "v_wataame", "v_art_fuji", "v_art_moon", "v_art_ginkgo", "v_art_blob", "v_art_self", "v_art_group", "v_art_banana", "v_art_squad"]
           .map((k) => [k, `${k}.png`])
           .concat([["ki", "./assets/worlds/lake/ki_walk.png"]])
