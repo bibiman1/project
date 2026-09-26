@@ -87,8 +87,8 @@
         pan(y, holdMs, onDone) {
           pan = { y, t0: clock, hold: holdMs / 1000, onDone: onDone || null, from: lastCamY };
         },
-        toast(text) {
-          toast = { text, until: clock + 2.4 };
+        toast(text, sec) {
+          toast = { text, until: clock + (sec || 2.4) };
         },
         say(pages, onDone) {
           host.say(pages, onDone);
