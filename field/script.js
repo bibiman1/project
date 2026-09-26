@@ -383,6 +383,11 @@
       e.preventDefault();
       return;
     }
+    if (e.code === "KeyX" || e.code === "ShiftLeft" || e.code === "ShiftRight") {
+      if (!transitioning && !e.repeat) rpg.jump();
+      e.preventDefault();
+      return;
+    }
     const dir = KEY_MAP[e.code];
     if (!dir) return;
     keys[dir] = true;
@@ -464,7 +469,8 @@
   actionBtnB.addEventListener("pointerdown", (e) => {
     e.preventDefault();
     e.stopPropagation();
-    skipStory();
+    if (story) skipStory();
+    else if (!transitioning) rpg.jump(); // B: ジャンプ(覚えたあと)
   });
 
   function readInput() {

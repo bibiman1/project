@@ -127,6 +127,10 @@
         player() {
           return { x: player.x, y: player.y, facing: player.facing };
         },
+        // ジャンプを演出として跳ばせる(教わる場面など)
+        hop() {
+          jumpT0 = clock;
+        },
         image(key) {
           return img(key);
         },
@@ -296,6 +300,24 @@
         if (x1 > sx0 && x0 < sx0 + s.w && y1 > sy0 && y0 < sy0 + s.h) return true;
       }
       return false;
+    }
+
+    // ジャンプ(覚えたあと、B ボタン / X キー)。地図は map.onJump(api, player) で受け取れる
+    const JUMP_TIME = 0.5;
+    let jumpT0 = -1;
+    function jumpHeight() {
+      if (jumpT0 < 0) return 0;
+      const u = (clock - jumpT0) / JUMP_TIME;
+      if (u >= 1) return 0;
+      return Math.sin(u * Math.PI) * 20;
+    }
+    function jump() {
+      if (!world || !player || cutscene || pan) return false;
+      if (!world.api.flag("jump")) return false;
+      if (jumpT0 >= 0 && clock - jumpT0 < JUMP_TIME) return false;
+      jumpT0 = clock;
+      if (map.onJump) map.onJump(world.api, { x: player.x, y: player.y, facing: player.facing });
+      return true;
     }
 
     function busy() {
@@ -490,7 +512,7 @@
 
       // y順に並べて、手前のものほど後に描く
       const drawables = visibleObjects().map((o) => ({ y: o.y + (o.sortDy || 0), o }));
-      drawables.push({ y: player.y, player: true });
+      if (!map.hidePlayer) drawables.push({ y: player.y, player: true });
       drawables.sort((a, b) => a.y - b.y);
       for (const d of drawables) {
         if (d.player) drawPlayer(ox, oy, t);
@@ -556,7 +578,8 @@
       if (!im) return;
       const row = DIR_ROW[player.facing];
       const frame = player.moving ? 1 + (Math.floor(t * 10) % (p.frames - 1)) : 0;
-      ctx.drawImage(im, frame * p.cell, row * p.cell, p.cell, p.cell, sx - p.cell / 2, sy - p.cell + p.footY, p.cell, p.cell);
+      const jz = Math.round(jumpHeight()); // ジャンプ中は体だけ浮く(影は地面に残る)
+      ctx.drawImage(im, frame * p.cell, row * p.cell, p.cell, p.cell, sx - p.cell / 2, sy - p.cell + p.footY - jz, p.cell, p.cell);
     }
 
     function headOf(who, ox, oy) {
@@ -676,6 +699,7 @@
       update,
       draw,
       interact,
+      jump,
       get active() {
         return !!world;
       },

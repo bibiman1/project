@@ -755,6 +755,7 @@
   const VOID_FRAGMENTS = [
     fragment("lake", "凍った湖と富士山", "きーが見た風景。", "frag_lake", 22, 12),
     fragment("haihei", "廃兵院", "Hi Hey Win！", "frag_haihei", 33, 21, "lake"),
+    fragment("kasumi", "霞ヶ浦のエクラノプラン", "ミイラさまの遊覧飛行。", "frag_kasumi", 12, 22, "haihei"),
   ];
 
   const VOID = {
@@ -834,6 +835,16 @@
     d_shateki: { img: "d_shateki", w: 64, h: 64, top: 5, bottom: 58, solid: [24, 10] },
     d_yakisoba: { img: "d_yakisoba", w: 64, h: 64, top: 4, bottom: 61, solid: [24, 10] },
     d_carver: { img: "d_carver", w: 48, h: 48, top: 4, bottom: 45, solid: [28, 10] }, // 畳の上で正座
+    scarecrow: { img: "scarecrow", w: 32, h: 48, top: 0, bottom: 47, solid: [8, 6] },
+    plane: { img: "plane", w: 128, h: 64, top: 8, bottom: 60, solid: [110, 18] },
+    workbench: { img: "workbench", w: 96, h: 48, top: 10, bottom: 46, solid: [86, 14] },
+    drums: { img: "drums", w: 96, h: 48, top: 10, bottom: 44, solid: [88, 12] },
+    gondola: { img: "gondola", w: 160, h: 72, top: 14, bottom: 62, solid: [150, 20] },
+    crew_hawk: { img: "crew_hawk", w: 32, h: 48, top: 2, bottom: 46, solid: [14, 8] },
+    crew_wagtail: { img: "crew_wagtail", w: 32, h: 48, top: 4, bottom: 46, solid: [14, 8] },
+    crew_rooster: { img: "crew_rooster", w: 32, h: 48, top: 2, bottom: 46, solid: [14, 8] },
+    seat: { img: "seat", w: 48, h: 64, top: 4, bottom: 56, solid: [34, 14] },
+    mummy: { img: "mummy", w: 48, h: 64, top: 2, bottom: 56, solid: [34, 14] },
     poppo_row: { img: "poppo_row", w: 40, h: 12, top: 1, bottom: 11 },
     bench: { img: "bench", w: 60, h: 26, top: 0, bottom: 25, solid: [56, 10] },
     clock: { img: "clock", w: 12, h: 29, top: 0, bottom: 28 },
@@ -1602,19 +1613,241 @@
     ],
   };
 
+
+  // ================================================================
+  // 断片: 霞ヶ浦のエクラノプラン(晩秋の明け方)。廃兵院を終えると懲罰空間に現れる
+  // 条件: 格納庫で地上ぼぎクルー(笹野一刀彫)にジャンプを教わる → 傾斜路の先から翼へ跳び乗る
+  //       → 操縦席のミイラさまの遊覧飛行 → 懲罰空間に帰る
+  // 素材は仮(PixelLab の回数が戻ったら、docs/assets/kasumi の設計図と下絵から生成して差し替える)
+  // ================================================================
+  const kGrid = (cols, rows, solidAt) => {
+    const g = [];
+    for (let r = 0; r < rows; r++) {
+      let row = "";
+      for (let c = 0; c < cols; c++) row += solidAt(c, r) ? "#" : ".";
+      g.push(row);
+    }
+    return g;
+  };
+  const K_LEGEND = { "#": { solid: true }, ".": {} };
+  const kImage = (key, w, h) => (ctx, ox, oy, img) => {
+    const im = typeof img === "function" && img(key);
+    if (im) ctx.drawImage(im, ox, oy, w, h);
+  };
+
+  // A 蓮田のあぜ道(入口。北の門柱の先が基地跡)
+  const K_LOTUS = {
+    tile: T,
+    bg: "#6b5f3e",
+    tint: "rgba(255, 190, 150, 0.06)",
+    map: kGrid(12, 14, (c) => c < 5 || c > 6),
+    legend: K_LEGEND,
+    drawGround: kImage("bg_lotus", 12 * T, 14 * T),
+    spawns: {
+      start: { x: 6 * T, y: 12.6 * T, facing: "north" },
+      north: { x: 6 * T, y: 1.4 * T, facing: "south" },
+    },
+    triggers: [
+      { id: "toShore", x: 5 * T, y: -T, w: 2 * T, h: 1.3 * T, warp: { map: "shore", spawn: "gate" } },
+      { id: "leave", x: 5 * T, y: 13.6 * T, w: 2 * T, h: T, run: (api) => api.exit() },
+    ],
+    objects: [hat("scarecrow", 3 * T, 7 * T)],
+  };
+
+  // B 基地跡の岸(背景は一枚絵。当たり判定は背景に合わせる)
+  const SHORE_SOLID = (c, r) => {
+    if (r <= 8 && !(c >= 15 && c <= 17 && r >= 8)) return true; // 湖(傾斜路の先端まで歩ける)
+    if (r >= 17 && !(c === 15 || c === 16)) return true; // 塀と蓮田(門だけ通れる)
+    if (c >= 1 && c <= 13 && r >= 9 && r <= 15) return true; // 格納庫
+    if (c >= 19 && c <= 21 && r === 16) return true; // 衛兵所
+    if (c >= 20 && c <= 23 && r === 13) return true; // 燃料ドラム
+    if ((c === 25 || c === 26) && r === 14) return true; // 見張り台の脚
+    return false;
+  };
+  const K_SHORE = {
+    tile: T,
+    bg: "#3a4a58",
+    map: kGrid(32, 20, SHORE_SOLID),
+    legend: K_LEGEND,
+    drawGround: kImage("bg_shore", 32 * T, 20 * T),
+    spawns: {
+      gate: { x: 16 * T, y: 16.4 * T, facing: "north" },
+      hangar: { x: 9 * T, y: 16.5 * T, facing: "south" },
+      slip: { x: 16.5 * T, y: 9.6 * T, facing: "south" },
+    },
+    triggers: [
+      { id: "toLotus", x: 15 * T, y: 17.2 * T, w: 2 * T, h: T, warp: { map: "lotus", spawn: "north" } },
+      { id: "toHangar", x: 8 * T, y: 15.8 * T, w: 2.4 * T, h: 0.5 * T, warp: { map: "hangar", spawn: "door" } },
+    ],
+    // 傾斜路の先端で北を向いて跳ぶと、エクラノプランの翼に跳び移る(渡り板は落ちている)
+    onJump(api, p) {
+      if (p.facing === "north" && p.x > 15 * T && p.x < 18 * T && p.y < 9.8 * T) {
+        api.later(420, () => api.warp("cockpit", "door"));
+      }
+    },
+    objects: [
+      {
+        id: "slipTip",
+        x: 16.5 * T,
+        y: 9.2 * T,
+        w: 1,
+        h: 1,
+        range: 40,
+        interact(api) {
+          if (api.flag("jump")) api.mutter("……", 1400); // 跳べばとどく
+          else api.bubble("slipTip", "とどかない", 1800);
+        },
+      },
+    ],
+  };
+
+  // C 格納庫の中(地上ぼぎクルーが、今朝も整備している。ここでジャンプを教わる)
+  const HANGAR_SOLID = (c, r) => r <= 1 || c === 0 || c === 13 || (r === 9 && !(c === 6 || c === 7));
+  const crewMember = (id, img, fx, fy, phase) =>
+    Object.assign(hat(img, fx, fy), {
+      id,
+      bob: 0,
+      update(dt, t) {
+        this.hopping = this.hopUntil && t < this.hopUntil;
+      },
+      draw(ctx, sx, sy, t) {
+        // 教える場面では、順番に跳んでみせる
+        if (!this.hopUntil || t > this.hopUntil || t < this.hopFrom) return;
+        const u = (t - this.hopFrom) / (this.hopUntil - this.hopFrom);
+        this.y = this.baseY - Math.sin(u * Math.PI) * 14;
+      },
+    });
+  const CREW = [
+    crewMember("crew1", "crew_hawk", 5.2 * T, 5.2 * T, 0),
+    crewMember("crew2", "crew_wagtail", 6.2 * T, 5.4 * T, 1),
+    crewMember("crew3", "crew_rooster", 7.2 * T, 5.2 * T, 2),
+  ];
+  CREW.forEach((c) => (c.baseY = c.y));
+  function teachJump(api) {
+    const now = performance.now() / 1000;
+    CREW.forEach((c, i) => {
+      c.hopFrom = now + i * 0.55;
+      c.hopUntil = c.hopFrom + 0.5;
+    });
+    api.later(1900, () => {
+      CREW.forEach((c) => (c.y = c.baseY));
+      api.hop();
+      api.later(700, () => {
+        if (!api.flag("jump")) {
+          api.setFlag("jump");
+          api.toast("ジャンプ");
+        }
+      });
+    });
+  }
+  const K_HANGAR = {
+    tile: T,
+    bg: "#2a2622",
+    tint: "rgba(255, 190, 150, 0.05)",
+    map: kGrid(14, 10, HANGAR_SOLID),
+    legend: K_LEGEND,
+    drawGround: kImage("bg_hangar", 14 * T, 10 * T),
+    spawns: { door: { x: 7 * T, y: 8.6 * T, facing: "north" } },
+    triggers: [{ id: "out", x: 6 * T, y: 9.4 * T, w: 2 * T, h: T, warp: { map: "shore", spawn: "hangar" } }],
+    objects: [
+      hat("plane", 2.6 * T, 4.2 * T),
+      Object.assign(hat("workbench", 6.2 * T, 6.6 * T), {
+        id: "bench",
+        range: 52,
+        interact(api) {
+          teachJump(api); // 整備台の上で、跳んでみせてくれる
+        },
+      }),
+      hat("drums", 10.6 * T, 3 * T),
+      hat("gondola", 10.4 * T, 7.4 * T),
+      ...CREW.map((c) =>
+        Object.assign(c, {
+          range: 44,
+          interact(api) {
+            api.bubble(c.id, "……", 1200);
+            teachJump(api);
+          },
+        })
+      ),
+    ],
+  };
+
+  // D 操縦席(左の機長席にミイラさま。右席にきー)
+  const K_COCKPIT = {
+    tile: T,
+    bg: "#1d201f",
+    map: kGrid(10, 7, (c, r) => r <= 2 || c === 0 || c === 9 || (r === 6 && c !== 4 && c !== 5)),
+    legend: K_LEGEND,
+    drawGround: kImage("bg_cockpit", 10 * T, 7 * T),
+    spawns: { door: { x: 4.5 * T, y: 5.4 * T, facing: "north" } },
+    triggers: [{ id: "out", x: 4 * T, y: 6.4 * T, w: 2 * T, h: T, warp: { map: "shore", spawn: "slip" } }],
+    objects: [
+      Object.assign(hat("mummy", 3 * T, 3.9 * T), {
+        id: "mummy",
+        range: 48,
+        interact(api) {
+          api.warp("flight", "view"); // 遊覧飛行
+        },
+      }),
+      hat("seat", 6 * T, 3.9 * T),
+    ],
+  };
+
+  // E 遊覧飛行: 空・山なみ・水面の多重スクロールのあと、キメの一枚絵
+  let flightT0 = 0;
+  const K_FLIGHT = {
+    tile: T,
+    bg: "#000",
+    hidePlayer: true,
+    map: kGrid(15, 10, () => false),
+    legend: K_LEGEND,
+    drawGround(ctx, ox, oy, img) {
+      const t = performance.now() / 1000 - flightT0;
+      const get = (k) => (typeof img === "function" ? img(k) : null);
+      const W = 15 * T;
+      const sky = get("fl_sky");
+      if (sky) ctx.drawImage(sky, ox, oy, W, 10 * T);
+      const layer = (k, y, speed, h) => {
+        const im = get(k);
+        if (!im) return;
+        const off = (t * speed) % im.width;
+        for (let x = -off; x < W; x += im.width) ctx.drawImage(im, x + ox, y + oy, im.width, h || im.height);
+      };
+      layer("fl_hills", 100, 14);
+      layer("fl_water", 170, 160);
+      layer("fl_mist", 158, 240);
+      const ek = get("fl_ekrano");
+      if (ek) ctx.drawImage(ek, 130 + ox, 118 + Math.sin(t * 1.3) * 2 + oy);
+      layer("fl_mist", 196, 320);
+    },
+    spawns: { view: { x: 7 * T, y: 5 * T, facing: "east" } },
+    onEnter(api) {
+      flightT0 = performance.now() / 1000;
+      api.later(9000, () =>
+        api.show("v_flight", () => {
+          api.clear();
+          api.warp("cockpit", "door");
+        })
+      );
+    },
+    triggers: [],
+    objects: [],
+  };
+
   window.BOGI_WORLDS = {
     // 懲罰空間(ハブ)。ここから断片の世界に入り、戻ってくる
     void: {
       id: "void",
       name: "懲罰空間",
       hub: true,
-      fragments: ["lake", "haihei"],
+      fragments: ["lake", "haihei", "kasumi"],
       assetBase: "./assets/worlds/void/",
       images: {
         wang_void: "wang_void.png",
         pedestal: "pedestal.png",
         frag_lake: "frag_lake.png",
         frag_haihei: "frag_haihei.png",
+        frag_kasumi: "frag_kasumi.png",
         ki: "./assets/worlds/lake/ki_walk.png",
       },
       playerSprite: { img: "ki", cell: 64, frames: 7, footY: 17 },
@@ -1685,6 +1918,21 @@
       start: "yard",
       startSpawn: "gate",
       maps: { yard: YARD, hall: HALL, watari: WATARI, ward: WARD, sick: ROOM_SICK, window: ROOM_WINDOW, room1: ROOM1, room2: ROOM2, workshop: ROOM_WORKSHOP, carver: ROOM_CARVER, roof: ROOF },
+    },
+    // 断片: 霞ヶ浦のエクラノプラン。廃兵院を終えると懲罰空間に現れる
+    kasumi: {
+      id: "kasumi",
+      name: "霞ヶ浦のエクラノプラン",
+      assetBase: "./assets/worlds/kasumi/",
+      images: Object.fromEntries(
+        ["bg_lotus", "bg_hangar", "bg_cockpit", "scarecrow", "plane", "workbench", "drums", "gondola", "crew_hawk", "crew_wagtail", "crew_rooster", "seat", "mummy", "fl_sky", "fl_hills", "fl_water", "fl_mist", "fl_ekrano", "v_flight"]
+          .map((k) => [k, `${k}.png`])
+          .concat([["bg_shore", "bg_shore_wip.png"], ["ki", "./assets/worlds/lake/ki_walk.png"]])
+      ),
+      playerSprite: { img: "ki", cell: 64, frames: 7, footY: 17 },
+      start: "lotus",
+      startSpawn: "start",
+      maps: { lotus: K_LOTUS, shore: K_SHORE, hangar: K_HANGAR, cockpit: K_COCKPIT, flight: K_FLIGHT },
     },
   };
 })();
