@@ -790,6 +790,7 @@
     oxyvase: { img: "oxyvase", w: 32, h: 32, top: 5, bottom: 31 },
     starchart: { img: "starchart", w: 32, h: 32, top: 0, bottom: 30 },
     photo_wedding: { img: "photo_wedding", w: 32, h: 32, top: 0, bottom: 30 },
+    guestbook: { img: "guestbook", w: 32, h: 32, top: 12, bottom: 23 }, // 来場者ノート
     noticeboard: { img: "noticeboard", w: 64, h: 64, top: 5, bottom: 62, solid: [48, 8] }, // 掲示板(ガリ版刷りの文化祭のビラ、献立表、消灯時刻)
     photo_fighter: { img: "photo_fighter", w: 32, h: 32, top: 0, bottom: 30 },
     art_fuji: { img: "art_fuji", w: 32, h: 32, top: 4, bottom: 23 },
@@ -951,6 +952,7 @@
         if (r < 5) ch = "G";
         else if ((c === 8 || c === 9) && r >= 5) ch = ".";
         else if (r >= 9 && r <= 15 && c >= 3 && c <= 14) ch = ".";
+        else if (r >= 16 && r <= 18 && c >= 7 && c <= 13) ch = "."; // 門を入った前庭(受付)
         row.push(ch);
       }
       g.push(row.join(""));
@@ -992,14 +994,25 @@
     },
     objects: [
       hat("facade", 9 * T, 5 * T),
-      board("board_gate", 6.4 * T, 18.9 * T), // 門を入ってすぐの掲示板
+      board("board_gate", 7 * T, 9.3 * T), // 中庭の奥、病棟への道の脇の掲示板(正面から見える)
       hat("ginkgo", 1.2 * T, 7 * T),
       hat("ginkgo", 16.8 * T, 7.4 * T),
       hat("ginkgo", 1.4 * T, 17 * T),
       hat("ginkgo", 16.6 * T, 16.8 * T),
       hat("arch", 9 * T, 19.6 * T, { sortDy: 60 }),
-      hat("uketsuke", 12.6 * T, 17.2 * T),
-      dead("d_uketsuke", "uketsuke", 12.6 * T, 16.5 * T, "v_uketsuke", null, {
+      // 受付: 門を入ってすぐ、道の右わきの机。道を歩いてくると正面に向かい合う
+      hat("uketsuke", 11.7 * T, 17.7 * T),
+      // 来場者ノート(かすれた縦書き。宇宙海軍の部隊名がほのかに読める)
+      hat("guestbook", 11.3 * T, 17.1 * T, {
+        id: "guestbook",
+        sortDy: 30,
+        iy: 30,
+        range: 40,
+        interact(api) {
+          api.show("v_guestbook");
+        },
+      }),
+      dead("d_uketsuke", "uketsuke", 12.2 * T, 16.9 * T, "v_uketsuke", null, {
         sortDy: 20,
         range: 64, // 受付の机ごしに話しかける
         interact(api) {
@@ -1105,7 +1118,7 @@
         },
       }),
       dead("d_carver", "carver", 13.5 * T, 10.5 * T, "v_carver", (api) => stamp(api, "exhibit")),
-      board("board_hall", 6 * T, 10.9 * T), // 大広場の入口の脇の掲示板
+      board("board_hall", 2.3 * T, 3.3 * T), // 大広場の奥の壁ぎわの掲示板
       // 談話のすみ: 誰もいないのに「バナナ農園」を映しているテレビ
       hat("tv", 13.5 * T, 3 * T, {
         id: "tv",
@@ -1517,7 +1530,7 @@
       name: "廃兵院",
       assetBase: "./assets/worlds/haihei/",
       images: Object.fromEntries(
-        ["facade", "arch", "yakisoba", "wataame", "shateki", "uketsuke", "wheelchair", "ginkgo", "stage", "exhibit1", "exhibit2", "bed", "telescope", "tv", "iv", "legshelf", "nursedesk", "oxyvase", "starchart", "photo_wedding", "photo_fighter", "d_family", "d_visitors", "tansu", "futon", "hibachi", "tricycle", "kyodai", "stairs", "door", "bed_f", "bonsai1", "bonsai2", "bonsai3", "bonsai4", "bonsai5", "rwall", "rwall_p", "rwall_w", "wall_in", "wheelchair_back", "prosthetic_rack", "workbench", "arm_stand", "deskphoto", "sunset", "noticeboard", "v_board", "wx_bed", "wx_chair", "wx_gramophone", "wx_lamp", "wx_teatable", "wx_rug", "rwallx", "rwallx_p", "rwallx_w", "art_fuji", "art_moon", "art_ginkgo", "art_blob", "art_self", "art_group", "art_banana", "art_squad", "cot", "radio", "wall", "wall2", "wang_yard", "wang_ward",
+        ["facade", "arch", "yakisoba", "wataame", "shateki", "uketsuke", "wheelchair", "ginkgo", "stage", "exhibit1", "exhibit2", "bed", "telescope", "tv", "iv", "legshelf", "nursedesk", "oxyvase", "starchart", "photo_wedding", "photo_fighter", "d_family", "d_visitors", "tansu", "futon", "hibachi", "tricycle", "kyodai", "stairs", "door", "bed_f", "bonsai1", "bonsai2", "bonsai3", "bonsai4", "bonsai5", "rwall", "rwall_p", "rwall_w", "wall_in", "wheelchair_back", "prosthetic_rack", "workbench", "arm_stand", "deskphoto", "sunset", "noticeboard", "v_board", "guestbook", "v_guestbook", "wx_bed", "wx_chair", "wx_gramophone", "wx_lamp", "wx_teatable", "wx_rug", "rwallx", "rwallx_p", "rwallx_w", "art_fuji", "art_moon", "art_ginkgo", "art_blob", "art_self", "art_group", "art_banana", "art_squad", "cot", "radio", "wall", "wall2", "wang_yard", "wang_ward",
           "d_uketsuke", "d_shateki", "d_yakisoba", "d_carver", "d_band1", "d_band2", "d_band3", "d_band4", "d_band5", "d_wheel", "d_bedman", "d_scope",
           "v_uketsuke", "v_yakisoba", "v_stall", "v_carver", "v_stage", "v_wheel", "v_bed", "v_cockpit", "v_roof", "v_photo_wedding", "v_photo_fighter", "v_view", "v_moon", "v_family", "v_wataame", "v_art_fuji", "v_art_moon", "v_art_ginkgo", "v_art_blob", "v_art_self", "v_art_group", "v_art_banana", "v_art_squad"]
           .map((k) => [k, `${k}.png`])
