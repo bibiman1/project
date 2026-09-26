@@ -109,7 +109,7 @@
           host.enterWorld(id);
         },
         player() {
-          return { x: player.x, y: player.y };
+          return { x: player.x, y: player.y, facing: player.facing };
         },
         image(key) {
           return img(key);

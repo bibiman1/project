@@ -194,15 +194,15 @@
     triggers: [
       // 道のはじまり(来たところ)から、懲罰空間へ戻る
       { id: "leave", x: 5.5 * T, y: 59.35 * T, w: 4 * T, h: T, run: (api) => api.exit() },
-      // 峠: 森が切れて、富士山が見えてくる
+      // 峠: 森が切れて、富士山が見えてくる(北へ越えるたびに)
       {
         id: "vista",
-        once: true,
         x: 0,
         y: 12 * T,
         w: ROAD_COLS * T,
         h: T,
         run(api) {
+          if (api.player().facing !== "north") return;
           api.pan(0, 2200);
         },
       },
