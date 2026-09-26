@@ -621,11 +621,26 @@
       ctx.fillRect(0, 0, VW, VH);
       const im = img(cutscene.img);
       if (!im) return;
-      const s = Math.max(1, Math.floor(Math.min(VW / im.width, VH / im.height)));
-      const w = im.width * s;
-      const h = im.height * s;
+      // 枠の角の丸みやスマホのボタンで端が欠けないよう、まわりに余白を残して描く。
+      // 整数倍でくっきり拡大してから、余白に収まる大きさへなめらかに縮める
+      const fit = Math.min((VW * 0.9) / im.width, (VH * 0.86) / im.height);
+      const s = Math.max(1, Math.ceil(fit));
+      if (!cutscene.buf || cutscene.buf.src !== im) {
+        const c = document.createElement("canvas");
+        c.width = im.width * s;
+        c.height = im.height * s;
+        const g = c.getContext("2d");
+        g.imageSmoothingEnabled = false;
+        g.drawImage(im, 0, 0, c.width, c.height);
+        cutscene.buf = { src: im, canvas: c };
+      }
+      const w = Math.round(im.width * fit);
+      const h = Math.round(im.height * fit);
       ctx.globalAlpha = a;
-      ctx.drawImage(im, Math.round((VW - w) / 2), Math.round((VH - h) / 2), w, h);
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = "high";
+      ctx.drawImage(cutscene.buf.canvas, Math.round((VW - w) / 2), Math.round((VH - h) / 2), w, h);
+      ctx.imageSmoothingEnabled = false;
       ctx.globalAlpha = 1;
     }
 
@@ -646,6 +661,10 @@
       interact,
       get active() {
         return !!world;
+      },
+      // 一枚絵を見ているあいだ
+      get viewing() {
+        return !!cutscene;
       },
       get isHub() {
         return !!(world && world.hub);

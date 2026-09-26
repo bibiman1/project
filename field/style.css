@@ -388,3 +388,9 @@ body.landscape-compact .field-footer {
     padding: 24px 16px 16px;
   }
 }
+
+/* 一枚絵を見ているあいだは、絵にかぶらないようスティックとボタンを薄く */
+body.viewing .joystick,
+body.viewing .action-btn {
+  opacity: 0.25;
+}

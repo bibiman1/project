@@ -522,6 +522,7 @@
       rpg.update(dt, t, input);
     }
     rpg.draw(t);
+    document.body.classList.toggle("viewing", rpg.viewing);
   }
 
   rpg.enter(window.BOGI_WORLDS[HUB]);
