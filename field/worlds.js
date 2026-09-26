@@ -542,9 +542,9 @@
   const HS = {
     facade: { img: "facade", w: 320, h: 160, top: 13, bottom: 147 },
     arch: { img: "arch", w: 128, h: 96, top: 3, bottom: 93 },
-    yakisoba: { img: "yakisoba", w: 96, h: 80, top: 7, bottom: 74, solid: [56, 22] },
-    wataame: { img: "wataame", w: 96, h: 80, top: 5, bottom: 77, solid: [70, 22] },
-    shateki: { img: "shateki", w: 128, h: 96, top: 0, bottom: 86, solid: [100, 28] },
+    yakisoba: { img: "yakisoba", w: 96, h: 96, top: 13, bottom: 85, solid: [72, 24] },
+    wataame: { img: "wataame", w: 96, h: 96, top: 17, bottom: 87, solid: [62, 24] },
+    shateki: { img: "shateki", w: 128, h: 96, top: 10, bottom: 85, solid: [92, 28] },
     uketsuke: { img: "uketsuke", w: 96, h: 64, top: 4, bottom: 60, solid: [64, 20] },
     ginkgo: { img: "ginkgo", w: 64, h: 96, top: 5, bottom: 91, solid: [14, 8] },
     stage: { img: "stage", w: 256, h: 96, top: 2, bottom: 96, solid: [156, 64] },
@@ -736,18 +736,18 @@
           }
         },
       }),
-      hat("yakisoba", 4.5 * T, 11.2 * T),
+      hat("yakisoba", 4.5 * T, 11 * T),
       dead("d_yakisoba", "yakisoba", 6.2 * T, 11.6 * T, "v_yakisoba"),
-      hat("wataame", 4.5 * T, 15.4 * T),
-      hat("shateki", 13.2 * T, 11.2 * T, {
+      hat("wataame", 4.5 * T, 15 * T),
+      hat("shateki", 13 * T, 11 * T, {
         // 景品棚の、見たことのないもの(鈴木商店の宇宙船殻用単結晶)。景品として受け取ると消える
         draw(ctx, sx, sy, t, api) {
           if (api.flag("prize")) return;
           const a = 0.55 + Math.sin(t * 3) * 0.35;
           ctx.fillStyle = `rgba(170, 230, 255, ${a})`;
-          ctx.fillRect(sx + 28, sy - 26, 4, 6);
+          ctx.fillRect(sx + 12, sy - 11, 4, 6);
           ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
-          ctx.fillRect(sx + 29, sy - 25, 1, 2);
+          ctx.fillRect(sx + 13, sy - 10, 1, 2);
         },
       }),
       dead("d_shateki", "shateki", 15.6 * T, 11.7 * T, "v_stall", (api) => stamp(api, "stall")),
