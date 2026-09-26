@@ -145,6 +145,7 @@
       cutscene = null;
       pan = null;
       toast = null;
+      if (def.onEnterWorld) def.onEnterWorld(world.api); // 入るたびに、その回だけの状態をリセットする
       loadMap(def.start, spawnName || def.startSpawn);
     }
 
@@ -311,12 +312,15 @@
       }
       if (cutscene) return;
 
-      const onIce =
-        !!(tileAt(player.x, player.y) || {}).ice || !!(map.slippery && map.slippery(world.api, player.x, player.y));
+      // すべる床: 氷のタイル、または map.slippery(true か、追従の強さの数値。小さいほどつるつる)
+      const slip = map.slippery ? map.slippery(world.api, player.x, player.y) : false;
+      const iceTile = !!(tileAt(player.x, player.y) || {}).ice;
+      const onIce = iceTile || !!slip;
+      const iceAccel = !iceTile && typeof slip === "number" ? slip : ICE_ACCEL;
       const tx = input.x * SPEED;
       const ty = input.y * SPEED;
       if (onIce) {
-        const k = Math.min(1, ICE_ACCEL * dt);
+        const k = Math.min(1, iceAccel * dt);
         player.vx += (tx - player.vx) * k;
         player.vy += (ty - player.vy) * k;
       } else {

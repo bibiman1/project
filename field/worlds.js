@@ -238,7 +238,9 @@
     return runs.filter((r) => r.length > 4);
   })();
   // 帰り道(ほうとうを食べたあと): 道に雪が積もって、つるつるすべる
-  const homeward = (api) => api.flag("ate");
+  // 行きは雪のない道。ほうとうを食べると、その回の帰り道だけ雪が積もる(入り直すと行きに戻る)
+  const homeward = (api) => api.flag("homeward");
+  const HOMEWARD_SLIP = 0.45; // 湖の氷(1.6)より、ずっとつるつる
   // 峠の待避所(行と列)。崖の縁にガードレール、谷の向こうに富士山
   const LAYBY = { c0: 3.5, c1: 13.5, r0: 8.35, r1: 11 };
 
@@ -262,7 +264,7 @@
       const r = Math.floor(y / T);
       const c = Math.floor(x / T);
       const inLayby = x > LAYBY.c0 * T && x < LAYBY.c1 * T && y > LAYBY.r0 * T && y < LAYBY.r1 * T;
-      return inLayby || (roadMapGrid[r] && roadMapGrid[r][c] === "=");
+      return inLayby || (roadMapGrid[r] && roadMapGrid[r][c] === "=") ? HOMEWARD_SLIP : false;
     },
     drawGround(ctx, ox, oy, img, api) {
       if (typeof img !== "function") return; // 古い rpg.js と混ざったとき(キャッシュ)に止まらないように
@@ -456,7 +458,7 @@
     },
     backdrop: { img: "fuji", x: 0, y: 16, scale: 2 },
     slippery(api, x, y) {
-      return homeward(api) && y > 17 * T && y < 19 * T;
+      return homeward(api) && y > 17 * T && y < 19 * T ? HOMEWARD_SLIP : false;
     },
     drawGround(ctx, ox, oy, img, api) {
       if (api && homeward(api)) {
@@ -591,6 +593,7 @@
           api.later(1300, () =>
             api.show("v_table", () => {
               api.setFlag("ate");
+              api.setFlag("homeward");
               api.later(500, () => api.show("v_road", () => api.clear()));
             })
           );
@@ -1415,6 +1418,9 @@
       id: "lake",
       name: "凍った湖と富士山",
       assetBase: "./assets/worlds/lake/",
+      onEnterWorld(api) {
+        api.setFlag("homeward", false);
+      },
       images: {
         wang_road: "wang_road.png",
         wang_ice: "wang_ice.png",
