@@ -831,10 +831,10 @@
     d_yakisoba: { img: "d_yakisoba", w: 64, h: 64, top: 4, bottom: 61, solid: [24, 10] },
     d_carver: { img: "d_carver", w: 48, h: 48, top: 4, bottom: 45, solid: [28, 10] }, // 畳の上で正座
     poppo_row: { img: "poppo_row", w: 40, h: 12, top: 1, bottom: 11 },
-    bench: { img: "bench", w: 64, h: 32, top: 4, bottom: 28, solid: [60, 10] },
-    clock: { img: "clock", w: 16, h: 32, top: 0, bottom: 30 },
-    firebucket: { img: "firebucket", w: 32, h: 32, top: 7, bottom: 30, solid: [26, 8] },
-    plant: { img: "plant", w: 32, h: 32, top: 5, bottom: 30, solid: [12, 6] },
+    bench: { img: "bench", w: 60, h: 26, top: 0, bottom: 25, solid: [56, 10] },
+    clock: { img: "clock", w: 12, h: 29, top: 0, bottom: 28 },
+    firebucket: { img: "firebucket", w: 28, h: 23, top: 0, bottom: 22, solid: [24, 8] },
+    plant: { img: "plant", w: 18, h: 24, top: 0, bottom: 23, solid: [12, 6] },
     portrait: { img: "portrait", w: 32, h: 32, top: 2, bottom: 26 },
     d_wheel: { img: "d_wheel", w: 64, h: 64, top: 7, bottom: 58, solid: [26, 10] },
     d_bedman: { img: "d_bedman", w: 32, h: 64, top: 3, bottom: 62, solid: [26, 40] },
@@ -1269,23 +1269,20 @@
       yard: { img: "wang_yard", size: 32, lookup: WANG16 },
       ward: { img: "wang_ward", size: 32, lookup: WANG16 },
     },
-    drawGround(ctx, ox, oy) {
+    drawGround(ctx, ox, oy, img) {
       const W = WATARI_W * T;
       // 屋根の影(床の上だけ、少し暗く)と、西日の差し込み
       ctx.fillStyle = "rgba(40, 24, 16, 0.18)";
       ctx.fillRect(ox, T + oy, W, 4 * T);
       southLight(ctx, ox, oy, 0, W, 5 * T);
-      // 手すり: 柱と横木(北と南)
-      for (const y of [T + 20, 4 * T + 8]) {
-        ctx.fillStyle = "#5b3d2a";
-        ctx.fillRect(ox, y + oy, W, 3);
-        ctx.fillStyle = "#94603a";
-        ctx.fillRect(ox, y - 1 + oy, W, 1);
-        for (let x = 0; x < W; x += T) {
-          ctx.fillStyle = "#5b3d2a";
-          ctx.fillRect(x + 14 + ox, y - 14 + oy, 4, 22);
-          ctx.fillStyle = "#b98450";
-          ctx.fillRect(x + 14 + ox, y - 14 + oy, 1, 22);
+      // 手すり(北と南): 柱と横木の絵を、2マスごとに並べる
+      const rail = typeof img === "function" && img("rail");
+      if (rail) {
+        for (const y of [T - 2, 4 * T - 14]) {
+          for (let x = 0; x < W; x += rail.width) {
+            const w = Math.min(rail.width, W - x); // 端ではみ出さないように切る
+            ctx.drawImage(rail, 0, 0, w, rail.height, x + ox, y + oy, w, rail.height);
+          }
         }
       }
     },
@@ -1691,7 +1688,7 @@
       name: "廃兵院",
       assetBase: "./assets/worlds/haihei/",
       images: Object.fromEntries(
-        ["facade", "arch", "yakisoba", "wataame", "shateki", "uketsuke", "wheelchair", "crutch", "ginkgo", "stage", "exhibit1", "exhibit2", "telescope", "tv_on", "tv_off", "iv", "legshelf", "oxyvase", "starchart", "photo_wedding", "photo_fighter", "d_family", "d_visitors", "poppo_row", "portrait", "bench", "clock", "firebucket", "plant", "tansu", "futon", "hibachi", "tricycle", "kyodai", "stairs", "door", "bed_f", "bonsai_table1", "bonsai_table2", "rwall", "rwall_p", "rwall_w", "aw", "aw_g", "aw_p", "aw_pg", "aw_w", "aw_wg", "aw_pw", "wheelchair_back", "prosthetic_rack", "workbench", "arm_stand", "deskphoto", "sunset", "noticeboard", "v_board", "guestbook", "v_guestbook", "wx_bed", "wx_chair", "wx_gramophone", "wx_lamp", "wx_teatable", "wx_rug", "rwallx", "rwallx_p", "rwallx_w", "art_fuji", "art_moon", "art_ginkgo", "art_blob", "art_self", "art_group", "art_banana", "art_squad", "art_roof", "cot", "radio", "wang_yard", "wang_ward",
+        ["facade", "arch", "yakisoba", "wataame", "shateki", "uketsuke", "wheelchair", "crutch", "ginkgo", "stage", "exhibit1", "exhibit2", "telescope", "tv_on", "tv_off", "iv", "legshelf", "oxyvase", "starchart", "photo_wedding", "photo_fighter", "d_family", "d_visitors", "poppo_row", "portrait", "bench", "clock", "firebucket", "plant", "rail", "tansu", "futon", "hibachi", "tricycle", "kyodai", "stairs", "door", "bed_f", "bonsai_table1", "bonsai_table2", "rwall", "rwall_p", "rwall_w", "aw", "aw_g", "aw_p", "aw_pg", "aw_w", "aw_wg", "aw_pw", "wheelchair_back", "prosthetic_rack", "workbench", "arm_stand", "deskphoto", "sunset", "noticeboard", "v_board", "guestbook", "v_guestbook", "wx_bed", "wx_chair", "wx_gramophone", "wx_lamp", "wx_teatable", "wx_rug", "rwallx", "rwallx_p", "rwallx_w", "art_fuji", "art_moon", "art_ginkgo", "art_blob", "art_self", "art_group", "art_banana", "art_squad", "art_roof", "cot", "radio", "wang_yard", "wang_ward",
           "d_uketsuke", "d_shateki", "d_yakisoba", "d_carver", "d_band1", "d_band2", "d_band3", "d_band4", "d_band5", "d_wheel", "d_bedman", "d_scope",
           "v_uketsuke", "v_yakisoba", "v_stall", "v_carver", "v_stage", "v_wheel", "v_bed", "v_cockpit", "v_photo_wedding", "v_photo_fighter", "v_view", "v_moon", "v_family", "v_wataame", "v_art_fuji", "v_art_moon", "v_art_ginkgo", "v_art_blob", "v_art_self", "v_art_group", "v_art_banana", "v_art_squad", "v_art_roof", "v_tv", "v_card_0", "v_card_1", "v_card_2", "v_card_3", "v_card_4", "v_card_5", "v_card_6", "v_card_7"]
           .map((k) => [k, `${k}.png`])
