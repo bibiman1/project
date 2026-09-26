@@ -824,8 +824,8 @@
     door: { img: "door", w: 32, h: 64, top: 10, bottom: 56 },
     bonsai_table1: { img: "bonsai_table1", w: 128, h: 48, top: 12, bottom: 45, solid: [124, 14] },
     bonsai_table2: { img: "bonsai_table2", w: 128, h: 48, top: 12, bottom: 45, solid: [124, 14] },
-    bed_h: { img: "bed_h", w: 54, h: 26, top: 0, bottom: 25, solid: [50, 18] },
-    d_bedman_h: { img: "d_bedman_h", w: 59, h: 27, top: 0, bottom: 26, solid: [52, 18] },
+    bed_h: { img: "bed_h", w: 64, h: 54, top: 0, bottom: 53, solid: [58, 16] },
+    d_bedman_h: { img: "d_bedman_h", w: 64, h: 54, top: 0, bottom: 53, solid: [58, 16] },
     cabinet_radio: { img: "cabinet_radio", w: 28, h: 55, top: 0, bottom: 54, solid: [24, 10] },
     bed_f: { img: "bed_f", w: 32, h: 64, top: 5, bottom: 59, solid: [26, 40] },
     cot: { img: "cot", w: 32, h: 32, top: 2, bottom: 32, solid: [20, 10] },
@@ -1426,9 +1426,9 @@
   // 病室: 壁ぎわのベッド、点滴スタンドの風鈴、酸素マスクの花瓶、×印の星図
   // 病室(洋室): 一枚絵と同じく、ベッドは窓と平行に並ぶ。星図は窓のない壁に
   const ROOM_SICK = room("sick", "wood", [
-    hat("bed_h", 2.2 * T, 3.4 * T),
+    hat("bed_h", 2.3 * T, 3.6 * T),
     // 床頭台の上のラジオ。金星の天気予報
-    hat("cabinet_radio", 3.8 * T, 3.4 * T, {
+    hat("cabinet_radio", 4.1 * T, 3.4 * T, {
       id: "radio",
       range: 34,
       interact(api) {
@@ -1439,16 +1439,7 @@
         }
       },
     }),
-    dead("d_bedman_h", "bedman", 5.4 * T, 3.4 * T, "v_bed"),
-    // 点滴台に吊った、金魚の風鈴
-    hat("iv", 6.8 * T, 3.5 * T, {
-      id: "iv",
-      range: 34,
-      interact(api) {
-        api.bubble("iv", "ちりん", 1800);
-      },
-    }),
-    hat("oxyvase", 7.6 * T, 3.5 * T), // 酸素マスクを花瓶にしたもの(部屋の隅)
+    dead("d_bedman_h", "bedman", 5.9 * T, 3.6 * T, "v_bed"),
     hat("starchart", 7.5 * T, 1.25 * T, { sortDy: -40 }),
   ], "PWWWPWWAP");
   // 窓辺の部屋: 机の上のコックピットの写真(焦げたぼぎのマスコット)、ロッキングチェアのガイコツ、宇宙戦闘機の写真
