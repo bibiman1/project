@@ -784,6 +784,7 @@
     wataame: { img: "wataame", w: 96, h: 96, top: 12, bottom: 84, solid: [66, 20] },
     shateki: { img: "shateki", w: 128, h: 96, top: 9, bottom: 87, solid: [86, 24] },
     uketsuke: { img: "uketsuke", w: 96, h: 64, top: 4, bottom: 60, solid: [64, 20] },
+    ginkgo_big: { img: "ginkgo_big", w: 86, h: 100, top: 0, bottom: 98, solid: [47, 14] }, // 中庭の真ん中の大銀杏(石の植え込み)
     ginkgo: { img: "ginkgo", w: 64, h: 96, top: 5, bottom: 91, solid: [14, 8] },
     stage: { img: "stage", w: 256, h: 96, top: 0, bottom: 96, solid: [240, 64] },
     prosthetic_rack: { img: "prosthetic_rack", w: 64, h: 64, top: 6, bottom: 58, solid: [56, 12] },
@@ -1064,6 +1065,7 @@
     objects: [
       hat("facade", 9.5 * T, 5 * T), // 玄関が 9 列目の中央に来る
       board("board_gate", 7 * T, 9.3 * T), // 中庭の奥、病棟への道の脇の掲示板(正面から見える)
+      hat("ginkgo_big", 9 * T, 12.6 * T), // 中庭の真ん中の大銀杏
       hat("ginkgo", 1.2 * T, 7 * T),
       hat("ginkgo", 16.8 * T, 7.4 * T),
       hat("ginkgo", 1.4 * T, 17 * T),
@@ -1119,7 +1121,7 @@
       }),
       dead("d_shateki", "shateki", 15.6 * T, 11.7 * T, "v_stall", (api) => stamp(api, "stall")),
       racer("racer1", 14.1, 40, 90),
-      crutchWalker("crutches", 12.6, 5 * T, 12 * T, 12),
+      crutchWalker("crutches", 15.3, 8 * T, 12.5 * T, 12),
     ],
   };
 
@@ -1683,7 +1685,7 @@
       name: "廃兵院",
       assetBase: "./assets/worlds/haihei/",
       images: Object.fromEntries(
-        ["facade", "arch", "yakisoba", "wataame", "shateki", "uketsuke", "wheelchair", "crutch", "ginkgo", "stage", "exhibit1", "exhibit2", "telescope", "tv_on", "tv_off", "iv", "legshelf", "oxyvase", "starchart", "photo_wedding", "photo_fighter", "d_family", "d_visitors", "poppo_row", "portrait", "bench", "clock", "firebucket", "plant", "rail", "tansu", "futon", "hibachi", "tricycle", "kyodai", "stairs", "door", "bed_f", "bonsai_table1", "bonsai_table2", "bed_h", "d_bedman_h", "cabinet_radio", "rwall", "rwall_p", "rwall_w", "aw", "aw_g", "aw_p", "aw_pg", "aw_w", "aw_wg", "aw_pw", "wheelchair_back", "prosthetic_rack", "workbench", "arm_stand", "deskphoto", "sunset", "noticeboard", "v_board", "guestbook", "v_guestbook", "wx_bed", "wx_chair", "wx_gramophone", "wx_lamp", "wx_teatable", "wx_rug", "rwallx", "rwallx_p", "rwallx_w", "art_fuji", "art_moon", "art_ginkgo", "art_blob", "art_self", "art_group", "art_banana", "art_squad", "art_roof", "cot", "radio", "wang_yard", "wang_ward",
+        ["facade", "arch", "yakisoba", "wataame", "shateki", "uketsuke", "wheelchair", "crutch", "ginkgo", "ginkgo_big", "stage", "exhibit1", "exhibit2", "telescope", "tv_on", "tv_off", "iv", "legshelf", "oxyvase", "starchart", "photo_wedding", "photo_fighter", "d_family", "d_visitors", "poppo_row", "portrait", "bench", "clock", "firebucket", "plant", "rail", "tansu", "futon", "hibachi", "tricycle", "kyodai", "stairs", "door", "bed_f", "bonsai_table1", "bonsai_table2", "bed_h", "d_bedman_h", "cabinet_radio", "rwall", "rwall_p", "rwall_w", "aw", "aw_g", "aw_p", "aw_pg", "aw_w", "aw_wg", "aw_pw", "wheelchair_back", "prosthetic_rack", "workbench", "arm_stand", "deskphoto", "sunset", "noticeboard", "v_board", "guestbook", "v_guestbook", "wx_bed", "wx_chair", "wx_gramophone", "wx_lamp", "wx_teatable", "wx_rug", "rwallx", "rwallx_p", "rwallx_w", "art_fuji", "art_moon", "art_ginkgo", "art_blob", "art_self", "art_group", "art_banana", "art_squad", "art_roof", "cot", "radio", "wang_yard", "wang_ward",
           "d_uketsuke", "d_shateki", "d_yakisoba", "d_carver", "d_band1", "d_band2", "d_band3", "d_band4", "d_band5", "d_wheel", "d_bedman", "d_scope",
           "v_uketsuke", "v_yakisoba", "v_stall", "v_carver", "v_stage", "v_wheel", "v_bed", "v_cockpit", "v_photo_wedding", "v_photo_fighter", "v_view", "v_moon", "v_family", "v_wataame", "v_art_fuji", "v_art_moon", "v_art_ginkgo", "v_art_blob", "v_art_self", "v_art_group", "v_art_banana", "v_art_squad", "v_art_roof", "v_tv", "v_card_0", "v_card_1", "v_card_2", "v_card_3", "v_card_4", "v_card_5", "v_card_6", "v_card_7"]
           .map((k) => [k, `${k}.png`])
