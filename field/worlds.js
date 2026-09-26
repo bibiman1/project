@@ -547,7 +547,10 @@
     shateki: { img: "shateki", w: 128, h: 96, top: 9, bottom: 87, solid: [86, 24] },
     uketsuke: { img: "uketsuke", w: 96, h: 64, top: 4, bottom: 60, solid: [64, 20] },
     ginkgo: { img: "ginkgo", w: 64, h: 96, top: 5, bottom: 91, solid: [14, 8] },
-    stage: { img: "stage", w: 256, h: 96, top: 2, bottom: 96, solid: [156, 64] },
+    stage: { img: "stage", w: 256, h: 96, top: 0, bottom: 96, solid: [240, 64] },
+    prosthetic_rack: { img: "prosthetic_rack", w: 64, h: 64, top: 6, bottom: 58, solid: [56, 12] },
+    workbench: { img: "workbench", w: 64, h: 32, top: 3, bottom: 30, solid: [54, 14] },
+    arm_stand: { img: "arm_stand", w: 32, h: 64, top: 3, bottom: 61, solid: [16, 8] },
     exhibit1: { img: "exhibit1", w: 96, h: 48, top: 5, bottom: 48, solid: [80, 18] },
     exhibit2: { img: "exhibit2", w: 96, h: 48, top: 6, bottom: 48, solid: [84, 18] },
     wheelchair: { img: "wheelchair", w: 32, h: 32, top: 2, bottom: 30, solid: [18, 8] },
@@ -589,8 +592,9 @@
     d_shateki: { img: "d_shateki", w: 64, h: 64, top: 7, bottom: 58, solid: [24, 10] },
     d_yakisoba: { img: "d_yakisoba", w: 64, h: 64, top: 11, bottom: 53, solid: [24, 10] },
     d_carver: { img: "d_carver", w: 64, h: 64, top: 8, bottom: 59, solid: [28, 10] },
-    d_band1: { img: "d_band1", w: 64, h: 64, top: 14, bottom: 51 },
-    d_band2: { img: "d_band2", w: 64, h: 64, top: 6, bottom: 59 },
+    d_band1: { img: "d_band1", w: 64, h: 64, top: 6, bottom: 60 },
+    d_band2: { img: "d_band2", w: 64, h: 64, top: 6, bottom: 58 },
+    d_band3: { img: "d_band3", w: 64, h: 64, top: 6, bottom: 59 },
     d_wheel: { img: "d_wheel", w: 64, h: 64, top: 7, bottom: 59, solid: [26, 10] },
     d_bedman: { img: "d_bedman", w: 32, h: 64, top: 8, bottom: 61, solid: [26, 40] },
     d_scope: { img: "d_scope", w: 64, h: 64, top: 3, bottom: 60, solid: [30, 12] },
@@ -821,14 +825,17 @@
     ],
     objects: [
       hat("stage", 8 * T, 5 * T),
-      dead("d_band1", "band1", 6.5 * T, 4.2 * T, "v_stage", (api) => {
-        stamp(api, "stage");
-        hiHeyWin(api, ["band1", "band2", "carver"]);
-      }, { sortDy: 60, iy: 60, range: 56 }),
-      dead("d_band2", "band2", 9.5 * T, 4.2 * T, "v_stage", (api) => {
-        stamp(api, "stage");
-        hiHeyWin(api, ["band2", "band1", "carver"]);
-      }, { sortDy: 60, iy: 60, range: 56 }),
+      // 舞台の楽団: アコーディオン、ラッパ、太鼓
+      ...[
+        ["d_band1", "band1", 6],
+        ["d_band2", "band2", 8],
+        ["d_band3", "band3", 10],
+      ].map(([kind, id, c]) =>
+        dead(kind, id, c * T, 4.6 * T, "v_stage", (api) => {
+          stamp(api, "stage");
+          hiHeyWin(api, [id, ...["band1", "band2", "band3"].filter((b) => b !== id), "carver"]);
+        }, { sortDy: 60, iy: 60, range: 56 })
+      ),
       // 客席: 車椅子を一列に
       ...[5.5, 6.5, 7.5, 8.5, 9.5, 10.5].map((c) => hat("wheelchair", c * T, 7 * T)),
       // 作品展示: 盆栽をずらりと二列
@@ -884,16 +891,16 @@
   // 廊下の作品展: 患者たちの絵と、写真
   const CORRIDOR_ARTS = [["fuji", 2], ["moon", 6], ["ginkgo", 10], ["blob", 13], ["self", 15], ["group", 19], ["banana", 23], ["squad", 26]];
   // ---- 廊下(個室のドアと、絵や写真の展示が並ぶ。途中に詰所、突き当たりに屋上への階段) ----
-  const WARD_W = 32;
-  const DOORS = { sick: 4, window: 8, room1: 17, room2: 21 }; // ドアの列
+  const WARD_W = 31;
+  const DOORS = { sick: 4, window: 8, room1: 17, room2: 21, workshop: 25 }; // ドアの列
   const WARD = {
     tile: T,
     bg: "#1c1411",
     tintMul: "#f0c09a",
     tint: "rgba(255, 150, 70, 0.08)",
     map: [
-      "Uu".repeat(WARD_W / 2),
-      "Ll".repeat(WARD_W / 2),
+      ("Uu".repeat(16).slice(0, 28) + "OO" + "U"),
+      ("Ll".repeat(16).slice(0, 28) + "OO" + "L"),
       "." + ".".repeat(WARD_W - 2) + "X",
       "." + ".".repeat(WARD_W - 2) + "X",
       "X" + ".".repeat(WARD_W - 2) + "X",
@@ -905,16 +912,19 @@
       L: { solid: true, img: "wall", crop: [0, 32], lowerOf: ["ward"] },
       u: { solid: true, img: "wall2", crop: [0, 0], lowerOf: ["ward"] },
       l: { solid: true, img: "wall2", crop: [0, 32], lowerOf: ["ward"] },
+      O: { solid: true, color: "#1a120d", lowerOf: ["ward"] }, // 階段の口
       ".": { wang: "ward", lowerOf: ["ward"] },
     },
     wang: { ward: { img: "wang_ward", size: 32, lookup: WANG16 } },
     spawns: Object.assign(
-      { west: { x: 1 * T, y: 3.4 * T, facing: "east" }, stairs: { x: 29 * T, y: 2.9 * T, facing: "south" } },
+      { west: { x: 1 * T, y: 3.4 * T, facing: "east" }, stairs: { x: 29 * T, y: 2.8 * T, facing: "south" } },
       Object.fromEntries(Object.entries(DOORS).map(([k, c]) => [k, { x: (c + 0.5) * T, y: 2.8 * T, facing: "south" }]))
     ),
     triggers: [
       { id: "toHall", x: -T, y: 2 * T, w: 1.5 * T, h: 2 * T, warp: { map: "hall", spawn: "east" } },
       // 個室のドア: 入ると部屋に切り替わる
+      // 突き当たりの階段: 歩いて上がると屋上へ
+      { id: "toRoof", x: 28.2 * T, y: 1.9 * T, w: 1.6 * T, h: 0.45 * T, warp: { map: "roof", spawn: "up" } },
       ...Object.entries(DOORS).map(([k, c]) => ({ id: `to_${k}`, x: (c + 0.1) * T, y: 1.9 * T, w: 0.8 * T, h: 0.45 * T, warp: { map: k, spawn: "door" } })),
     ],
     objects: [
@@ -941,28 +951,8 @@
           }
         },
       }),
-      // 叩くと木琴のように鳴る義足の棚
-      hat("legshelf", 25 * T, 3.4 * T, {
-        id: "legshelf",
-        range: 40,
-        interact(api) {
-          api.bubble("legshelf", "ぽろん　ぽろん", 2200);
-        },
-      }),
-      // 屋上への階段: 景品をもらったら上がれる
-      hat("stairs", 29 * T, 2 * T, {
-        id: "stairs",
-        sortDy: -40,
-        iy: 44,
-        range: 44,
-        interact(api) {
-          if (!api.hasItem("宇宙船殻用単結晶")) {
-            api.mutter("……");
-            return;
-          }
-          api.warp("roof", "up");
-        },
-      }),
+      // 屋上への階段(壁の開口部)
+      hat("stairs", 29 * T, 2 * T, { sortDy: -40 }),
     ],
   };
 
@@ -1022,6 +1012,18 @@
     }),
     dead("d_scope", "scope", 3.5 * T, 4.2 * T, "v_cockpit"),
     wallPhoto("photo_fighter", 4.5 * T, "v_photo_fighter"),
+  ]);
+  // 義肢装具室: 木の義足が掛かったラック(叩くと木琴のように鳴る)、作りかけの機械の義手の作業台、義手のスタンド
+  const ROOM_WORKSHOP = room("workshop", "wood", [
+    hat("prosthetic_rack", 2 * T, 3 * T, {
+      id: "legshelf",
+      range: 40,
+      interact(api) {
+        api.bubble("legshelf", "ぽろん　ぽろん", 2200);
+      },
+    }),
+    hat("workbench", 5 * T, 3 * T),
+    hat("arm_stand", 7.5 * T, 3 * T),
   ]);
   // 家族の部屋: 卓袱台を囲む一家。箪笥、鏡台、三輪車
   const ROOM1 = room("room1", "tatami", [
@@ -1132,6 +1134,11 @@
         h: 8,
         range: 44,
         interact(api) {
+          // 景品(次の世界へのカギ)を持っていれば、記憶へ進んで懲罰空間に戻る
+          if (!api.hasItem("宇宙船殻用単結晶")) {
+            api.show("v_view");
+            return;
+          }
           api.show("v_view", () => {
             api.show("v_roof", () => {
               api.mutter("はい　へい　うぃん", 3000);
@@ -1211,8 +1218,8 @@
       name: "廃兵院",
       assetBase: "./assets/worlds/haihei/",
       images: Object.fromEntries(
-        ["facade", "arch", "yakisoba", "wataame", "shateki", "uketsuke", "wheelchair", "ginkgo", "stage", "exhibit1", "exhibit2", "bed", "telescope", "tv", "iv", "legshelf", "nursedesk", "oxyvase", "starchart", "photo_wedding", "photo_fighter", "d_family", "d_visitors", "tansu", "futon", "hibachi", "tricycle", "kyodai", "stairs", "door", "bed_f", "bonsai1", "bonsai2", "bonsai3", "bonsai4", "bonsai5", "rwall", "rwall_p", "rwall_w", "art_fuji", "art_moon", "art_ginkgo", "art_blob", "art_self", "art_group", "art_banana", "art_squad", "cot", "radio", "wall", "wall2", "wang_yard", "wang_ward",
-          "d_uketsuke", "d_shateki", "d_yakisoba", "d_carver", "d_band1", "d_band2", "d_wheel", "d_bedman", "d_scope",
+        ["facade", "arch", "yakisoba", "wataame", "shateki", "uketsuke", "wheelchair", "ginkgo", "stage", "exhibit1", "exhibit2", "bed", "telescope", "tv", "iv", "legshelf", "nursedesk", "oxyvase", "starchart", "photo_wedding", "photo_fighter", "d_family", "d_visitors", "tansu", "futon", "hibachi", "tricycle", "kyodai", "stairs", "door", "bed_f", "bonsai1", "bonsai2", "bonsai3", "bonsai4", "bonsai5", "rwall", "rwall_p", "rwall_w", "prosthetic_rack", "workbench", "arm_stand", "art_fuji", "art_moon", "art_ginkgo", "art_blob", "art_self", "art_group", "art_banana", "art_squad", "cot", "radio", "wall", "wall2", "wang_yard", "wang_ward",
+          "d_uketsuke", "d_shateki", "d_yakisoba", "d_carver", "d_band1", "d_band2", "d_band3", "d_wheel", "d_bedman", "d_scope",
           "v_uketsuke", "v_yakisoba", "v_stall", "v_carver", "v_stage", "v_wheel", "v_bed", "v_cockpit", "v_roof", "v_photo_wedding", "v_photo_fighter", "v_view", "v_moon", "v_family", "v_wataame", "v_art_fuji", "v_art_moon", "v_art_ginkgo", "v_art_blob", "v_art_self", "v_art_group", "v_art_banana", "v_art_squad"]
           .map((k) => [k, `${k}.png`])
           .concat([["ki", "./assets/worlds/lake/ki_walk.png"]])
@@ -1220,7 +1227,7 @@
       playerSprite: { img: "ki", cell: 64, frames: 7, footY: 17 },
       start: "yard",
       startSpawn: "gate",
-      maps: { yard: YARD, hall: HALL, ward: WARD, sick: ROOM_SICK, window: ROOM_WINDOW, room1: ROOM1, room2: ROOM2, roof: ROOF },
+      maps: { yard: YARD, hall: HALL, ward: WARD, sick: ROOM_SICK, window: ROOM_WINDOW, room1: ROOM1, room2: ROOM2, workshop: ROOM_WORKSHOP, roof: ROOF },
     },
   };
 })();
