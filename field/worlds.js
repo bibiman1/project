@@ -1096,7 +1096,7 @@
           } else if (stampCount(api) === STAMPS.length && !api.flag("prize")) {
             api.show(cardImage(api), () => {
               api.setFlag("prize");
-              api.giveItem("宇宙船殻用単結晶");
+              api.giveItem("おたかぽっぽ"); // スタンプの特典: 展示で彫られていたのと同じ、小さな一刀彫
             });
           } else {
             api.show("v_uketsuke", () => api.show(cardImage(api))); // 今の台紙
@@ -1108,17 +1108,7 @@
       hat("wataame", 4.5 * T, 15 * T),
       // 祭に来ていた市民: 綿あめを持った子と母
       dead("d_visitors", "visitors", 6.6 * T, 15.2 * T, "v_wataame"),
-      hat("shateki", 13 * T, 11 * T, {
-        // 景品棚の、見たことのないもの(鈴木商店の宇宙船殻用単結晶)。景品として受け取ると消える
-        draw(ctx, sx, sy, t, api) {
-          if (api.flag("prize")) return;
-          const a = 0.55 + Math.sin(t * 3) * 0.35;
-          ctx.fillStyle = `rgba(170, 230, 255, ${a})`;
-          ctx.fillRect(sx - 7, sy - 4, 5, 6); // 景品棚の中段の、空けてある枠に収まる
-          ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
-          ctx.fillRect(sx - 6, sy - 3, 1, 2);
-        },
-      }),
+      hat("shateki", 13 * T, 11 * T),
       dead("d_shateki", "shateki", 15.6 * T, 11.7 * T, "v_stall", (api) => stamp(api, "stall")),
       racer("racer1", 14.1, 40, 90),
       crutchWalker("crutches", 15.3, 8 * T, 12.5 * T, 12),
@@ -1598,7 +1588,7 @@
         range: 44,
         interact(api) {
           // 景品(次の世界へのカギ)を持っていれば、屋上の記憶へ(断片の条件を満たす。帰りは門から)
-          if (!api.hasItem("宇宙船殻用単結晶")) {
+          if (!api.hasItem("おたかぽっぽ") && !api.flag("prize")) { // 以前の版で景品をもらった人も通れるように
             api.show("v_view");
             return;
           }
@@ -1679,7 +1669,7 @@
     },
     // 断片: 廃兵院(Hi Hey Win！)。きーの記憶の世界。凍った湖と富士山を終えると、懲罰空間に現れる
     // 条件: スタンプを3つ集めて景品をもらう → 屋上から文化祭を見る → 懲罰空間に帰る
-    // 次の世界へのカギ: 道具「宇宙船殻用単結晶」
+    // 次の世界へのカギ: 道具「おたかぽっぽ」(スタンプの特典)
     haihei: {
       id: "haihei",
       name: "廃兵院",
