@@ -295,10 +295,13 @@
     fadeOverlay.classList.add("on");
     setTimeout(() => {
       fn();
-      fadeOverlay.classList.remove("on");
-      setTimeout(() => {
-        transitioning = false;
-      }, 300);
+      // 画像を読み終わるまで暗いまま。読み終わったらフェードイン
+      rpg.whenReady(() => {
+        fadeOverlay.classList.remove("on");
+        setTimeout(() => {
+          transitioning = false;
+        }, 300);
+      });
     }, 480);
   }
 
@@ -522,9 +525,12 @@
       rpg.update(dt, t, input);
     }
     rpg.draw(t);
+    document.body.classList.toggle("viewing", rpg.viewing);
   }
 
   rpg.enter(window.BOGI_WORLDS[HUB]);
   updateStatus();
+  // 最初も、画像を読み終わってからフェードイン
+  rpg.whenReady(() => fadeOverlay.classList.remove("on"));
   requestAnimationFrame(loop);
 })();

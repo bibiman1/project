@@ -207,7 +207,7 @@ body {
 .fade-overlay {
   position: absolute;
   inset: 0;
-  background: #f4f7f9;
+  background: #0c0b10;
   opacity: 0;
   pointer-events: none;
   transition: opacity 450ms ease;
@@ -387,4 +387,10 @@ body.landscape-compact .field-footer {
   .field-header {
     padding: 24px 16px 16px;
   }
+}
+
+/* 一枚絵を見ているあいだは、絵にかぶらないようスティックとボタンを薄く */
+body.viewing .joystick,
+body.viewing .action-btn {
+  opacity: 0.25;
 }

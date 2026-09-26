@@ -37,11 +37,27 @@
     function loadImage(key, src) {
       if (images[key]) return;
       const img = new Image();
-      images[key] = { img, loaded: false };
+      images[key] = { img, loaded: false, done: false };
       img.onload = () => {
         images[key].loaded = true;
+        images[key].done = true;
+      };
+      img.onerror = () => {
+        images[key].done = true; // 読めなくても待ち続けない
       };
       img.src = src;
+    }
+
+    // いまの世界の画像がすべて読み終わったら cb を呼ぶ(最長 maxMs まで待つ)
+    function whenReady(cb, maxMs = 8000) {
+      const t0 = performance.now();
+      const keys = world ? Object.keys(world.images) : [];
+      const check = () => {
+        const ok = keys.every((k) => !images[k] || images[k].done);
+        if (ok || performance.now() - t0 > maxMs) cb();
+        else setTimeout(check, 50);
+      };
+      check();
     }
 
     function img(key) {
@@ -109,16 +125,25 @@
           host.enterWorld(id);
         },
         player() {
-          return { x: player.x, y: player.y };
+          return { x: player.x, y: player.y, facing: player.facing };
         },
         image(key) {
           return img(key);
         },
+        // その断片の世界を終えたか
+        cleared(id) {
+          return host.state.cleared.includes(id);
+        },
         warp(mapId, spawn) {
           host.fade(() => loadMap(mapId, spawn));
         },
-        exit() {
+        // 断片の条件を満たした(記録だけ。退出は出口から)
+        clear() {
           if (!host.state.cleared.includes(w.id)) host.state.cleared.push(w.id);
+          host.save();
+        },
+        // 懲罰空間へ戻る
+        exit() {
           host.save();
           host.exit(w.id);
         },
@@ -136,6 +161,7 @@
       cutscene = null;
       pan = null;
       toast = null;
+      if (def.onEnterWorld) def.onEnterWorld(world.api); // 入るたびに、その回だけの状態をリセットする
       loadMap(def.start, spawnName || def.startSpawn);
     }
 
@@ -216,6 +242,38 @@
       return map.objects.filter((o) => !o.hidden || !o.hidden(world.api));
     }
 
+    // 線の壁(map.rails: 点列の配列)。ぶつかると、はじき返す
+    const RAIL_R = 9;
+    function railHit(fx, fy) {
+      for (const run of map.rails || []) {
+        for (let i = 0; i < run.length - 1; i++) {
+          const [ax, ay] = run[i];
+          const [bx, by] = run[i + 1];
+          const dx = bx - ax;
+          const dy = by - ay;
+          const l2 = dx * dx + dy * dy || 1;
+          const t = Math.max(0, Math.min(1, ((fx - ax) * dx + (fy - ay) * dy) / l2));
+          const qx = ax + dx * t;
+          const qy = ay + dy * t;
+          const d = Math.hypot(fx - qx, fy - qy);
+          if (d < RAIL_R) {
+            // いまいる側へ、はじく
+            let nx = player.x - qx;
+            let ny = player.y - qy;
+            const nl = Math.hypot(nx, ny) || 1;
+            nx /= nl;
+            ny /= nl;
+            player.kx = nx * 230;
+            player.ky = ny * 230;
+            player.vx = 0;
+            player.vy = 0;
+            return true;
+          }
+        }
+      }
+      return false;
+    }
+
     function solidAt(fx, fy) {
       const x0 = fx - FEET_W / 2;
       const x1 = fx + FEET_W / 2;
@@ -256,6 +314,7 @@
         }
       }
       bubbles = bubbles.filter((b) => b.until > clock);
+      for (const o of map.objects) if (o.update) o.update(dt, t, world.api);
       if (toast && toast.until < clock) toast = null;
 
       if (pan) {
@@ -269,11 +328,15 @@
       }
       if (cutscene) return;
 
-      const onIce = !!(tileAt(player.x, player.y) || {}).ice;
+      // すべる床: 氷のタイル、または map.slippery(true か、追従の強さの数値。小さいほどつるつる)
+      const slip = map.slippery ? map.slippery(world.api, player.x, player.y) : false;
+      const iceTile = !!(tileAt(player.x, player.y) || {}).ice;
+      const onIce = iceTile || !!slip;
+      const iceAccel = !iceTile && typeof slip === "number" ? slip : ICE_ACCEL;
       const tx = input.x * SPEED;
       const ty = input.y * SPEED;
       if (onIce) {
-        const k = Math.min(1, ICE_ACCEL * dt);
+        const k = Math.min(1, iceAccel * dt);
         player.vx += (tx - player.vx) * k;
         player.vy += (ty - player.vy) * k;
       } else {
@@ -281,11 +344,18 @@
         player.vy = ty;
       }
 
-      const nx = player.x + player.vx * dt;
-      if (!solidAt(nx, player.y)) player.x = nx;
+      // はじかれた勢い(ガードレールなど)。少しずつ弱まる
+      const kd = Math.exp(-7 * dt);
+      player.kx = (player.kx || 0) * kd;
+      player.ky = (player.ky || 0) * kd;
+      const mvx = player.vx + player.kx;
+      const mvy = player.vy + player.ky;
+
+      const nx = player.x + mvx * dt;
+      if (!solidAt(nx, player.y) && !railHit(nx, player.y)) player.x = nx;
       else player.vx = 0;
-      const ny = player.y + player.vy * dt;
-      if (!solidAt(player.x, ny)) player.y = ny;
+      const ny = player.y + mvy * dt;
+      if (!solidAt(player.x, ny) && !railHit(player.x, ny)) player.y = ny;
       else player.vy = 0;
 
       player.moving = Math.hypot(player.vx, player.vy) > 8;
@@ -296,6 +366,7 @@
 
       // 範囲に入ると発火する仕掛け(出入口、景色が開ける場所など)
       for (const tr of map.triggers || []) {
+        if (tr.enabled && !tr.enabled(world.api)) continue;
         const inside =
           player.x > tr.x && player.x < tr.x + tr.w && player.y > tr.y && player.y < tr.y + tr.h;
         if (inside && !tr.inside) {
@@ -415,7 +486,7 @@
         }
       }
 
-      if (map.drawGround) map.drawGround(ctx, ox, oy, img);
+      if (map.drawGround) map.drawGround(ctx, ox, oy, img, world.api);
 
       // y順に並べて、手前のものほど後に描く
       const drawables = visibleObjects().map((o) => ({ y: o.y + (o.sortDy || 0), o }));
@@ -426,6 +497,18 @@
         else drawObject(d.o, ox, oy, t);
       }
 
+      if (map.drawOverlay) map.drawOverlay(ctx, ox, oy, t, world.api);
+      // 夕方などの色: tintMul は掛け合わせ(暗く、色をのせる)、tint は上から薄く重ねる
+      if (map.tintMul) {
+        ctx.globalCompositeOperation = "multiply";
+        ctx.fillStyle = map.tintMul;
+        ctx.fillRect(0, 0, vw, vh);
+        ctx.globalCompositeOperation = "source-over";
+      }
+      if (map.tint) {
+        ctx.fillStyle = map.tint;
+        ctx.fillRect(0, 0, vw, vh);
+      }
       if (map.snow) drawSnow();
       for (const b of bubbles) drawBubble(b, ox, oy);
       if (nearObj && !busy()) drawActionMark(nearObj, ox, oy, t);
@@ -554,11 +637,26 @@
       ctx.fillRect(0, 0, VW, VH);
       const im = img(cutscene.img);
       if (!im) return;
-      const s = Math.max(1, Math.floor(Math.min(VW / im.width, VH / im.height)));
-      const w = im.width * s;
-      const h = im.height * s;
+      // 枠の角の丸みやスマホのボタンで端が欠けないよう、まわりに余白を残して描く。
+      // 整数倍でくっきり拡大してから、余白に収まる大きさへなめらかに縮める
+      const fit = Math.min((VW * 0.9) / im.width, (VH * 0.86) / im.height);
+      const s = Math.max(1, Math.ceil(fit));
+      if (!cutscene.buf || cutscene.buf.src !== im) {
+        const c = document.createElement("canvas");
+        c.width = im.width * s;
+        c.height = im.height * s;
+        const g = c.getContext("2d");
+        g.imageSmoothingEnabled = false;
+        g.drawImage(im, 0, 0, c.width, c.height);
+        cutscene.buf = { src: im, canvas: c };
+      }
+      const w = Math.round(im.width * fit);
+      const h = Math.round(im.height * fit);
       ctx.globalAlpha = a;
-      ctx.drawImage(im, Math.round((VW - w) / 2), Math.round((VH - h) / 2), w, h);
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = "high";
+      ctx.drawImage(cutscene.buf.canvas, Math.round((VW - w) / 2), Math.round((VH - h) / 2), w, h);
+      ctx.imageSmoothingEnabled = false;
       ctx.globalAlpha = 1;
     }
 
@@ -574,11 +672,16 @@
     return {
       enter,
       leave,
+      whenReady,
       update,
       draw,
       interact,
       get active() {
         return !!world;
+      },
+      // 一枚絵を見ているあいだ
+      get viewing() {
+        return !!cutscene;
       },
       get isHub() {
         return !!(world && world.hub);
