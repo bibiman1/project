@@ -872,10 +872,10 @@
   }
   // 台紙の絵: 押した場所の枠にハンコ(屋台=1, 展示=2, 舞台=4 のビットで 8 通り)
   const cardImage = (api) => `v_card_${STAMPS.reduce((m, k, i) => m | (api.flag(`stamp.${k}`) ? 1 << i : 0), 0)}`;
+  // 押すたびに台紙を見せる。押してある場所をもう一度調べても、今の台紙を見せる(押したかどうか確かめられる)
   function stamp(api, key, delayMs = 0) {
-    if (api.flag(`stamp.${key}`)) return;
     api.setFlag(`stamp.${key}`);
-    api.later(delayMs, () => api.show(cardImage(api))); // ハンコが増えた台紙を見せる
+    api.later(delayMs, () => api.show(cardImage(api)));
   }
   // 死人: 話しかけると、その人との思い出
   function dead(kind, id, fx, fy, memory, after, extra) {
@@ -1090,7 +1090,7 @@
               api.giveItem("宇宙船殻用単結晶");
             });
           } else {
-            api.show("v_uketsuke");
+            api.show("v_uketsuke", () => api.show(cardImage(api))); // 今の台紙
           }
         },
       }),
@@ -1333,7 +1333,7 @@
   };
 
   // ---- 個室(ドアから入り、下の出口から廊下へ戻る)。floor: "tatami" | "wood" | "western"(和室を洋風に改装) ----
-  function room(key, floor, objects) {
+  function room(key, floor, objects, wallRow = "PWWWPWWWP") {
     const western = floor === "western";
     const wood = floor === "wood" || western;
     const wall = western ? "rwallx" : wood ? "aw" : "rwall";
@@ -1342,7 +1342,7 @@
       bg: "#1c1411",
       tintMul: "#f0c09a",
       tint: "rgba(255, 150, 70, 0.08)",
-      map: ["PWWWPWWWP", "pwwwpwwwp", "X.......X", "X.......X", "X.......X", "X.......X", "XXXX.XXXX"],
+      map: [wallRow, wallRow.toLowerCase(), "X.......X", "X.......X", "X.......X", "X.......X", "XXXX.XXXX"],
       legend: {
         X: { solid: true, color: "#2a1d17", lowerOf: ["ward"] },
         P: { solid: true, img: `${wall}_p`, crop: [0, 0], lowerOf: ["ward"] },
@@ -1439,11 +1439,12 @@
   ]);
   // 家族の部屋: 卓袱台を囲む一家。箪笥、鏡台、三輪車
   // 木彫りの人の部屋(和室): 障子の窓辺で正座して、おたかポッポを彫っていた
+  // 左は障子の窓、右は写真を掛けた壁(思い出の絵と同じ並び)
   const ROOM_CARVER = room("carver", "tatami", [
     hat("portrait", 6.5 * T, 1.3 * T, { sortDy: -40 }), // 壁の写真(若い頃の軍服)
     hat("poppo_row", 2.7 * T, 4.2 * T),
     dead("d_carver", "carver", 4.4 * T, 4.1 * T, "v_carver"),
-  ]);
+  ], "PWWWPAAAP");
   const ROOM1 = room("room1", "tatami", [
     hat("tansu", 1.5 * T, 3 * T),
     hat("kyodai", 7.5 * T, 3 * T),
