@@ -563,15 +563,15 @@
     stairs: { img: "stairs", w: 64, h: 64, top: 0, bottom: 62 },
     cot: { img: "cot", w: 32, h: 32, top: 2, bottom: 32, solid: [20, 10] },
     radio: { img: "radio", w: 32, h: 32, top: 5, bottom: 27 },
-    d_uketsuke: { img: "d_uketsuke", w: 64, h: 64, top: 9, bottom: 55 },
-    d_shateki: { img: "d_shateki", w: 64, h: 64, top: 6, bottom: 57, solid: [24, 10] },
-    d_yakisoba: { img: "d_yakisoba", w: 64, h: 64, top: 3, bottom: 61, solid: [24, 10] },
-    d_carver: { img: "d_carver", w: 64, h: 64, top: 7, bottom: 57, solid: [28, 10] },
-    d_band1: { img: "d_band1", w: 64, h: 64, top: 9, bottom: 56 },
-    d_band2: { img: "d_band2", w: 64, h: 64, top: 9, bottom: 57 },
-    d_wheel: { img: "d_wheel", w: 64, h: 64, top: 8, bottom: 58, solid: [26, 10] },
-    d_bedman: { img: "d_bedman", w: 48, h: 64, top: 12, bottom: 55, solid: [36, 40] },
-    d_scope: { img: "d_scope", w: 64, h: 64, top: 4, bottom: 61, solid: [30, 12] },
+    d_uketsuke: { img: "d_uketsuke", w: 64, h: 64, top: 7, bottom: 58 },
+    d_shateki: { img: "d_shateki", w: 64, h: 64, top: 7, bottom: 58, solid: [24, 10] },
+    d_yakisoba: { img: "d_yakisoba", w: 64, h: 64, top: 11, bottom: 53, solid: [24, 10] },
+    d_carver: { img: "d_carver", w: 64, h: 64, top: 8, bottom: 59, solid: [28, 10] },
+    d_band1: { img: "d_band1", w: 64, h: 64, top: 14, bottom: 51 },
+    d_band2: { img: "d_band2", w: 64, h: 64, top: 6, bottom: 59 },
+    d_wheel: { img: "d_wheel", w: 64, h: 64, top: 7, bottom: 59, solid: [26, 10] },
+    d_bedman: { img: "d_bedman", w: 48, h: 64, top: 11, bottom: 55, solid: [36, 40] },
+    d_scope: { img: "d_scope", w: 64, h: 64, top: 3, bottom: 60, solid: [30, 12] },
   };
 
   function hat(kind, fx, fy, extra) {
@@ -889,7 +889,14 @@
         },
       }),
       dead("d_scope", "scope", 15.6 * T, 4.2 * T, "v_cockpit"),
-      hat("telescope", 17.2 * T, 3.4 * T),
+      // 望遠鏡: 覗くと、月のまわりに輪
+      hat("telescope", 17.2 * T, 3.4 * T, {
+        id: "telescope",
+        range: 36,
+        interact(api) {
+          api.show("v_moon");
+        },
+      }),
       // 窓辺の壁: クラシックな宇宙戦闘機の写真
       hat("photo_fighter", 16.4 * T, 1.9 * T, {
         id: "photo_fighter",
@@ -936,9 +943,12 @@
             api.mutter("……");
             return;
           }
-          api.show("v_roof", () => {
-            api.mutter("はい　へい　うぃん", 3000);
-            api.later(2600, () => api.exit());
+          // 二階: いまの高原の景色 → 文化祭の日の屋上の記憶
+          api.show("v_view", () => {
+            api.show("v_roof", () => {
+              api.mutter("はい　へい　うぃん", 3000);
+              api.later(2600, () => api.exit());
+            });
           });
         },
       }),
@@ -1015,7 +1025,7 @@
       images: Object.fromEntries(
         ["facade", "arch", "yakisoba", "wataame", "shateki", "uketsuke", "wheelchair", "ginkgo", "stage", "exhibit1", "exhibit2", "bed", "telescope", "tv", "iv", "legshelf", "nursedesk", "oxyvase", "starchart", "photo_wedding", "photo_fighter", "stairs", "cot", "radio", "wall", "wall2", "wang_yard", "wang_ward",
           "d_uketsuke", "d_shateki", "d_yakisoba", "d_carver", "d_band1", "d_band2", "d_wheel", "d_bedman", "d_scope",
-          "v_uketsuke", "v_yakisoba", "v_stall", "v_carver", "v_stage", "v_wheel", "v_bed", "v_cockpit", "v_roof", "v_photo_wedding", "v_photo_fighter"]
+          "v_uketsuke", "v_yakisoba", "v_stall", "v_carver", "v_stage", "v_wheel", "v_bed", "v_cockpit", "v_roof", "v_photo_wedding", "v_photo_fighter", "v_view", "v_moon"]
           .map((k) => [k, `${k}.png`])
           .concat([["ki", "./assets/worlds/lake/ki_walk.png"]])
       ),
