@@ -560,6 +560,14 @@
     starchart: { img: "starchart", w: 32, h: 32, top: 0, bottom: 30 },
     photo_wedding: { img: "photo_wedding", w: 32, h: 32, top: 0, bottom: 30 },
     photo_fighter: { img: "photo_fighter", w: 32, h: 32, top: 0, bottom: 30 },
+    art_fuji: { img: "art_fuji", w: 32, h: 32, top: 4, bottom: 23 },
+    art_moon: { img: "art_moon", w: 32, h: 32, top: 4, bottom: 23 },
+    art_ginkgo: { img: "art_ginkgo", w: 32, h: 32, top: 4, bottom: 23 },
+    art_blob: { img: "art_blob", w: 32, h: 32, top: 4, bottom: 23 },
+    art_self: { img: "art_self", w: 32, h: 32, top: 4, bottom: 23 },
+    art_group: { img: "art_group", w: 32, h: 32, top: 4, bottom: 23 },
+    art_banana: { img: "art_banana", w: 32, h: 32, top: 4, bottom: 23 },
+    art_squad: { img: "art_squad", w: 32, h: 32, top: 4, bottom: 23 },
     d_family: { img: "d_family", w: 96, h: 64, top: 9, bottom: 51, solid: [56, 14] },
     d_visitors: { img: "d_visitors", w: 64, h: 64, top: 6, bottom: 60 },
     tansu: { img: "tansu", w: 32, h: 64, top: 3, bottom: 61, solid: [28, 12] },
@@ -863,7 +871,19 @@
     ctx.fillRect(x0, y0 + h - 2, w, 2);
   }
 
-  // ---- 廊下(個室のドアが並ぶ。途中に詰所、突き当たりに屋上への階段) ----
+  const wallPhoto = (kind, x, vignette) =>
+    hat(kind, x, 1.95 * T, {
+      id: kind,
+      sortDy: -40,
+      iy: 20,
+      range: 40,
+      interact(api) {
+        api.show(vignette);
+      },
+    });
+  // 廊下の作品展: 患者たちの絵と、写真
+  const CORRIDOR_ARTS = [["fuji", 2], ["moon", 6], ["ginkgo", 10], ["blob", 13], ["self", 15], ["group", 19], ["banana", 23], ["squad", 26]];
+  // ---- 廊下(個室のドアと、絵や写真の展示が並ぶ。途中に詰所、突き当たりに屋上への階段) ----
   const WARD_W = 32;
   const DOORS = { sick: 4, window: 8, room1: 17, room2: 21 }; // ドアの列
   const WARD = {
@@ -899,6 +919,7 @@
     ],
     objects: [
       ...Object.values(DOORS).map((c) => hat("door", (c + 0.5) * T, 2 * T, { sortDy: -40 })),
+      ...CORRIDOR_ARTS.map(([k, c]) => wallPhoto(`art_${k}`, (c + 0.5) * T, `v_art_${k}`)),
       // からの車椅子が、廊下を走っていた
       dead("d_wheel", "wheel", 6.5 * T, 4.9 * T, "v_wheel"),
       // 詰所: ナースコールを押すと、遠くでプロペラの音(ぼぎボマー)。ラジオは金星の天気予報
@@ -981,16 +1002,6 @@
       objects,
     };
   }
-  const wallPhoto = (kind, x, vignette) =>
-    hat(kind, x, 1.95 * T, {
-      id: kind,
-      sortDy: -40,
-      iy: 20,
-      range: 40,
-      interact(api) {
-        api.show(vignette);
-      },
-    });
   // 病室: 壁ぎわのベッド、点滴スタンドの風鈴、酸素マスクの花瓶、×印の星図
   const ROOM_SICK = room("sick", "wood", [
     hat("bed_f", 1.5 * T, 4 * T),
@@ -1107,9 +1118,9 @@
       name: "廃兵院",
       assetBase: "./assets/worlds/haihei/",
       images: Object.fromEntries(
-        ["facade", "arch", "yakisoba", "wataame", "shateki", "uketsuke", "wheelchair", "ginkgo", "stage", "exhibit1", "exhibit2", "bed", "telescope", "tv", "iv", "legshelf", "nursedesk", "oxyvase", "starchart", "photo_wedding", "photo_fighter", "d_family", "d_visitors", "tansu", "futon", "hibachi", "tricycle", "kyodai", "stairs", "door", "bed_f", "bonsai1", "bonsai2", "bonsai3", "bonsai4", "bonsai5", "rwall", "rwall_p", "rwall_w", "cot", "radio", "wall", "wall2", "wang_yard", "wang_ward",
+        ["facade", "arch", "yakisoba", "wataame", "shateki", "uketsuke", "wheelchair", "ginkgo", "stage", "exhibit1", "exhibit2", "bed", "telescope", "tv", "iv", "legshelf", "nursedesk", "oxyvase", "starchart", "photo_wedding", "photo_fighter", "d_family", "d_visitors", "tansu", "futon", "hibachi", "tricycle", "kyodai", "stairs", "door", "bed_f", "bonsai1", "bonsai2", "bonsai3", "bonsai4", "bonsai5", "rwall", "rwall_p", "rwall_w", "art_fuji", "art_moon", "art_ginkgo", "art_blob", "art_self", "art_group", "art_banana", "art_squad", "cot", "radio", "wall", "wall2", "wang_yard", "wang_ward",
           "d_uketsuke", "d_shateki", "d_yakisoba", "d_carver", "d_band1", "d_band2", "d_wheel", "d_bedman", "d_scope",
-          "v_uketsuke", "v_yakisoba", "v_stall", "v_carver", "v_stage", "v_wheel", "v_bed", "v_cockpit", "v_roof", "v_photo_wedding", "v_photo_fighter", "v_view", "v_moon", "v_family", "v_wataame"]
+          "v_uketsuke", "v_yakisoba", "v_stall", "v_carver", "v_stage", "v_wheel", "v_bed", "v_cockpit", "v_roof", "v_photo_wedding", "v_photo_fighter", "v_view", "v_moon", "v_family", "v_wataame", "v_art_fuji", "v_art_moon", "v_art_ginkgo", "v_art_blob", "v_art_self", "v_art_group", "v_art_banana", "v_art_squad"]
           .map((k) => [k, `${k}.png`])
           .concat([["ki", "./assets/worlds/lake/ki_walk.png"]])
       ),
