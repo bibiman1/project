@@ -778,7 +778,7 @@
   // フィールドは今(夕方)。死人に話しかけると、生きていた頃の文化祭の日の思い出(一枚絵)が起きる。
   // リリカルで、物悲しいが怖くない。サナトリウムのように穏やか。激戦があったことは匂わせるだけ。
   const HS = {
-    facade: { img: "facade", w: 512, h: 176, top: 0, bottom: 168 },
+    facade: { img: "facade", w: 544, h: 176, top: 0, bottom: 168 }, // 右端は東の病棟への渡り廊下
     arch: { img: "arch", w: 128, h: 96, top: 3, bottom: 93 },
     yakisoba: { img: "yakisoba", w: 96, h: 96, top: 12, bottom: 82, solid: [72, 20] },
     wataame: { img: "wataame", w: 96, h: 96, top: 12, bottom: 84, solid: [66, 20] },
@@ -831,6 +831,10 @@
     d_yakisoba: { img: "d_yakisoba", w: 64, h: 64, top: 4, bottom: 61, solid: [24, 10] },
     d_carver: { img: "d_carver", w: 48, h: 48, top: 4, bottom: 45, solid: [28, 10] }, // 畳の上で正座
     poppo_row: { img: "poppo_row", w: 40, h: 12, top: 1, bottom: 11 },
+    bench: { img: "bench", w: 64, h: 32, top: 4, bottom: 28, solid: [60, 10] },
+    clock: { img: "clock", w: 16, h: 32, top: 0, bottom: 30 },
+    firebucket: { img: "firebucket", w: 32, h: 32, top: 7, bottom: 30, solid: [26, 8] },
+    plant: { img: "plant", w: 32, h: 32, top: 5, bottom: 30, solid: [12, 6] },
     portrait: { img: "portrait", w: 32, h: 32, top: 2, bottom: 26 },
     d_wheel: { img: "d_wheel", w: 64, h: 64, top: 7, bottom: 58, solid: [26, 10] },
     d_bedman: { img: "d_bedman", w: 32, h: 64, top: 3, bottom: 62, solid: [26, 40] },
@@ -1055,7 +1059,7 @@
       bunting(ctx, ox, oy, 2 * T, 12.5 * T, 16 * T, 12.5 * T, t);
     },
     objects: [
-      hat("facade", 9 * T, 5 * T),
+      hat("facade", 9.5 * T, 5 * T), // 玄関が 9 列目の中央に来る
       board("board_gate", 7 * T, 9.3 * T), // 中庭の奥、病棟への道の脇の掲示板(正面から見える)
       hat("ginkgo", 1.2 * T, 7 * T),
       hat("ginkgo", 16.8 * T, 7.4 * T),
@@ -1105,9 +1109,9 @@
           if (api.flag("prize")) return;
           const a = 0.55 + Math.sin(t * 3) * 0.35;
           ctx.fillStyle = `rgba(170, 230, 255, ${a})`;
-          ctx.fillRect(sx - 6, sy - 6, 4, 6);
+          ctx.fillRect(sx - 7, sy - 4, 5, 6); // 景品棚の中段の、空けてある枠に収まる
           ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
-          ctx.fillRect(sx - 5, sy - 5, 1, 2);
+          ctx.fillRect(sx - 6, sy - 3, 1, 2);
         },
       }),
       dead("d_shateki", "shateki", 15.6 * T, 11.7 * T, "v_stall", (api) => stamp(api, "stall")),
@@ -1182,7 +1186,7 @@
     },
     triggers: [
       { id: "toYard", x: 7 * T, y: 11.3 * T, w: 2 * T, h: T, warp: { map: "yard", spawn: "door" } },
-      { id: "toWard", x: 15.4 * T, y: 7 * T, w: T, h: 2 * T, warp: { map: "ward", spawn: "west" } },
+      { id: "toWard", x: 15.4 * T, y: 7 * T, w: T, h: 2 * T, warp: { map: "watari", spawn: "west" } },
     ],
     objects: [
       hat("stage", 8 * T, 5 * T),
@@ -1248,6 +1252,54 @@
         api.show(vignette);
       },
     });
+  // ---- 渡り廊下(大広場から東の病棟へ。屋根付きで、両側は手すりごしに中庭の草地) ----
+  const WATARI_W = 9;
+  const WATARI = {
+    tile: T,
+    bg: "#1c1411",
+    tintMul: "#f2b48a",
+    tint: "rgba(255, 150, 70, 0.10)",
+    map: ["G".repeat(WATARI_W), "R".repeat(WATARI_W), ".".repeat(WATARI_W), ".".repeat(WATARI_W), "R".repeat(WATARI_W), "G".repeat(WATARI_W)],
+    legend: {
+      G: { wang: "yard", solid: true, lowerOf: ["ward"] },
+      R: { wang: "ward", solid: true, lowerOf: ["ward"] },
+      ".": { wang: "ward", lowerOf: ["ward"] },
+    },
+    wang: {
+      yard: { img: "wang_yard", size: 32, lookup: WANG16 },
+      ward: { img: "wang_ward", size: 32, lookup: WANG16 },
+    },
+    drawGround(ctx, ox, oy) {
+      const W = WATARI_W * T;
+      // 屋根の影(床の上だけ、少し暗く)と、西日の差し込み
+      ctx.fillStyle = "rgba(40, 24, 16, 0.18)";
+      ctx.fillRect(ox, T + oy, W, 4 * T);
+      southLight(ctx, ox, oy, 0, W, 5 * T);
+      // 手すり: 柱と横木(北と南)
+      for (const y of [T + 20, 4 * T + 8]) {
+        ctx.fillStyle = "#5b3d2a";
+        ctx.fillRect(ox, y + oy, W, 3);
+        ctx.fillStyle = "#94603a";
+        ctx.fillRect(ox, y - 1 + oy, W, 1);
+        for (let x = 0; x < W; x += T) {
+          ctx.fillStyle = "#5b3d2a";
+          ctx.fillRect(x + 14 + ox, y - 14 + oy, 4, 22);
+          ctx.fillStyle = "#b98450";
+          ctx.fillRect(x + 14 + ox, y - 14 + oy, 1, 22);
+        }
+      }
+    },
+    spawns: {
+      west: { x: 0.8 * T, y: 3 * T, facing: "east" },
+      east: { x: (WATARI_W - 0.8) * T, y: 3 * T, facing: "west" },
+    },
+    triggers: [
+      { id: "toHall", x: -T, y: 2 * T, w: 1.8 * T, h: 2 * T, warp: { map: "hall", spawn: "east" } },
+      { id: "toWard", x: (WATARI_W - 0.8) * T, y: 2 * T, w: 1.8 * T, h: 2 * T, warp: { map: "ward", spawn: "west" } },
+    ],
+    objects: [],
+  };
+
   // 廊下の作品展: 患者たちの絵と、写真
   const CORRIDOR_ARTS = [["fuji", 1.4], ["moon", 6.6], ["ginkgo", 9.4], ["roof", 14.6], ["blob", 17.4], ["self", 22.6], ["group", 25.4], ["banana", 30.6], ["squad", 33.4]];
   // ---- 廊下(個室のドアと、絵や写真の展示が並ぶ。途中に詰所、突き当たりに屋上への階段) ----
@@ -1316,7 +1368,7 @@
       Object.fromEntries(Object.entries(DOORS).map(([k, c]) => [k, { x: (c + 0.5) * T, y: 2.8 * T, facing: "south" }]))
     ),
     triggers: [
-      { id: "toHall", x: -T, y: 2 * T, w: 1.5 * T, h: 2 * T, warp: { map: "hall", spawn: "east" } },
+      { id: "toHall", x: -T, y: 2 * T, w: 1.5 * T, h: 2 * T, warp: { map: "watari", spawn: "east" } },
       // 個室のドア: 入ると部屋に切り替わる
       // 突き当たりの階段: 歩いて上がると屋上へ
       { id: "toRoof", x: (STAIR_C + 0.2) * T, y: 1.9 * T, w: 1.6 * T, h: 0.45 * T, warp: { map: "roof", spawn: "up" } },
@@ -1327,6 +1379,11 @@
       ...CORRIDOR_ARTS.map(([k, c]) => wallPhoto(`art_${k}`, (c + 0.5) * T, `v_art_${k}`)),
       // からの車椅子が、廊下を走っていた
       dead("d_wheel", "wheel", 6.5 * T, 4.9 * T, "v_wheel"),
+      // 廊下の奥: 壁ぎわの長椅子、止まったままの柱時計、防火用水、葉蘭の鉢
+      hat("bench", 38.9 * T, 2.9 * T),
+      hat("clock", 40 * T + 3, 1.25 * T, { sortDy: -40 }),
+      hat("firebucket", 42.5 * T, 2.85 * T),
+      hat("plant", 46.6 * T, 2.85 * T),
       // 屋上への階段(壁の開口部)
       hat("stairs", (STAIR_C + 1) * T, 2 * T, { sortDy: -40 }),
     ],
@@ -1634,7 +1691,7 @@
       name: "廃兵院",
       assetBase: "./assets/worlds/haihei/",
       images: Object.fromEntries(
-        ["facade", "arch", "yakisoba", "wataame", "shateki", "uketsuke", "wheelchair", "crutch", "ginkgo", "stage", "exhibit1", "exhibit2", "telescope", "tv_on", "tv_off", "iv", "legshelf", "oxyvase", "starchart", "photo_wedding", "photo_fighter", "d_family", "d_visitors", "poppo_row", "portrait", "tansu", "futon", "hibachi", "tricycle", "kyodai", "stairs", "door", "bed_f", "bonsai_table1", "bonsai_table2", "rwall", "rwall_p", "rwall_w", "aw", "aw_g", "aw_p", "aw_pg", "aw_w", "aw_wg", "aw_pw", "wheelchair_back", "prosthetic_rack", "workbench", "arm_stand", "deskphoto", "sunset", "noticeboard", "v_board", "guestbook", "v_guestbook", "wx_bed", "wx_chair", "wx_gramophone", "wx_lamp", "wx_teatable", "wx_rug", "rwallx", "rwallx_p", "rwallx_w", "art_fuji", "art_moon", "art_ginkgo", "art_blob", "art_self", "art_group", "art_banana", "art_squad", "art_roof", "cot", "radio", "wang_yard", "wang_ward",
+        ["facade", "arch", "yakisoba", "wataame", "shateki", "uketsuke", "wheelchair", "crutch", "ginkgo", "stage", "exhibit1", "exhibit2", "telescope", "tv_on", "tv_off", "iv", "legshelf", "oxyvase", "starchart", "photo_wedding", "photo_fighter", "d_family", "d_visitors", "poppo_row", "portrait", "bench", "clock", "firebucket", "plant", "tansu", "futon", "hibachi", "tricycle", "kyodai", "stairs", "door", "bed_f", "bonsai_table1", "bonsai_table2", "rwall", "rwall_p", "rwall_w", "aw", "aw_g", "aw_p", "aw_pg", "aw_w", "aw_wg", "aw_pw", "wheelchair_back", "prosthetic_rack", "workbench", "arm_stand", "deskphoto", "sunset", "noticeboard", "v_board", "guestbook", "v_guestbook", "wx_bed", "wx_chair", "wx_gramophone", "wx_lamp", "wx_teatable", "wx_rug", "rwallx", "rwallx_p", "rwallx_w", "art_fuji", "art_moon", "art_ginkgo", "art_blob", "art_self", "art_group", "art_banana", "art_squad", "art_roof", "cot", "radio", "wang_yard", "wang_ward",
           "d_uketsuke", "d_shateki", "d_yakisoba", "d_carver", "d_band1", "d_band2", "d_band3", "d_band4", "d_band5", "d_wheel", "d_bedman", "d_scope",
           "v_uketsuke", "v_yakisoba", "v_stall", "v_carver", "v_stage", "v_wheel", "v_bed", "v_cockpit", "v_photo_wedding", "v_photo_fighter", "v_view", "v_moon", "v_family", "v_wataame", "v_art_fuji", "v_art_moon", "v_art_ginkgo", "v_art_blob", "v_art_self", "v_art_group", "v_art_banana", "v_art_squad", "v_art_roof", "v_tv", "v_card_0", "v_card_1", "v_card_2", "v_card_3", "v_card_4", "v_card_5", "v_card_6", "v_card_7"]
           .map((k) => [k, `${k}.png`])
@@ -1643,7 +1700,7 @@
       playerSprite: { img: "ki", cell: 64, frames: 7, footY: 17 },
       start: "yard",
       startSpawn: "gate",
-      maps: { yard: YARD, hall: HALL, ward: WARD, sick: ROOM_SICK, window: ROOM_WINDOW, room1: ROOM1, room2: ROOM2, workshop: ROOM_WORKSHOP, carver: ROOM_CARVER, roof: ROOF },
+      maps: { yard: YARD, hall: HALL, watari: WATARI, ward: WARD, sick: ROOM_SICK, window: ROOM_WINDOW, room1: ROOM1, room2: ROOM2, workshop: ROOM_WORKSHOP, carver: ROOM_CARVER, roof: ROOF },
     },
   };
 })();
