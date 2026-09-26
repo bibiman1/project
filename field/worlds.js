@@ -794,7 +794,7 @@
     wheelchair_back: { img: "wheelchair_back", w: 48, h: 48, top: 5, bottom: 43, solid: [30, 10] },
     wheelchair: { img: "wheelchair", w: 48, h: 48, top: 5, bottom: 44, solid: [26, 10] },
     telescope: { img: "telescope", w: 32, h: 48, top: 8, bottom: 48, solid: [16, 8] },
-    tv: { img: "tv", w: 48, h: 48, top: 6, bottom: 43, solid: [30, 12] },
+    tv: { img: "tv_off", w: 48, h: 48, top: 6, bottom: 43, solid: [30, 12] },
     iv: { img: "iv", w: 32, h: 64, top: 3, bottom: 62, solid: [12, 6] },
     legshelf: { img: "legshelf", w: 64, h: 64, top: 3, bottom: 56, solid: [46, 14] },
     nursedesk: { img: "nursedesk", w: 64, h: 32, top: 1, bottom: 31, solid: [36, 14] },
@@ -829,7 +829,6 @@
     bonsai4: { img: "bonsai4", w: 32, h: 32, top: 2, bottom: 30, solid: [16, 8] },
     bonsai5: { img: "bonsai5", w: 32, h: 32, top: 4, bottom: 29, solid: [16, 8] },
     cot: { img: "cot", w: 32, h: 32, top: 2, bottom: 32, solid: [20, 10] },
-    radio: { img: "radio", w: 32, h: 32, top: 5, bottom: 27 },
     d_uketsuke: { img: "d_uketsuke", w: 64, h: 64, top: 11, bottom: 54 },
     d_shateki: { img: "d_shateki", w: 64, h: 64, top: 5, bottom: 58, solid: [24, 10] },
     d_yakisoba: { img: "d_yakisoba", w: 64, h: 64, top: 4, bottom: 61, solid: [24, 10] },
@@ -1066,6 +1065,18 @@
 
   // ---- 大広場(建物に入ってすぐ。舞台、客席の車椅子、作品展示、談話のテレビ。右へ進むと廊下) ----
   // マップチップに揃える: 物の中心は升目の中心、足もとは升目の境目に置く
+  // 談話のすみのテレビ(最初は消えている)。調べるたびに入/切、つけると画面を見る
+  let tvOn = false;
+  const TV = hat("tv", 13.5 * T, 3 * T, {
+    id: "tv",
+    range: 40,
+    interact(api) {
+      tvOn = !tvOn;
+      if (tvOn) api.later(300, () => api.show("v_tv"));
+    },
+  });
+  Object.defineProperty(TV, "img", { get: () => (tvOn ? "tv_on" : "tv_off") });
+
   const HALL = {
     tile: T,
     bg: "#1c1411",
@@ -1131,14 +1142,8 @@
       }),
       dead("d_carver", "carver", 13.5 * T, 10.5 * T, "v_carver", (api) => stamp(api, "exhibit")),
       board("board_hall", 2.3 * T, 3.3 * T), // 大広場の奥の壁ぎわの掲示板
-      // 談話のすみ: 誰もいないのに「バナナ農園」を映しているテレビ
-      hat("tv", 13.5 * T, 3 * T, {
-        id: "tv",
-        range: 40,
-        interact(api) {
-          api.bubble("tv", "……バナナ農園……", 3000);
-        },
-      }),
+      // 談話のすみのテレビ。調べるたびに電源が入/切。つけると南極のバナナ農園の中継
+      TV,
     ],
   };
 
@@ -1234,25 +1239,8 @@
       ...CORRIDOR_ARTS.map(([k, c]) => wallPhoto(`art_${k}`, (c + 0.5) * T, `v_art_${k}`)),
       // からの車椅子が、廊下を走っていた
       dead("d_wheel", "wheel", 6.5 * T, 4.9 * T, "v_wheel"),
-      // 詰所: ナースコールを押すと、遠くでプロペラの音(ぼぎボマー)。ラジオは金星の天気予報
-      hat("nursedesk", 12 * T, 3 * T, {
-        id: "nursecall",
-        range: 44,
-        interact(api) {
-          api.bubble("nursecall", "……ぶうううん……", 3000);
-        },
-      }),
-      hat("radio", 14 * T, 3 * T, {
-        id: "radio",
-        range: 34,
-        interact(api) {
-          api.bubble("radio", "……あすの金星は、晴れ……", 3600);
-          if (!api.hasWord("金星の天気予報")) {
-            api.learnWord("金星の天気予報");
-            api.toast("金星の天気予報");
-          }
-        },
-      }),
+      // 詰所
+      hat("nursedesk", 12 * T, 3 * T),
       // 屋上への階段(壁の開口部)
       hat("stairs", 29 * T, 2 * T, { sortDy: -40 }),
     ],
@@ -1541,9 +1529,9 @@
       name: "廃兵院",
       assetBase: "./assets/worlds/haihei/",
       images: Object.fromEntries(
-        ["facade", "arch", "yakisoba", "wataame", "shateki", "uketsuke", "wheelchair", "ginkgo", "stage", "exhibit1", "exhibit2", "bed", "telescope", "tv", "iv", "legshelf", "nursedesk", "oxyvase", "starchart", "photo_wedding", "photo_fighter", "d_family", "d_visitors", "tansu", "futon", "hibachi", "tricycle", "kyodai", "stairs", "door", "bed_f", "bonsai1", "bonsai2", "bonsai3", "bonsai4", "bonsai5", "rwall", "rwall_p", "rwall_w", "wall_in", "wheelchair_back", "prosthetic_rack", "workbench", "arm_stand", "deskphoto", "sunset", "noticeboard", "v_board", "guestbook", "v_guestbook", "wx_bed", "wx_chair", "wx_gramophone", "wx_lamp", "wx_teatable", "wx_rug", "rwallx", "rwallx_p", "rwallx_w", "art_fuji", "art_moon", "art_ginkgo", "art_blob", "art_self", "art_group", "art_banana", "art_squad", "art_roof", "cot", "radio", "wall", "wall2", "wang_yard", "wang_ward",
+        ["facade", "arch", "yakisoba", "wataame", "shateki", "uketsuke", "wheelchair", "ginkgo", "stage", "exhibit1", "exhibit2", "bed", "telescope", "tv_on", "tv_off", "iv", "legshelf", "nursedesk", "oxyvase", "starchart", "photo_wedding", "photo_fighter", "d_family", "d_visitors", "tansu", "futon", "hibachi", "tricycle", "kyodai", "stairs", "door", "bed_f", "bonsai1", "bonsai2", "bonsai3", "bonsai4", "bonsai5", "rwall", "rwall_p", "rwall_w", "wall_in", "wheelchair_back", "prosthetic_rack", "workbench", "arm_stand", "deskphoto", "sunset", "noticeboard", "v_board", "guestbook", "v_guestbook", "wx_bed", "wx_chair", "wx_gramophone", "wx_lamp", "wx_teatable", "wx_rug", "rwallx", "rwallx_p", "rwallx_w", "art_fuji", "art_moon", "art_ginkgo", "art_blob", "art_self", "art_group", "art_banana", "art_squad", "art_roof", "cot", "wall", "wall2", "wang_yard", "wang_ward",
           "d_uketsuke", "d_shateki", "d_yakisoba", "d_carver", "d_band1", "d_band2", "d_band3", "d_band4", "d_band5", "d_wheel", "d_bedman", "d_scope",
-          "v_uketsuke", "v_yakisoba", "v_stall", "v_carver", "v_stage", "v_wheel", "v_bed", "v_cockpit", "v_photo_wedding", "v_photo_fighter", "v_view", "v_moon", "v_family", "v_wataame", "v_art_fuji", "v_art_moon", "v_art_ginkgo", "v_art_blob", "v_art_self", "v_art_group", "v_art_banana", "v_art_squad", "v_art_roof"]
+          "v_uketsuke", "v_yakisoba", "v_stall", "v_carver", "v_stage", "v_wheel", "v_bed", "v_cockpit", "v_photo_wedding", "v_photo_fighter", "v_view", "v_moon", "v_family", "v_wataame", "v_art_fuji", "v_art_moon", "v_art_ginkgo", "v_art_blob", "v_art_self", "v_art_group", "v_art_banana", "v_art_squad", "v_art_roof", "v_tv"]
           .map((k) => [k, `${k}.png`])
           .concat([["ki", "./assets/worlds/lake/ki_walk.png"]])
       ),
