@@ -540,11 +540,11 @@
   // フィールドは今(夕方)。死人に話しかけると、生きていた頃の文化祭の日の思い出(一枚絵)が起きる。
   // リリカルで、物悲しいが怖くない。サナトリウムのように穏やか。激戦があったことは匂わせるだけ。
   const HS = {
-    facade: { img: "facade", w: 320, h: 160, top: 13, bottom: 147 },
+    facade: { img: "facade", w: 320, h: 160, top: 31, bottom: 131 },
     arch: { img: "arch", w: 128, h: 96, top: 3, bottom: 93 },
-    yakisoba: { img: "yakisoba", w: 96, h: 96, top: 13, bottom: 85, solid: [72, 24] },
-    wataame: { img: "wataame", w: 96, h: 96, top: 17, bottom: 87, solid: [62, 24] },
-    shateki: { img: "shateki", w: 128, h: 96, top: 10, bottom: 85, solid: [92, 28] },
+    yakisoba: { img: "yakisoba", w: 96, h: 96, top: 12, bottom: 82, solid: [72, 20] },
+    wataame: { img: "wataame", w: 96, h: 96, top: 12, bottom: 84, solid: [66, 20] },
+    shateki: { img: "shateki", w: 128, h: 96, top: 9, bottom: 87, solid: [86, 24] },
     uketsuke: { img: "uketsuke", w: 96, h: 64, top: 4, bottom: 60, solid: [64, 20] },
     ginkgo: { img: "ginkgo", w: 64, h: 96, top: 5, bottom: 91, solid: [14, 8] },
     stage: { img: "stage", w: 256, h: 96, top: 2, bottom: 96, solid: [156, 64] },
@@ -747,9 +747,9 @@
           if (api.flag("prize")) return;
           const a = 0.55 + Math.sin(t * 3) * 0.35;
           ctx.fillStyle = `rgba(170, 230, 255, ${a})`;
-          ctx.fillRect(sx + 12, sy - 11, 4, 6);
+          ctx.fillRect(sx - 6, sy - 6, 4, 6);
           ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
-          ctx.fillRect(sx + 13, sy - 10, 1, 2);
+          ctx.fillRect(sx - 5, sy - 5, 1, 2);
         },
       }),
       dead("d_shateki", "shateki", 15.6 * T, 11.7 * T, "v_stall", (api) => stamp(api, "stall")),
