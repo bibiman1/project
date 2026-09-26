@@ -121,8 +121,13 @@
         warp(mapId, spawn) {
           host.fade(() => loadMap(mapId, spawn));
         },
-        exit() {
+        // 断片の条件を満たした(記録だけ。退出は出口から)
+        clear() {
           if (!host.state.cleared.includes(w.id)) host.state.cleared.push(w.id);
+          host.save();
+        },
+        // 懲罰空間へ戻る
+        exit() {
           host.save();
           host.exit(w.id);
         },

@@ -192,6 +192,8 @@
       pass: { x: 13.2 * T, y: 10.6 * T, facing: "west" },
     },
     triggers: [
+      // 道のはじまり(来たところ)から、懲罰空間へ戻る
+      { id: "leave", x: 5.5 * T, y: 59.35 * T, w: 4 * T, h: T, run: (api) => api.exit() },
       // 峠: 森が切れて、富士山が見えてくる
       {
         id: "vista",
@@ -410,7 +412,7 @@
             api.show("v_table", () => {
               api.setFlag("ate");
               api.later(500, () =>
-                api.show("v_road", () => api.later(700, () => api.exit()))
+                api.show("v_road", () => api.clear())
               );
             })
           );
@@ -735,7 +737,11 @@
       api.setFlag("heard");
       api.later(900, () => api.mutter("はい　へい　うぃん", 3200));
     },
-    triggers: [{ id: "toHall", x: 8 * T, y: 4.6 * T, w: 2 * T, h: 0.8 * T, warp: { map: "hall", spawn: "south" } }],
+    triggers: [
+      { id: "toHall", x: 8 * T, y: 4.6 * T, w: 2 * T, h: 0.8 * T, warp: { map: "hall", spawn: "south" } },
+      // 門(来たところ)から、懲罰空間へ戻る
+      { id: "leave", x: 7.5 * T, y: 19.35 * T, w: 3 * T, h: T, run: (api) => api.exit() },
+    ],
     drawOverlay(ctx, ox, oy, t) {
       bunting(ctx, ox, oy, 3 * T, 4.2 * T, 3.5 * T, 17.5 * T, t);
       bunting(ctx, ox, oy, 15 * T, 4.2 * T, 14.5 * T, 17.5 * T, t);
@@ -1169,7 +1175,7 @@
         h: 8,
         range: 44,
         interact(api) {
-          // 景品(次の世界へのカギ)を持っていれば、記憶へ進んで懲罰空間に戻る
+          // 景品(次の世界へのカギ)を持っていれば、屋上の記憶へ(断片の条件を満たす。帰りは門から)
           if (!api.hasItem("宇宙船殻用単結晶")) {
             api.show("v_view");
             return;
@@ -1177,7 +1183,7 @@
           api.show("v_view", () => {
             api.show("v_roof", () => {
               api.mutter("はい　へい　うぃん", 3000);
-              api.later(2600, () => api.exit());
+              api.clear();
             });
           });
         },
