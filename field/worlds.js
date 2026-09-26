@@ -1789,6 +1789,21 @@
     },
 
     objects: [
+      // ドラム缶の上の波板の壁に、夏の日の集合写真(機体とパイロットと整備兵。黒い台紙)
+      {
+        id: "photo",
+        img: "photo_summer",
+        w: 22,
+        h: 15,
+        x: 8.4 * T,
+        y: 2.6 * T,
+        sortDy: -30,
+        iy: 50,
+        range: 44,
+        interact(api) {
+          api.show("v_summer");
+        },
+      },
       {
         id: "bench",
         x: 6.4 * T,
@@ -1832,7 +1847,7 @@
     return inside;
   };
   const WING_SOLID = (c, r) => !WING_POLYS.some((p) => inPoly(c + 0.5, r + 0.5, p));
-  // 機体の脇で、地上ぼぎクルーが直している(カン、カン)。話しかけると、夏の日の思い出
+  // 機体の脇で、地上ぼぎクルーが直している(カン、カン)
   const repairCrew = (id, img, fx, fy, phase) =>
     hat(img, fx, fy, {
       id,
@@ -1860,7 +1875,7 @@
         ctx.restore();
       },
       interact(api) {
-        api.show("v_summer");
+        api.bubble(id, "カン", 900);
       },
     });
   const WING_CREW = [
@@ -2106,7 +2121,7 @@
       name: "霞ヶ浦のエクラノプラン",
       assetBase: "./assets/worlds/kasumi/",
       images: Object.fromEntries(
-        ["bg_lotus", "bg_hangar", "bg_wing", "bg_cockpit", "crew_hawk", "crew_wagtail", "crew_rooster", "fl_sky", "fl_hills", "fl_wbase", "fl_ripple", "fl_mist", "fl_ekrano", "fl_ekrano_top", "fl_ekrano_shadow", "fl_lake", "v_flight", "v_summer"]
+        ["bg_lotus", "bg_hangar", "bg_wing", "bg_cockpit", "crew_hawk", "crew_wagtail", "crew_rooster", "fl_sky", "fl_hills", "fl_wbase", "fl_ripple", "fl_mist", "fl_ekrano", "fl_ekrano_top", "fl_ekrano_shadow", "fl_lake", "v_flight", "v_summer", "photo_summer"]
           .map((k) => [k, `${k}.png`])
           .concat([["bg_shore", "bg_shore.png"], ["ki", "./assets/worlds/lake/ki_walk.png"]])
       ),
