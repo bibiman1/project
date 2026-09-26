@@ -1282,7 +1282,29 @@
   }
 
   let lastTime = 0;
+  // 起きたエラーを画面に出す(スマホでも原因がわかるように)。最初の1件だけ
+  let reportedError = false;
+  function reportError(e) {
+    if (reportedError) return;
+    reportedError = true;
+    introHint.textContent = `エラー: ${(e && e.message) || e}`;
+    introHint.classList.remove("hidden");
+    introHint.style.whiteSpace = "normal";
+    introHint.style.maxWidth = "90%";
+  }
+  window.bogiReportError = reportError;
+  window.addEventListener("error", (ev) => reportError(ev.error || ev.message));
+
   function loop(timestamp) {
+    requestAnimationFrame(loop);
+    try {
+      frame(timestamp);
+    } catch (e) {
+      reportError(e);
+    }
+  }
+
+  function frame(timestamp) {
     if (!lastTime) lastTime = timestamp;
     const dt = Math.min(0.05, (timestamp - lastTime) / 1000);
     lastTime = timestamp;
@@ -1292,7 +1314,6 @@
 
     if (rpg.active) {
       rpg.draw(t);
-      requestAnimationFrame(loop);
       return;
     }
 
@@ -1306,8 +1327,6 @@
     drawToribogikaaWanderer(camX, camY, t);
     drawBogikaaWanderer(camX, camY, t);
     drawPlayer(t);
-
-    requestAnimationFrame(loop);
   }
 
   updateStatus();

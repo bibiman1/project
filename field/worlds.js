@@ -108,72 +108,34 @@
     }
   }
 
-  // 曲がった道を1ドット単位で描いた下絵(一度だけ作る)。
-  // マス目のタイルだと縁が階段になるので、道は曲線に沿って円を押していって描く。
-  function buildRoadLayer(tileImg, curve, cols, rows, fromRow) {
-    const W = cols * T;
-    const H = rows * T;
-    const tex = document.createElement("canvas");
-    tex.width = T;
-    tex.height = T;
-    const tctx = tex.getContext("2d");
-    tctx.drawImage(tileImg, 2 * T, 1 * T, T, T, 0, 0, T, T); // 全面が道のタイル(角 0000)
-    const texData = tctx.getImageData(0, 0, T, T).data;
-    const mask = new Uint8Array(W * H); // 0: なし 1: 雪の土手 2: 道
-    const INNER = 44;
-    const OUTER = 48;
-    const pts = [];
-    for (let i = 0; i < curve.length - 1; i++) {
-      const [r0, c0] = curve[i];
-      const [r1, c1] = curve[i + 1];
-      const x0 = (c0 + 0.5) * T;
-      const y0 = (r0 + 0.5) * T;
-      const x1 = (c1 + 0.5) * T;
-      const y1 = (r1 + 0.5) * T;
-      const n = Math.max(1, Math.ceil(Math.hypot(x1 - x0, y1 - y0) / 2));
-      for (let k = 0; k < n; k++) pts.push([x0 + ((x1 - x0) * k) / n, y0 + ((y1 - y0) * k) / n]);
+  // 曲がった道: 曲線を太い線で2回なぞる(外側が雪の土手、内側が道)。
+  // マス目のタイルだと縁が階段になるので、道だけは線で描く。
+  function drawRoadVector(ctx, ox, oy, tileImg, cache) {
+    if (!cache.pattern) {
+      const tex = document.createElement("canvas");
+      tex.width = T;
+      tex.height = T;
+      tex.getContext("2d").drawImage(tileImg, 2 * T, 1 * T, T, T, 0, 0, T, T);
+      cache.pattern = ctx.createPattern(tex, "repeat");
     }
-    const stamp = (r, v) => {
-      for (const [px, py] of pts) {
-        for (let y = Math.max(fromRow * T, Math.floor(py - r)); y <= Math.min(H - 1, py + r); y++) {
-          for (let x = Math.max(0, Math.floor(px - r)); x <= Math.min(W - 1, px + r); x++) {
-            if ((x + 0.5 - px) ** 2 + (y + 0.5 - py) ** 2 <= r * r && mask[y * W + x] < v) mask[y * W + x] = v;
-          }
-        }
-      }
-    };
-    stamp(INNER, 2);
-    stamp(OUTER, 1);
-    const out = document.createElement("canvas");
-    out.width = W;
-    out.height = H;
-    const octx = out.getContext("2d");
-    const img = octx.createImageData(W, H);
-    const d = img.data;
-    for (let y = 0; y < H; y++) {
-      for (let x = 0; x < W; x++) {
-        const m = mask[y * W + x];
-        if (!m) continue;
-        const o = (y * W + x) * 4;
-        if (m === 2) {
-          const t = ((y % T) * T + (x % T)) * 4;
-          d[o] = texData[t];
-          d[o + 1] = texData[t + 1];
-          d[o + 2] = texData[t + 2];
-        } else {
-          // 土手: 道に近い側は影、雪との境目は輪郭
-          const edge = x > 0 && x < W - 1 && y > 0 && y < H - 1 && [mask[o / 4 - 1], mask[o / 4 + 1], mask[o / 4 - W], mask[o / 4 + W]].includes(0);
-          const inner = [mask[o / 4 - 1], mask[o / 4 + 1], mask[o / 4 - W], mask[o / 4 + W]].includes(2);
-          const c = edge ? [150, 184, 204] : inner ? [196, 218, 230] : [238, 246, 250];
-          d[o] = c[0];
-          d[o + 1] = c[1];
-          d[o + 2] = c[2];
-        }
-        d[o + 3] = 255;
-      }
-    }
-    octx.putImageData(img, 0, 0);
-    return out;
+    ctx.save();
+    ctx.translate(ox, oy);
+    ctx.beginPath();
+    ROAD_CURVE.forEach(([r, c], i) => {
+      const x = (c + 0.5) * T;
+      const y = Math.max(8 * T, (r + 0.5) * T);
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    });
+    ctx.lineCap = "butt";
+    ctx.lineJoin = "round";
+    ctx.strokeStyle = "#c4dae6";
+    ctx.lineWidth = 96;
+    ctx.stroke();
+    ctx.strokeStyle = cache.pattern;
+    ctx.lineWidth = 88;
+    ctx.stroke();
+    ctx.restore();
   }
 
   function nearRoad(grid, r, c, d) {
@@ -219,13 +181,10 @@
     wang: { road: { img: "wang_road", size: 32, lookup: WANG16 } },
     backdrop: { img: "fuji", x: 0, y: 16, scale: 2 },
     drawGround(ctx, ox, oy, img) {
-      if (!this.layer) {
-        if (typeof img !== "function") return; // 古い rpg.js と混ざったとき(キャッシュ)に止まらないように
-        const tile = img("wang_road");
-        if (!tile) return;
-        this.layer = buildRoadLayer(tile, ROAD_CURVE, ROAD_COLS, ROAD_ROWS, 8);
-      }
-      ctx.drawImage(this.layer, ox, oy);
+      if (typeof img !== "function") return; // 古い rpg.js と混ざったとき(キャッシュ)に止まらないように
+      const tile = img("wang_road");
+      if (!tile) return;
+      drawRoadVector(ctx, ox, oy, tile, this);
       centerLine(ctx, ox, oy, ROAD_CURVE.filter(([r]) => r > 8).map(([r, c]) => [(c + 0.5) * T, (r + 0.5) * T]));
     },
     spawns: {
