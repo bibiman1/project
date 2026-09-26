@@ -560,6 +560,13 @@
     starchart: { img: "starchart", w: 32, h: 32, top: 0, bottom: 30 },
     photo_wedding: { img: "photo_wedding", w: 32, h: 32, top: 0, bottom: 30 },
     photo_fighter: { img: "photo_fighter", w: 32, h: 32, top: 0, bottom: 30 },
+    d_family: { img: "d_family", w: 96, h: 64, top: 9, bottom: 51, solid: [56, 14] },
+    d_visitors: { img: "d_visitors", w: 64, h: 64, top: 6, bottom: 60 },
+    tansu: { img: "tansu", w: 48, h: 64, top: 13, bottom: 56, solid: [36, 12] },
+    futon: { img: "futon", w: 48, h: 32, top: 6, bottom: 28 },
+    hibachi: { img: "hibachi", w: 32, h: 32, top: 6, bottom: 28, solid: [18, 8] },
+    tricycle: { img: "tricycle", w: 32, h: 32, top: 5, bottom: 27 },
+    kyodai: { img: "kyodai", w: 32, h: 48, top: 5, bottom: 47, solid: [22, 8] },
     stairs: { img: "stairs", w: 64, h: 64, top: 0, bottom: 62 },
     cot: { img: "cot", w: 32, h: 32, top: 2, bottom: 32, solid: [20, 10] },
     radio: { img: "radio", w: 32, h: 32, top: 5, bottom: 27 },
@@ -741,6 +748,8 @@
       hat("yakisoba", 4.5 * T, 11 * T),
       dead("d_yakisoba", "yakisoba", 6.2 * T, 11.6 * T, "v_yakisoba"),
       hat("wataame", 4.5 * T, 15 * T),
+      // 祭に来ていた市民: 綿あめを持った子と母
+      dead("d_visitors", "visitors", 6.6 * T, 15.2 * T, "v_wataame"),
       hat("shateki", 13 * T, 11 * T, {
         // 景品棚の、見たことのないもの(鈴木商店の宇宙船殻用単結晶)。景品として受け取ると消える
         draw(ctx, sx, sy, t, api) {
@@ -820,22 +829,40 @@
     ],
   };
 
-  // ---- 病棟(談話室、病室、詰所、屋上への階段) ----
+  // ---- 病棟(談話室、病室、詰所、家族の個室、屋上への階段) ----
+  // 家族の個室(列の範囲)。廃兵院は生活の場で、家族と暮らしていた
+  const FAMILY_ROOMS = [[25, 30], [31, 36]];
+  function partition(col) {
+    return {
+      x: col * T,
+      y: 3.5 * T,
+      w: 6,
+      h: 3 * T,
+      sortDy: 1.5 * T,
+      solid: { w: 6, h: 3 * T, dy: 0 },
+      draw(ctx, sx, sy) {
+        ctx.fillStyle = "#3a261b";
+        ctx.fillRect(sx - 3, sy - 1.5 * T - 18, 6, 3 * T + 18);
+        ctx.fillStyle = "#5b3d2a";
+        ctx.fillRect(sx - 2, sy - 1.5 * T - 18, 2, 3 * T + 18);
+      },
+    };
+  }
   const WARD = {
     tile: T,
     bg: "#1c1411",
     tintMul: "#f0c09a",
     tint: "rgba(255, 150, 70, 0.08)",
     map: [
-      "UuUuUuUuUuUuUuUuUuUuUuUuUu",
-      "LlLlLlLlLlLlLlLlLlLlLlLlLl",
-      "X,,,,,,,,,,,,,,,,,,,,,,,,X",
-      "X,,,,,,,,,,,,,,,,,,,,,,,,X",
-      "X,,,,,,,,,,,,,,,,,,,,,,,,X",
-      "..........................",
-      "..........................",
-      "X........................X",
-      "XXXXXXXXXXXXXXXXXXXXXXXXXX",
+      "UuUuUuUuUuUuUuUuUuUuUuUuUuUuUuUuUuUuUu",
+      "LlLlLlLlLlLlLlLlLlLlLlLlLlLlLlLlLlLlLl",
+      "X,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,X",
+      "X,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,X",
+      "X,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,X",
+      "......................................",
+      "......................................",
+      "X....................................X",
+      "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
     ].map((r, i) => (i === 5 || i === 6 ? "." + r.slice(1, -1) + "X" : r)),
     legend: {
       X: { solid: true, color: "#2a1d17", lowerOf: ["ward"] },
@@ -847,6 +874,27 @@
       ",": { wang: "ward" },
     },
     wang: { ward: { img: "wang_ward", size: 32, lookup: WANG16 } },
+    // 家族の個室: 畳を敷いて、板の仕切りで区切る
+    drawGround(ctx, ox, oy) {
+      FAMILY_ROOMS.forEach(([c0, c1]) => {
+        const x0 = c0 * T + ox;
+        const y0 = 2 * T + oy;
+        const w = (c1 - c0) * T;
+        const h = 3 * T;
+        ctx.fillStyle = "#c2a86e";
+        ctx.fillRect(x0, y0, w, h);
+        ctx.fillStyle = "rgba(120, 96, 50, 0.25)";
+        for (let x = x0 + 1; x < x0 + w; x += 3) ctx.fillRect(x, y0, 1, h); // い草の目
+        // 畳の縁: 横長の畳を、段ごとにずらして敷く
+        ctx.fillStyle = "#3d5238";
+        for (let r = 0; r < 3; r++) {
+          const y = y0 + r * T;
+          ctx.fillRect(x0, y, w, 2);
+          for (let x = x0 + (r % 2 ? T : 0); x <= x0 + w; x += 2 * T) ctx.fillRect(Math.min(x, x0 + w - 2), y, 2, T);
+        }
+        ctx.fillRect(x0, y0 + h - 2, w, 2);
+      });
+    },
     spawns: { west: { x: 1 * T, y: 6 * T, facing: "east" } },
     triggers: [{ id: "toHall", x: -T, y: 5 * T, w: 1.5 * T, h: 2 * T, warp: { map: "hall", spawn: "east" } }],
     objects: [
@@ -861,8 +909,8 @@
       dead("d_wheel", "wheel", 5.6 * T, 6.9 * T, "v_wheel"),
       // 病室
       hat("oxyvase", 7.6 * T, 2.9 * T),
-      // 枕元の壁: 宇宙軍の礼装と花嫁の写真
-      hat("photo_wedding", 8.4 * T, 1.9 * T, {
+      // 個室の壁: 宇宙軍の礼装と花嫁の写真
+      hat("photo_wedding", 33.2 * T, 1.9 * T, {
         id: "photo_wedding",
         sortDy: -40,
         iy: 20,
@@ -935,7 +983,18 @@
         },
       }),
       // 屋上への階段: 景品をもらったら上がれる
-      hat("stairs", 24.4 * T, 4.4 * T, {
+      // 家族の個室: 卓袱台を囲む一家。三輪車、箪笥、鏡台
+      partition(24.9),
+      hat("tansu", 25.9 * T, 2.9 * T),
+      hat("kyodai", 29.2 * T, 2.9 * T),
+      dead("d_family", "family", 27.5 * T, 4.2 * T, "v_family"),
+      hat("tricycle", 26.2 * T, 4.8 * T),
+      partition(30.5),
+      // 隣の個室: たたんだ布団、火鉢、壁に結婚写真
+      hat("futon", 32 * T, 2.9 * T),
+      hat("hibachi", 34.4 * T, 3.9 * T),
+      partition(36.1),
+      hat("stairs", 37 * T, 4.4 * T, {
         id: "stairs",
         range: 44,
         interact(api) {
@@ -1023,9 +1082,9 @@
       name: "廃兵院",
       assetBase: "./assets/worlds/haihei/",
       images: Object.fromEntries(
-        ["facade", "arch", "yakisoba", "wataame", "shateki", "uketsuke", "wheelchair", "ginkgo", "stage", "exhibit1", "exhibit2", "bed", "telescope", "tv", "iv", "legshelf", "nursedesk", "oxyvase", "starchart", "photo_wedding", "photo_fighter", "stairs", "cot", "radio", "wall", "wall2", "wang_yard", "wang_ward",
+        ["facade", "arch", "yakisoba", "wataame", "shateki", "uketsuke", "wheelchair", "ginkgo", "stage", "exhibit1", "exhibit2", "bed", "telescope", "tv", "iv", "legshelf", "nursedesk", "oxyvase", "starchart", "photo_wedding", "photo_fighter", "d_family", "d_visitors", "tansu", "futon", "hibachi", "tricycle", "kyodai", "stairs", "cot", "radio", "wall", "wall2", "wang_yard", "wang_ward",
           "d_uketsuke", "d_shateki", "d_yakisoba", "d_carver", "d_band1", "d_band2", "d_wheel", "d_bedman", "d_scope",
-          "v_uketsuke", "v_yakisoba", "v_stall", "v_carver", "v_stage", "v_wheel", "v_bed", "v_cockpit", "v_roof", "v_photo_wedding", "v_photo_fighter", "v_view", "v_moon"]
+          "v_uketsuke", "v_yakisoba", "v_stall", "v_carver", "v_stage", "v_wheel", "v_bed", "v_cockpit", "v_roof", "v_photo_wedding", "v_photo_fighter", "v_view", "v_moon", "v_family", "v_wataame"]
           .map((k) => [k, `${k}.png`])
           .concat([["ki", "./assets/worlds/lake/ki_walk.png"]])
       ),
