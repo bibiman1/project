@@ -829,7 +829,9 @@
     d_uketsuke: { img: "d_uketsuke", w: 64, h: 64, top: 11, bottom: 54 },
     d_shateki: { img: "d_shateki", w: 64, h: 64, top: 5, bottom: 58, solid: [24, 10] },
     d_yakisoba: { img: "d_yakisoba", w: 64, h: 64, top: 4, bottom: 61, solid: [24, 10] },
-    d_carver: { img: "d_carver", w: 64, h: 64, top: 10, bottom: 60, solid: [28, 10] },
+    d_carver: { img: "d_carver", w: 48, h: 48, top: 4, bottom: 45, solid: [28, 10] }, // 畳の上で正座
+    poppo_row: { img: "poppo_row", w: 40, h: 12, top: 1, bottom: 11 },
+    portrait: { img: "portrait", w: 32, h: 32, top: 2, bottom: 26 },
     d_wheel: { img: "d_wheel", w: 64, h: 64, top: 7, bottom: 58, solid: [26, 10] },
     d_bedman: { img: "d_bedman", w: 32, h: 64, top: 3, bottom: 62, solid: [26, 40] },
     d_band1: { img: "d_band1", w: 48, h: 64, top: 11, bottom: 61 },
@@ -868,11 +870,12 @@
   function stampCount(api) {
     return STAMPS.filter((k) => api.flag(`stamp.${k}`)).length;
   }
-  function stamp(api, key) {
+  // 台紙の絵: 押した場所の枠にハンコ(屋台=1, 展示=2, 舞台=4 のビットで 8 通り)
+  const cardImage = (api) => `v_card_${STAMPS.reduce((m, k, i) => m | (api.flag(`stamp.${k}`) ? 1 << i : 0), 0)}`;
+  function stamp(api, key, delayMs = 0) {
     if (api.flag(`stamp.${key}`)) return;
     api.setFlag(`stamp.${key}`);
-    const n = stampCount(api);
-    api.toast(`スタンプ ${"●".repeat(n)}${"○".repeat(STAMPS.length - n)}`);
+    api.later(delayMs, () => api.show(cardImage(api))); // ハンコが増えた台紙を見せる
   }
   // 死人: 話しかけると、その人との思い出
   function dead(kind, id, fx, fy, memory, after, extra) {
@@ -1079,10 +1082,13 @@
             api.show("v_uketsuke", () => {
               api.setFlag("card");
               api.giveItem("スタンプ台紙");
+              api.show(cardImage(api)); // もらった台紙
             });
           } else if (stampCount(api) === STAMPS.length && !api.flag("prize")) {
-            api.setFlag("prize");
-            api.giveItem("宇宙船殻用単結晶");
+            api.show(cardImage(api), () => {
+              api.setFlag("prize");
+              api.giveItem("宇宙船殻用単結晶");
+            });
           } else {
             api.show("v_uketsuke");
           }
@@ -1189,8 +1195,8 @@
         ["d_band5", "band5", 11],
       ].map(([kind, id, c], i, all) =>
         dead(kind, id, c * T, 4.6 * T, "v_stage", (api) => {
-          stamp(api, "stage");
-          hiHeyWin(api, [id, ...all.map((b) => b[1]).filter((b) => b !== id), "carver"]);
+          stamp(api, "stage", 2800); // 掛け声のあとで台紙
+          hiHeyWin(api, [id, ...all.map((b) => b[1]).filter((b) => b !== id)]);
         }, { sortDy: 60, iy: 60, range: 56 })
       ),
       // 客席: 車椅子を一列に
@@ -1200,14 +1206,15 @@
       hat("bonsai_table1", 3 * T, 9.3 * T),
       hat("bonsai_table2", 3 * T, 10.9 * T),
       // 作りかけのおたかポッポ(手すさび)が並ぶ台
+      // (彫っていた人は、廊下の奥の自分の部屋にいる)
       hat("exhibit2", 11.5 * T, 9.5 * T, {
         id: "exhibit2",
         range: 36,
         interact(api) {
           api.mutter("ちゃん");
+          stamp(api, "exhibit");
         },
       }),
-      dead("d_carver", "carver", 13.5 * T, 10.5 * T, "v_carver", (api) => stamp(api, "exhibit")),
       board("board_hall", 2.3 * T, 3.3 * T), // 大広場の奥の壁ぎわの掲示板
       // 談話のすみのテレビ。調べるたびに電源が入/切。つけると南極のバナナ農園の中継
       TV,
@@ -1245,10 +1252,10 @@
   const CORRIDOR_ARTS = [["fuji", 1.4], ["moon", 6.6], ["ginkgo", 9.4], ["roof", 14.6], ["blob", 17.4], ["self", 22.6], ["group", 25.4], ["banana", 30.6], ["squad", 33.4]];
   // ---- 廊下(個室のドアと、絵や写真の展示が並ぶ。途中に詰所、突き当たりに屋上への階段) ----
   // 病棟の片廊下: 北側に個室が幅8マス(内法7マス+仕切り)で並び、ドアは各部屋の中央。南側は一面のガラス窓
-  const WARD_W = 44;
+  const WARD_W = 52;
   const ROOM_MOD = 8;
-  const DOORS = { sick: 4, window: 12, room1: 20, room2: 28, workshop: 36 }; // ドアの列
-  const STAIR_C = 41; // 突き当たりの階段(2マス)
+  const DOORS = { sick: 4, window: 12, room1: 20, room2: 28, workshop: 36, carver: 44 }; // ドアの列
+  const STAIR_C = 49; // 突き当たりの階段(2マス)
   const wardWallRow = (a, b) => {
     let r = "";
     for (let c = 0; c < WARD_W; c++) {
@@ -1431,6 +1438,12 @@
     hat("arm_stand", 7.5 * T, 3 * T),
   ]);
   // 家族の部屋: 卓袱台を囲む一家。箪笥、鏡台、三輪車
+  // 木彫りの人の部屋(和室): 障子の窓辺で正座して、おたかポッポを彫っていた
+  const ROOM_CARVER = room("carver", "tatami", [
+    hat("portrait", 6.5 * T, 1.3 * T, { sortDy: -40 }), // 壁の写真(若い頃の軍服)
+    hat("poppo_row", 2.7 * T, 4.2 * T),
+    dead("d_carver", "carver", 4.4 * T, 4.1 * T, "v_carver"),
+  ]);
   const ROOM1 = room("room1", "tatami", [
     hat("tansu", 1.5 * T, 3 * T),
     hat("kyodai", 7.5 * T, 3 * T),
@@ -1620,16 +1633,16 @@
       name: "廃兵院",
       assetBase: "./assets/worlds/haihei/",
       images: Object.fromEntries(
-        ["facade", "arch", "yakisoba", "wataame", "shateki", "uketsuke", "wheelchair", "crutch", "ginkgo", "stage", "exhibit1", "exhibit2", "telescope", "tv_on", "tv_off", "iv", "legshelf", "oxyvase", "starchart", "photo_wedding", "photo_fighter", "d_family", "d_visitors", "tansu", "futon", "hibachi", "tricycle", "kyodai", "stairs", "door", "bed_f", "bonsai_table1", "bonsai_table2", "rwall", "rwall_p", "rwall_w", "aw", "aw_g", "aw_p", "aw_pg", "aw_w", "aw_wg", "aw_pw", "wheelchair_back", "prosthetic_rack", "workbench", "arm_stand", "deskphoto", "sunset", "noticeboard", "v_board", "guestbook", "v_guestbook", "wx_bed", "wx_chair", "wx_gramophone", "wx_lamp", "wx_teatable", "wx_rug", "rwallx", "rwallx_p", "rwallx_w", "art_fuji", "art_moon", "art_ginkgo", "art_blob", "art_self", "art_group", "art_banana", "art_squad", "art_roof", "cot", "radio", "wang_yard", "wang_ward",
+        ["facade", "arch", "yakisoba", "wataame", "shateki", "uketsuke", "wheelchair", "crutch", "ginkgo", "stage", "exhibit1", "exhibit2", "telescope", "tv_on", "tv_off", "iv", "legshelf", "oxyvase", "starchart", "photo_wedding", "photo_fighter", "d_family", "d_visitors", "poppo_row", "portrait", "tansu", "futon", "hibachi", "tricycle", "kyodai", "stairs", "door", "bed_f", "bonsai_table1", "bonsai_table2", "rwall", "rwall_p", "rwall_w", "aw", "aw_g", "aw_p", "aw_pg", "aw_w", "aw_wg", "aw_pw", "wheelchair_back", "prosthetic_rack", "workbench", "arm_stand", "deskphoto", "sunset", "noticeboard", "v_board", "guestbook", "v_guestbook", "wx_bed", "wx_chair", "wx_gramophone", "wx_lamp", "wx_teatable", "wx_rug", "rwallx", "rwallx_p", "rwallx_w", "art_fuji", "art_moon", "art_ginkgo", "art_blob", "art_self", "art_group", "art_banana", "art_squad", "art_roof", "cot", "radio", "wang_yard", "wang_ward",
           "d_uketsuke", "d_shateki", "d_yakisoba", "d_carver", "d_band1", "d_band2", "d_band3", "d_band4", "d_band5", "d_wheel", "d_bedman", "d_scope",
-          "v_uketsuke", "v_yakisoba", "v_stall", "v_carver", "v_stage", "v_wheel", "v_bed", "v_cockpit", "v_photo_wedding", "v_photo_fighter", "v_view", "v_moon", "v_family", "v_wataame", "v_art_fuji", "v_art_moon", "v_art_ginkgo", "v_art_blob", "v_art_self", "v_art_group", "v_art_banana", "v_art_squad", "v_art_roof", "v_tv"]
+          "v_uketsuke", "v_yakisoba", "v_stall", "v_carver", "v_stage", "v_wheel", "v_bed", "v_cockpit", "v_photo_wedding", "v_photo_fighter", "v_view", "v_moon", "v_family", "v_wataame", "v_art_fuji", "v_art_moon", "v_art_ginkgo", "v_art_blob", "v_art_self", "v_art_group", "v_art_banana", "v_art_squad", "v_art_roof", "v_tv", "v_card_0", "v_card_1", "v_card_2", "v_card_3", "v_card_4", "v_card_5", "v_card_6", "v_card_7"]
           .map((k) => [k, `${k}.png`])
           .concat([["ki", "./assets/worlds/lake/ki_walk.png"]])
       ),
       playerSprite: { img: "ki", cell: 64, frames: 7, footY: 17 },
       start: "yard",
       startSpawn: "gate",
-      maps: { yard: YARD, hall: HALL, ward: WARD, sick: ROOM_SICK, window: ROOM_WINDOW, room1: ROOM1, room2: ROOM2, workshop: ROOM_WORKSHOP, roof: ROOF },
+      maps: { yard: YARD, hall: HALL, ward: WARD, sick: ROOM_SICK, window: ROOM_WINDOW, room1: ROOM1, room2: ROOM2, workshop: ROOM_WORKSHOP, carver: ROOM_CARVER, roof: ROOF },
     },
   };
 })();
