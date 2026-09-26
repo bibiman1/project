@@ -15,6 +15,7 @@
   const fragmentTitle = document.getElementById("fragmentTitle");
   const fragmentText = document.getElementById("fragmentText");
   const progressText = document.getElementById("progressText");
+  const inventoryText = document.getElementById("inventoryText");
   const completeToast = document.getElementById("completeToast");
   const storyOverlay = document.getElementById("storyOverlay");
   const storyTitleEl = document.getElementById("storyTitle");
@@ -222,6 +223,7 @@
       title: "凍った湖と富士山",
       text: "きーが見た風景。",
       icon: "lake",
+      world: "lake",
     },
     {
       id: "suzuki",
@@ -331,15 +333,41 @@
   let moved = false;
 
   const STORY_REVEAL_CHARS_PER_SEC = 38;
-  let story = null; // { text, revealed }
+  let story = null; // { pages, index, text, revealed, onDone }
 
-  function startStory(frag) {
-    story = { text: frag.text, revealed: 0 };
-    storyTitleEl.textContent = frag.title;
-    storyTextEl.textContent = "";
+  // pages: 文字列(ナレーション) / [話者, 台詞] / { title, text } の配列
+  function startDialog(pages, onDone) {
+    const norm = pages.map((p) => {
+      if (typeof p === "string") return { title: "", text: p };
+      if (Array.isArray(p)) return { title: p[0], text: p[1] };
+      return p;
+    });
+    story = { pages: norm, index: 0, text: "", revealed: 0, onDone: onDone || null };
+    showStoryPage();
     storyOverlay.hidden = false;
     resetJoy();
     joystick.style.display = "none";
+  }
+
+  function showStoryPage() {
+    const page = story.pages[story.index];
+    story.text = page.text;
+    story.revealed = 0;
+    storyTitleEl.textContent = page.title;
+    storyTitleEl.hidden = !page.title;
+    storyTextEl.textContent = "";
+  }
+
+  function startStory(frag, onDone) {
+    startDialog([{ title: frag.title, text: frag.text }], onDone);
+  }
+
+  function closeStory() {
+    const done = story.onDone;
+    story = null;
+    storyOverlay.hidden = true;
+    joystick.style.display = "";
+    if (done) done();
   }
 
   function updateStory(dt) {
@@ -354,16 +382,119 @@
       storyTextEl.textContent = story.text;
       return;
     }
-    story = null;
-    storyOverlay.hidden = true;
-    joystick.style.display = "";
+    if (story.index < story.pages.length - 1) {
+      story.index += 1;
+      showStoryPage();
+      return;
+    }
+    closeStory();
   }
 
+  // Bは会話を飛ばす。飛ばしても、会話の結果(道具・フラグ)は反映する
   function skipStory() {
     if (!story) return;
-    story = null;
-    storyOverlay.hidden = true;
-    joystick.style.display = "";
+    closeStory();
+  }
+
+  // ---- 断片世界 ----
+  const SAVE_KEY = "bogidachi.field.v1";
+  const gameState = loadState();
+
+  function loadState() {
+    const empty = { items: [], words: [], cleared: [], flags: {} };
+    try {
+      const raw = localStorage.getItem(SAVE_KEY);
+      if (!raw) return empty;
+      return Object.assign(empty, JSON.parse(raw));
+    } catch (e) {
+      return empty;
+    }
+  }
+
+  function saveState() {
+    try {
+      localStorage.setItem(SAVE_KEY, JSON.stringify(gameState));
+    } catch (e) {
+      // 保存できない環境(プライベートモードなど)では、その回かぎり
+    }
+    updateStatus();
+  }
+
+  const rpg = window.createBogiRPG({
+    ctx,
+    VW,
+    VH,
+    host: {
+      say: startDialog,
+      state: gameState,
+      save: saveState,
+      exit: exitWorld,
+      fade: (fn) => transition(fn),
+    },
+  });
+
+  if (/[?&]debug\b/.test(location.search)) window.bogiDebug = { rpg, gameState, enterWorld: (id) => enterWorld(FRAGMENTS.find((f) => f.world === id)) };
+
+  const fadeOverlay = document.getElementById("fadeOverlay");
+  let transitioning = false;
+  let worldFrag = null;
+
+  function transition(fn) {
+    transitioning = true;
+    resetJoy();
+    fadeOverlay.classList.add("on");
+    setTimeout(() => {
+      fn();
+      fadeOverlay.classList.remove("on");
+      setTimeout(() => {
+        transitioning = false;
+      }, 300);
+    }, 480);
+  }
+
+  function enterWorld(frag) {
+    const def = window.BOGI_WORLDS[frag.world];
+    if (!def || transitioning) return;
+    transition(() => {
+      worldFrag = frag;
+      dismissIntro();
+      fragmentBox.hidden = true;
+      galleryHint.hidden = true;
+      currentNear = null;
+      nearGallery = false;
+      rpg.enter(def);
+      updateStatus();
+    });
+  }
+
+  function exitWorld() {
+    transition(() => {
+      rpg.leave();
+      if (worldFrag) {
+        player.x = worldFrag.x;
+        player.y = worldFrag.y + worldFrag.r + 40;
+        player.dir = "south";
+      }
+      worldFrag = null;
+      updateStatus();
+    });
+  }
+
+  function updateStatus() {
+    progressText.textContent = rpg.active
+      ? `断片のなか: ${rpg.worldName}`
+      : `見つけた断片: ${discovered.size} / ${FRAGMENTS.length}`;
+    const parts = [];
+    if (gameState.items.length) parts.push(`もちもの: ${gameState.items.join("、")}`);
+    if (gameState.words.length) parts.push(`ことば: ${gameState.words.join("、")}`);
+    inventoryText.textContent = parts.join("　／　");
+    inventoryText.hidden = parts.length === 0;
+  }
+
+  function fragmentBoxText(frag) {
+    if (!frag.world || !window.BOGI_WORLDS[frag.world]) return frag.text;
+    const cleared = gameState.cleared.includes(frag.world) ? "(探索ずみ) " : "";
+    return `${frag.text}\n${cleared}タップ / A / Enterで、なかに入る`;
   }
 
   const keys = { up: false, down: false, left: false, right: false };
@@ -394,8 +525,23 @@
       // let Enter/digit typing reach the focused lock input normally
       return;
     }
-    if (nearGallery && (e.code === "Enter" || e.code === "Space" || e.code === "KeyZ")) {
+    const isAction = e.code === "Enter" || e.code === "Space" || e.code === "KeyZ";
+    if (isAction && transitioning) {
+      e.preventDefault();
+      return;
+    }
+    if (isAction && rpg.active) {
+      if (!e.repeat) rpg.interact();
+      e.preventDefault();
+      return;
+    }
+    if (nearGallery && isAction) {
       interactWithGallery();
+      e.preventDefault();
+      return;
+    }
+    if (currentNear && currentNear.world && isAction) {
+      enterWorld(currentNear);
       e.preventDefault();
       return;
     }
@@ -473,6 +619,10 @@
     interactWithGallery();
   });
 
+  fragmentBox.addEventListener("click", () => {
+    if (currentNear && currentNear.world && !story && !transitioning) enterWorld(currentNear);
+  });
+
   lockCancel.addEventListener("click", () => {
     closeLockOverlay();
   });
@@ -493,10 +643,16 @@
     e.stopPropagation();
     if (story) {
       advanceStory();
+    } else if (transitioning) {
+      // 遷移中は受け付けない
     } else if (lockPuzzleOpen) {
       submitLockCode();
+    } else if (rpg.active) {
+      rpg.interact();
     } else if (nearGallery) {
       interactWithGallery();
+    } else if (currentNear && currentNear.world) {
+      enterWorld(currentNear);
     }
   });
   actionBtnB.addEventListener("pointerdown", (e) => {
@@ -704,7 +860,7 @@
       updateStory(dt);
       return;
     }
-    if (lockPuzzleOpen) return;
+    if (lockPuzzleOpen || transitioning) return;
 
     let dx = 0;
     let dy = 0;
@@ -717,6 +873,17 @@
       if (keys.down) dy += 1;
       if (keys.left) dx -= 1;
       if (keys.right) dx += 1;
+    }
+
+    if (rpg.active) {
+      const len = Math.hypot(dx, dy);
+      if (len > 1) {
+        dx /= len;
+        dy /= len;
+      }
+      if (len > 0) dismissIntro();
+      rpg.update(dt, t, { x: dx, y: dy });
+      return;
     }
 
     player.moving = dx !== 0 || dy !== 0;
@@ -750,8 +917,9 @@
       if (dist <= frag.r) {
         if (!discovered.has(frag.id)) {
           discovered.add(frag.id);
-          progressText.textContent = `見つけた断片: ${discovered.size} / ${FRAGMENTS.length}`;
-          startStory(frag);
+          updateStatus();
+          const hasWorld = frag.world && window.BOGI_WORLDS[frag.world];
+          startStory(frag, hasWorld ? () => enterWorld(frag) : null);
           return;
         }
         near = frag;
@@ -763,7 +931,7 @@
       currentNear = near;
       if (near) {
         fragmentTitle.textContent = near.title;
-        fragmentText.textContent = near.text;
+        fragmentText.textContent = fragmentBoxText(near);
         fragmentBox.hidden = false;
       } else {
         fragmentBox.hidden = true;
@@ -1114,13 +1282,40 @@
   }
 
   let lastTime = 0;
+  // 起きたエラーを画面に出す(スマホでも原因がわかるように)。最初の1件だけ
+  let reportedError = false;
+  function reportError(e) {
+    if (reportedError) return;
+    reportedError = true;
+    introHint.textContent = `エラー: ${(e && e.message) || e}`;
+    introHint.classList.remove("hidden");
+    introHint.style.whiteSpace = "normal";
+    introHint.style.maxWidth = "90%";
+  }
+  window.bogiReportError = reportError;
+  window.addEventListener("error", (ev) => reportError(ev.error || ev.message));
+
   function loop(timestamp) {
+    requestAnimationFrame(loop);
+    try {
+      frame(timestamp);
+    } catch (e) {
+      reportError(e);
+    }
+  }
+
+  function frame(timestamp) {
     if (!lastTime) lastTime = timestamp;
     const dt = Math.min(0.05, (timestamp - lastTime) / 1000);
     lastTime = timestamp;
     const t = timestamp / 1000;
 
     update(dt, t);
+
+    if (rpg.active) {
+      rpg.draw(t);
+      return;
+    }
 
     const camX = player.x;
     const camY = player.y;
@@ -1132,9 +1327,8 @@
     drawToribogikaaWanderer(camX, camY, t);
     drawBogikaaWanderer(camX, camY, t);
     drawPlayer(t);
-
-    requestAnimationFrame(loop);
   }
 
+  updateStatus();
   requestAnimationFrame(loop);
 })();
