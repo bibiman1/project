@@ -909,7 +909,7 @@
     },
     wang: { ward: { img: "wang_ward", size: 32, lookup: WANG16 } },
     spawns: Object.assign(
-      { west: { x: 1 * T, y: 3.4 * T, facing: "east" } },
+      { west: { x: 1 * T, y: 3.4 * T, facing: "east" }, stairs: { x: 29 * T, y: 2.9 * T, facing: "south" } },
       Object.fromEntries(Object.entries(DOORS).map(([k, c]) => [k, { x: (c + 0.5) * T, y: 2.8 * T, facing: "south" }]))
     ),
     triggers: [
@@ -960,13 +960,7 @@
             api.mutter("……");
             return;
           }
-          // 二階: いまの高原の景色 → 文化祭の日の屋上の記憶
-          api.show("v_view", () => {
-            api.show("v_roof", () => {
-              api.mutter("はい　へい　うぃん", 3000);
-              api.later(2600, () => api.exit());
-            });
-          });
+          api.warp("roof", "up");
         },
       }),
     ],
@@ -980,7 +974,7 @@
       bg: "#1c1411",
       tintMul: "#f0c09a",
       tint: "rgba(255, 150, 70, 0.08)",
-      map: ["PAWAPAWAP", "papwapawp", "X.......X", "X.......X", "X.......X", "X.......X", "XXXX.XXXX"],
+      map: ["PWWWPWWWP", "pwwwpwwwp", "X.......X", "X.......X", "X.......X", "X.......X", "XXXX.XXXX"],
       legend: {
         X: { solid: true, color: "#2a1d17", lowerOf: ["ward"] },
         P: { solid: true, img: "rwall_p", crop: [0, 0], lowerOf: ["ward"] },
@@ -1017,7 +1011,7 @@
     hat("bed_f", 7.5 * T, 4 * T),
     hat("starchart", 6.5 * T, 1.95 * T, { sortDy: -40 }),
   ]);
-  // 窓辺の部屋: 枕元に焦げたぼぎのマスコット(コックピットの御守り)、空の一点を向いた望遠鏡、宇宙戦闘機の写真
+  // 窓辺の部屋: 枕元に焦げたぼぎのマスコット(コックピットの御守り)、宇宙戦闘機の写真
   const ROOM_WINDOW = room("window", "wood", [
     hat("cot", 1.5 * T, 3 * T, {
       id: "charm",
@@ -1027,13 +1021,6 @@
       },
     }),
     dead("d_scope", "scope", 3.5 * T, 4.2 * T, "v_cockpit"),
-    hat("telescope", 6.5 * T, 3.5 * T, {
-      id: "telescope",
-      range: 36,
-      interact(api) {
-        api.show("v_moon");
-      },
-    }),
     wallPhoto("photo_fighter", 4.5 * T, "v_photo_fighter"),
   ]);
   // 家族の部屋: 卓袱台を囲む一家。箪笥、鏡台、三輪車
@@ -1049,6 +1036,112 @@
     hat("hibachi", 6.5 * T, 4 * T),
     wallPhoto("photo_wedding", 4.5 * T, "v_photo_wedding"),
   ]);
+
+  // ---- 屋上(物干し台。望遠鏡、洗濯物。手すりから高原を見わたす) ----
+  const ROOF = {
+    tile: T,
+    bg: "#1c1411",
+    tintMul: "#f2b48a",
+    tint: "rgba(255, 140, 60, 0.10)",
+    map: [
+      "SSSSSSSSSSSSSS",
+      "SSSSSSSSSSSSSS",
+      "SSSSSSSSSSSSSS",
+      "X............X",
+      "X............X",
+      "X............X",
+      "X............X",
+      "X............X",
+      "XXXXXXXXXXXXXX",
+    ],
+    legend: {
+      S: { solid: true, color: "#e7a27a", lowerOf: ["ward"] },
+      X: { solid: true, color: "#2a1d17", lowerOf: ["ward"] },
+      ".": { wang: "ward", lowerOf: ["ward"] },
+    },
+    wang: { ward: { img: "wang_ward", size: 32, lookup: WANG16 } },
+    drawGround(ctx, ox, oy) {
+      const W = 14 * T;
+      // 夕空と、遠い山なみ(高原)
+      const g = ctx.createLinearGradient(0, oy, 0, 3 * T + oy);
+      g.addColorStop(0, "#6c5a8e");
+      g.addColorStop(0.55, "#e79a78");
+      g.addColorStop(1, "#f3c08c");
+      ctx.fillStyle = g;
+      ctx.fillRect(ox, oy, W, 3 * T);
+      const ridge = (base, amp, col, seed) => {
+        ctx.fillStyle = col;
+        ctx.beginPath();
+        ctx.moveTo(ox, 3 * T + oy);
+        for (let x = 0; x <= W; x += 8) ctx.lineTo(x + ox, base + oy - amp * (0.5 + 0.5 * Math.sin(x / 37 + seed) * Math.cos(x / 91 + seed * 2)));
+        ctx.lineTo(W + ox, 3 * T + oy);
+        ctx.fill();
+      };
+      ridge(2.1 * T, 34, "#8a7aa6", 1);
+      ridge(2.6 * T, 26, "#5e6a7a", 3);
+      ridge(3 * T, 14, "#3f4f45", 5); // からまつ林
+      // 手すり
+      ctx.fillStyle = "#5a3b28";
+      ctx.fillRect(T + ox, 3 * T - 4 + oy, 12 * T, 4);
+      for (let x = T; x <= 13 * T; x += 16) ctx.fillRect(x + ox, 3 * T - 4 + oy, 3, 14);
+      // 階段の口
+      ctx.fillStyle = "#1a120d";
+      ctx.fillRect(T + ox, 7 * T + oy, T, T);
+      ctx.fillStyle = "#4a3222";
+      for (let y = 0; y < T; y += 6) ctx.fillRect(T + 2 + ox, 7 * T + y + oy, T - 4, 2);
+    },
+    spawns: { up: { x: 1.5 * T, y: 6.4 * T, facing: "north" } },
+    triggers: [{ id: "down", x: T, y: 7.55 * T, w: T, h: 0.6 * T, warp: { map: "ward", spawn: "stairs" } }],
+    objects: [
+      // 物干し竿と洗濯物(生活の場)
+      {
+        x: 4.5 * T,
+        y: 4.6 * T,
+        w: 4 * T,
+        h: 2 * T,
+        sortDy: 16,
+        solid: { w: 4 * T, h: 8, dy: 16 },
+        draw(ctx, sx, sy, t) {
+          ctx.fillStyle = "#4a3222";
+          ctx.fillRect(sx - 2 * T, sy - 36, 3, 52);
+          ctx.fillRect(sx + 2 * T - 3, sy - 36, 3, 52);
+          ctx.fillStyle = "#8a8070";
+          ctx.fillRect(sx - 2 * T, sy - 34, 4 * T, 2);
+          const cloth = ["#f1ece0", "#dfe6ee", "#f1ece0", "#e8d9c4", "#f1ece0"];
+          cloth.forEach((c, i) => {
+            const sw = Math.round(Math.sin(t * 2 + i) * 2);
+            ctx.fillStyle = c;
+            ctx.fillRect(sx - 2 * T + 8 + i * 24 + sw, sy - 32, 18, 22 + (i % 2) * 6);
+          });
+        },
+      },
+      // 望遠鏡: 覗くと、月のまわりに輪
+      hat("telescope", 10.5 * T, 4.5 * T, {
+        id: "telescope",
+        range: 36,
+        interact(api) {
+          api.show("v_moon");
+        },
+      }),
+      // 手すりから見わたす: いまの高原の景色 → 文化祭の日の屋上の記憶 → 懲罰空間へ
+      {
+        id: "railing",
+        x: 7 * T,
+        y: 3.3 * T,
+        w: 2 * T,
+        h: 8,
+        range: 44,
+        interact(api) {
+          api.show("v_view", () => {
+            api.show("v_roof", () => {
+              api.mutter("はい　へい　うぃん", 3000);
+              api.later(2600, () => api.exit());
+            });
+          });
+        },
+      },
+    ],
+  };
 
   window.BOGI_WORLDS = {
     // 懲罰空間(ハブ)。ここから断片の世界に入り、戻ってくる
@@ -1127,7 +1220,7 @@
       playerSprite: { img: "ki", cell: 64, frames: 7, footY: 17 },
       start: "yard",
       startSpawn: "gate",
-      maps: { yard: YARD, hall: HALL, ward: WARD, sick: ROOM_SICK, window: ROOM_WINDOW, room1: ROOM1, room2: ROOM2 },
+      maps: { yard: YARD, hall: HALL, ward: WARD, sick: ROOM_SICK, window: ROOM_WINDOW, room1: ROOM1, room2: ROOM2, roof: ROOF },
     },
   };
 })();
