@@ -796,10 +796,10 @@
     telescope: { img: "telescope", w: 32, h: 48, top: 8, bottom: 48, solid: [16, 8] },
     radio: { img: "radio", w: 32, h: 32, top: 5, bottom: 27 },
     tv: { img: "tv_off", w: 48, h: 48, top: 6, bottom: 43, solid: [30, 12] },
-    iv: { img: "iv", w: 32, h: 64, top: 3, bottom: 62, solid: [12, 6] },
+    iv: { img: "iv", w: 20, h: 58, top: 0, bottom: 57, solid: [10, 6] },
     legshelf: { img: "legshelf", w: 64, h: 64, top: 3, bottom: 56, solid: [46, 14] },
     oxyvase: { img: "oxyvase", w: 32, h: 32, top: 5, bottom: 31 },
-    starchart: { img: "starchart", w: 32, h: 32, top: 0, bottom: 30 },
+    starchart: { img: "starchart", w: 24, h: 28, top: 0, bottom: 27 },
     photo_wedding: { img: "photo_wedding", w: 32, h: 32, top: 0, bottom: 30 },
     guestbook: { img: "guestbook", w: 32, h: 32, top: 12, bottom: 23 }, // 来場者ノート
     noticeboard: { img: "noticeboard", w: 64, h: 64, top: 5, bottom: 62, solid: [48, 8] }, // 掲示板(ガリ版刷りの文化祭のビラ、献立表、消灯時刻)
@@ -824,6 +824,9 @@
     door: { img: "door", w: 32, h: 64, top: 10, bottom: 56 },
     bonsai_table1: { img: "bonsai_table1", w: 128, h: 48, top: 12, bottom: 45, solid: [124, 14] },
     bonsai_table2: { img: "bonsai_table2", w: 128, h: 48, top: 12, bottom: 45, solid: [124, 14] },
+    bed_h: { img: "bed_h", w: 54, h: 26, top: 0, bottom: 25, solid: [50, 18] },
+    d_bedman_h: { img: "d_bedman_h", w: 59, h: 27, top: 0, bottom: 26, solid: [52, 18] },
+    cabinet_radio: { img: "cabinet_radio", w: 28, h: 55, top: 0, bottom: 54, solid: [24, 10] },
     bed_f: { img: "bed_f", w: 32, h: 64, top: 5, bottom: 59, solid: [26, 40] },
     cot: { img: "cot", w: 32, h: 32, top: 2, bottom: 32, solid: [20, 10] },
     d_uketsuke: { img: "d_uketsuke", w: 64, h: 64, top: 11, bottom: 54 },
@@ -1421,21 +1424,11 @@
     };
   }
   // 病室: 壁ぎわのベッド、点滴スタンドの風鈴、酸素マスクの花瓶、×印の星図
+  // 病室(洋室): 一枚絵と同じく、ベッドは窓と平行に並ぶ。星図は窓のない壁に
   const ROOM_SICK = room("sick", "wood", [
-    hat("bed_f", 1.5 * T, 4 * T),
-    hat("oxyvase", 2.5 * T, 3 * T),
-    dead("d_bedman", "bedman", 4.5 * T, 4 * T, "v_bed"),
-    hat("iv", 5.5 * T, 3.9 * T, {
-      id: "iv",
-      range: 34,
-      interact(api) {
-        api.bubble("iv", "ちりん", 1800);
-      },
-    }),
-    hat("bed_f", 7.5 * T, 4 * T),
-    hat("starchart", 6.5 * T, 1.95 * T, { sortDy: -40 }),
-    // 枕もとのラジオ。金星の天気予報
-    hat("radio", 6.6 * T, 3.3 * T, {
+    hat("bed_h", 2.2 * T, 3.4 * T),
+    // 床頭台の上のラジオ。金星の天気予報
+    hat("cabinet_radio", 3.8 * T, 3.4 * T, {
       id: "radio",
       range: 34,
       interact(api) {
@@ -1446,7 +1439,18 @@
         }
       },
     }),
-  ]);
+    dead("d_bedman_h", "bedman", 5.4 * T, 3.4 * T, "v_bed"),
+    // 点滴台に吊った、金魚の風鈴
+    hat("iv", 6.8 * T, 3.5 * T, {
+      id: "iv",
+      range: 34,
+      interact(api) {
+        api.bubble("iv", "ちりん", 1800);
+      },
+    }),
+    hat("oxyvase", 7.6 * T, 3.5 * T), // 酸素マスクを花瓶にしたもの(部屋の隅)
+    hat("starchart", 7.5 * T, 1.25 * T, { sortDy: -40 }),
+  ], "PWWWPWWAP");
   // 窓辺の部屋: 机の上のコックピットの写真(焦げたぼぎのマスコット)、ロッキングチェアのガイコツ、宇宙戦闘機の写真
   const ROOM_WINDOW = room("window", "wood", [
     // 机の上の写真: コックピット(焦げたぼぎのマスコットが下がっている)
@@ -1688,7 +1692,7 @@
       name: "廃兵院",
       assetBase: "./assets/worlds/haihei/",
       images: Object.fromEntries(
-        ["facade", "arch", "yakisoba", "wataame", "shateki", "uketsuke", "wheelchair", "crutch", "ginkgo", "stage", "exhibit1", "exhibit2", "telescope", "tv_on", "tv_off", "iv", "legshelf", "oxyvase", "starchart", "photo_wedding", "photo_fighter", "d_family", "d_visitors", "poppo_row", "portrait", "bench", "clock", "firebucket", "plant", "rail", "tansu", "futon", "hibachi", "tricycle", "kyodai", "stairs", "door", "bed_f", "bonsai_table1", "bonsai_table2", "rwall", "rwall_p", "rwall_w", "aw", "aw_g", "aw_p", "aw_pg", "aw_w", "aw_wg", "aw_pw", "wheelchair_back", "prosthetic_rack", "workbench", "arm_stand", "deskphoto", "sunset", "noticeboard", "v_board", "guestbook", "v_guestbook", "wx_bed", "wx_chair", "wx_gramophone", "wx_lamp", "wx_teatable", "wx_rug", "rwallx", "rwallx_p", "rwallx_w", "art_fuji", "art_moon", "art_ginkgo", "art_blob", "art_self", "art_group", "art_banana", "art_squad", "art_roof", "cot", "radio", "wang_yard", "wang_ward",
+        ["facade", "arch", "yakisoba", "wataame", "shateki", "uketsuke", "wheelchair", "crutch", "ginkgo", "stage", "exhibit1", "exhibit2", "telescope", "tv_on", "tv_off", "iv", "legshelf", "oxyvase", "starchart", "photo_wedding", "photo_fighter", "d_family", "d_visitors", "poppo_row", "portrait", "bench", "clock", "firebucket", "plant", "rail", "tansu", "futon", "hibachi", "tricycle", "kyodai", "stairs", "door", "bed_f", "bonsai_table1", "bonsai_table2", "bed_h", "d_bedman_h", "cabinet_radio", "rwall", "rwall_p", "rwall_w", "aw", "aw_g", "aw_p", "aw_pg", "aw_w", "aw_wg", "aw_pw", "wheelchair_back", "prosthetic_rack", "workbench", "arm_stand", "deskphoto", "sunset", "noticeboard", "v_board", "guestbook", "v_guestbook", "wx_bed", "wx_chair", "wx_gramophone", "wx_lamp", "wx_teatable", "wx_rug", "rwallx", "rwallx_p", "rwallx_w", "art_fuji", "art_moon", "art_ginkgo", "art_blob", "art_self", "art_group", "art_banana", "art_squad", "art_roof", "cot", "radio", "wang_yard", "wang_ward",
           "d_uketsuke", "d_shateki", "d_yakisoba", "d_carver", "d_band1", "d_band2", "d_band3", "d_band4", "d_band5", "d_wheel", "d_bedman", "d_scope",
           "v_uketsuke", "v_yakisoba", "v_stall", "v_carver", "v_stage", "v_wheel", "v_bed", "v_cockpit", "v_photo_wedding", "v_photo_fighter", "v_view", "v_moon", "v_family", "v_wataame", "v_art_fuji", "v_art_moon", "v_art_ginkgo", "v_art_blob", "v_art_self", "v_art_group", "v_art_banana", "v_art_squad", "v_art_roof", "v_tv", "v_card_0", "v_card_1", "v_card_2", "v_card_3", "v_card_4", "v_card_5", "v_card_6", "v_card_7"]
           .map((k) => [k, `${k}.png`])
