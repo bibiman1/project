@@ -899,8 +899,8 @@
     tintMul: "#f0c09a",
     tint: "rgba(255, 150, 70, 0.08)",
     map: [
-      ("Uu".repeat(16).slice(0, 28) + "OO" + "U"),
-      ("Ll".repeat(16).slice(0, 28) + "OO" + "L"),
+      ("Uu".repeat(16).slice(0, 28) + "OO" + "X"),
+      ("Ll".repeat(16).slice(0, 28) + "OO" + "X"),
       "." + ".".repeat(WARD_W - 2) + "X",
       "." + ".".repeat(WARD_W - 2) + "X",
       "X" + ".".repeat(WARD_W - 2) + "X",
@@ -916,6 +916,26 @@
       ".": { wang: "ward", lowerOf: ["ward"] },
     },
     wang: { ward: { img: "wang_ward", size: 32, lookup: WANG16 } },
+    // 廊下の端を閉じる: 突き当たりの側壁、大広場への入口の枠、手前の壁の見切り
+    drawGround(ctx, ox, oy) {
+      const wallTop = (x, y, w, h) => {
+        ctx.fillStyle = "#3a261b";
+        ctx.fillRect(x + ox, y + oy, w, h);
+        ctx.fillStyle = "#7a5638";
+        if (w < h) ctx.fillRect(x + ox + (x > T ? 0 : w - 2), y + oy, 2, h);
+        else ctx.fillRect(x + ox, y + oy, w, 2);
+      };
+      const E = (WARD_W - 1) * T;
+      wallTop(E, 0, 8, 5 * T + 8); // 突き当たりの側壁
+      wallTop(0, 5 * T, E + 8, 8); // 手前の見切り
+      wallTop(T - 8, 4 * T, 8, T + 8); // 入口の下側の壁
+      // 入口の枠(柱と鴨居)
+      ctx.fillStyle = "#5b3d2a";
+      ctx.fillRect(T - 8 + ox, 2 * T - 6 + oy, 8, 6);
+      ctx.fillRect(T - 8 + ox, 4 * T - 4 + oy, 8, 4);
+      ctx.fillStyle = "rgba(0, 0, 0, 0.25)"; // 大広場のほうへ落ちる影
+      ctx.fillRect(ox, 2 * T + oy, T - 8, 2 * T);
+    },
     spawns: Object.assign(
       { west: { x: 1 * T, y: 3.4 * T, facing: "east" }, stairs: { x: 29 * T, y: 2.8 * T, facing: "south" } },
       Object.fromEntries(Object.entries(DOORS).map(([k, c]) => [k, { x: (c + 0.5) * T, y: 2.8 * T, facing: "south" }]))
