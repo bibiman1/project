@@ -840,9 +840,9 @@
     workbench: { img: "workbench", w: 96, h: 48, top: 10, bottom: 46, solid: [86, 14] },
     drums: { img: "drums", w: 96, h: 48, top: 10, bottom: 44, solid: [88, 12] },
     gondola: { img: "gondola", w: 160, h: 72, top: 14, bottom: 62, solid: [150, 20] },
-    crew_hawk: { img: "crew_hawk", w: 32, h: 48, top: 2, bottom: 46, solid: [14, 8] },
-    crew_wagtail: { img: "crew_wagtail", w: 32, h: 48, top: 4, bottom: 46, solid: [14, 8] },
-    crew_rooster: { img: "crew_rooster", w: 32, h: 48, top: 2, bottom: 46, solid: [14, 8] },
+    crew_hawk: { img: "crew_hawk", w: 32, h: 40, top: 0, bottom: 39, solid: [14, 8] },
+    crew_wagtail: { img: "crew_wagtail", w: 32, h: 40, top: 0, bottom: 39, solid: [14, 8] },
+    crew_rooster: { img: "crew_rooster", w: 32, h: 40, top: 0, bottom: 39, solid: [14, 8] },
     seat: { img: "seat", w: 48, h: 64, top: 4, bottom: 56, solid: [34, 14] },
     mummy: { img: "mummy", w: 48, h: 64, top: 2, bottom: 56, solid: [34, 14] },
     poppo_row: { img: "poppo_row", w: 40, h: 12, top: 1, bottom: 11 },
@@ -1702,7 +1702,16 @@
   };
 
   // C 格納庫の中(地上ぼぎクルーが、今朝も整備している。ここでジャンプを教わる)
-  const HANGAR_SOLID = (c, r) => r <= 1 || c === 0 || c === 13 || (r === 9 && !(c === 6 || c === 7));
+  // 当たり判定は背景の絵に合わせる(奥の壁、機体、燃料ドラム、木、整備台、ゴンドラ)
+  const HANGAR_SOLID = (c, r) =>
+    r <= 2 ||
+    c === 0 ||
+    c === 13 ||
+    (r === 9 && !(c === 6 || c === 7)) ||
+    (r === 3 && c >= 1 && c <= 10) ||
+    (r === 4 && c >= 10 && c <= 11) ||
+    (r === 6 && c >= 5 && c <= 7) ||
+    (r === 7 && c >= 8 && c <= 12);
   const crewMember = (id, img, fx, fy, phase) =>
     Object.assign(hat(img, fx, fy), {
       id,
@@ -1718,9 +1727,9 @@
       },
     });
   const CREW = [
-    crewMember("crew1", "crew_hawk", 5.2 * T, 5.2 * T, 0),
-    crewMember("crew2", "crew_wagtail", 6.2 * T, 5.4 * T, 1),
-    crewMember("crew3", "crew_rooster", 7.2 * T, 5.2 * T, 2),
+    crewMember("crew1", "crew_hawk", 5.3 * T, 5.6 * T, 0),
+    crewMember("crew2", "crew_wagtail", 6.4 * T, 5.7 * T, 1),
+    crewMember("crew3", "crew_rooster", 7.5 * T, 5.6 * T, 2),
   ];
   CREW.forEach((c) => (c.baseY = c.y));
   function teachJump(api) {
@@ -1750,16 +1759,17 @@
     spawns: { door: { x: 7 * T, y: 8.6 * T, facing: "north" } },
     triggers: [{ id: "out", x: 6 * T, y: 9.4 * T, w: 2 * T, h: T, warp: { map: "shore", spawn: "hangar" } }],
     objects: [
-      hat("plane", 2.6 * T, 4.2 * T),
-      Object.assign(hat("workbench", 6.2 * T, 6.6 * T), {
+      {
         id: "bench",
+        x: 6.4 * T,
+        y: 7.1 * T,
+        w: 1,
+        h: 1,
         range: 52,
         interact(api) {
-          teachJump(api); // 整備台の上で、跳んでみせてくれる
+          teachJump(api); // 整備台のまわりで、跳んでみせてくれる
         },
-      }),
-      hat("drums", 10.6 * T, 3 * T),
-      hat("gondola", 10.4 * T, 7.4 * T),
+      },
       ...CREW.map((c) =>
         Object.assign(c, {
           range: 44,
@@ -1776,20 +1786,26 @@
   const K_COCKPIT = {
     tile: T,
     bg: "#1d201f",
-    map: kGrid(10, 7, (c, r) => r <= 2 || c === 0 || c === 9 || (r === 6 && c !== 4 && c !== 5)),
+    // 背景の絵に合わせる: 計器盤と2つの座席の間(操縦桿の台の手前)と、床の乗降口のまわりだけ歩ける
+    map: kGrid(10, 7, (c, r) => c === 0 || c === 9 || (r <= 5 && !(r === 5 && (c === 4 || c === 5)))),
     legend: K_LEGEND,
     drawGround: kImage("bg_cockpit", 10 * T, 7 * T),
-    spawns: { door: { x: 4.5 * T, y: 5.4 * T, facing: "north" } },
-    triggers: [{ id: "out", x: 4 * T, y: 6.4 * T, w: 2 * T, h: T, warp: { map: "shore", spawn: "slip" } }],
+    spawns: { door: { x: 5 * T, y: 6.3 * T, facing: "north" } },
+    triggers: [{ id: "out", x: 3.8 * T, y: 6.85 * T, w: 2.4 * T, h: T, warp: { map: "shore", spawn: "slip" } }],
     objects: [
-      Object.assign(hat("mummy", 3 * T, 3.9 * T), {
+      // 左の機長席のミイラさま(背景に描いてある)。話しかけると遊覧飛行
+      {
         id: "mummy",
-        range: 48,
+        x: 2.8 * T,
+        y: 5.6 * T,
+        w: 1,
+        h: 1,
+        headY: 90,
+        range: 70,
         interact(api) {
-          api.warp("flight", "view"); // 遊覧飛行
+          api.warp("flight", "view");
         },
-      }),
-      hat("seat", 6 * T, 3.9 * T),
+      },
     ],
   };
 
@@ -1804,21 +1820,20 @@
     drawGround(ctx, ox, oy, img) {
       const t = performance.now() / 1000 - flightT0;
       const get = (k) => (typeof img === "function" ? img(k) : null);
-      const W = 15 * T;
-      const sky = get("fl_sky");
-      if (sky) ctx.drawImage(sky, ox, oy, W, 10 * T);
-      const layer = (k, y, speed, h) => {
+      const layer = (k, y, speed) => {
         const im = get(k);
         if (!im) return;
         const off = (t * speed) % im.width;
-        for (let x = -off; x < W; x += im.width) ctx.drawImage(im, x + ox, y + oy, im.width, h || im.height);
+        for (let x = -off; x < 15 * T; x += im.width) ctx.drawImage(im, Math.round(x + ox), y + oy);
       };
-      layer("fl_hills", 100, 14);
-      layer("fl_water", 170, 160);
-      layer("fl_mist", 158, 240);
+      const sky = get("fl_sky");
+      if (sky) ctx.drawImage(sky, ox, oy); // 空と朝日は動かない
+      layer("fl_hills", 100, 12); // 遠い対岸の山なみ(ゆっくり)
+      layer("fl_water", 170, 150); // 水面(速く)
+      layer("fl_mist", 160, 220);
       const ek = get("fl_ekrano");
-      if (ek) ctx.drawImage(ek, 130 + ox, 118 + Math.sin(t * 1.3) * 2 + oy);
-      layer("fl_mist", 196, 320);
+      if (ek) ctx.drawImage(ek, 96 + Math.round(Math.sin(t * 0.7) * 6) + ox, 142 + Math.round(Math.sin(t * 1.3) * 2) + oy); // 湖面すれすれ(高くは舞い上がれない)
+      layer("fl_mist", 196, 300);
     },
     spawns: { view: { x: 7 * T, y: 5 * T, facing: "east" } },
     onEnter(api) {
@@ -1925,9 +1940,9 @@
       name: "霞ヶ浦のエクラノプラン",
       assetBase: "./assets/worlds/kasumi/",
       images: Object.fromEntries(
-        ["bg_lotus", "bg_hangar", "bg_cockpit", "scarecrow", "plane", "workbench", "drums", "gondola", "crew_hawk", "crew_wagtail", "crew_rooster", "seat", "mummy", "fl_sky", "fl_hills", "fl_water", "fl_mist", "fl_ekrano", "v_flight"]
+        ["bg_lotus", "bg_hangar", "bg_cockpit", "scarecrow", "crew_hawk", "crew_wagtail", "crew_rooster", "fl_sky", "fl_hills", "fl_water", "fl_mist", "fl_ekrano", "v_flight"]
           .map((k) => [k, `${k}.png`])
-          .concat([["bg_shore", "bg_shore_wip.png"], ["ki", "./assets/worlds/lake/ki_walk.png"]])
+          .concat([["bg_shore", "bg_shore.png"], ["ki", "./assets/worlds/lake/ki_walk.png"]])
       ),
       playerSprite: { img: "ki", cell: 64, frames: 7, footY: 17 },
       start: "lotus",
