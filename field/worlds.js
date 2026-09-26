@@ -16,8 +16,9 @@
     car: { img: "s_car", w: 96, h: 64, top: 10, bottom: 57, solid: [64, 22] },
     houtou: { img: "s_houtou", w: 160, h: 128, top: 10, bottom: 118, solid: [118, 44] },
     tires: { img: "s_tires", w: 64, h: 48, top: 8, bottom: 40, solid: [44, 12] },
-    irori: { img: "k_irori", w: 96, h: 96, top: 7, bottom: 90, solid: [66, 40] },
-    sign: { img: "s_sign", w: 32, h: 64, top: 2, bottom: 62, solid: [8, 6] },
+    irori: { img: "k_irori", w: 128, h: 160, top: 0, bottom: 149, solid: [96, 76] },
+    sign: { img: "s_sign_r", w: 32, h: 64, top: 1, bottom: 62, solid: [8, 6] },
+    signL: { img: "s_sign_l", w: 32, h: 64, top: 1, bottom: 62, solid: [8, 6] },
     shard: { img: "s_shard", w: 32, h: 32, top: 4, bottom: 26 },
     kamado: { img: "k_kamado", w: 128, h: 64, top: 4, bottom: 60, solid: [72, 26] },
     post: { img: "k_post", w: 32, h: 64, top: 3, bottom: 60, solid: [16, 8] },
@@ -362,7 +363,16 @@
       // カーブの外側の標識(道の上に来るものは置かない)
       ...[[48.9, 1.5], [37.9, 13.4], [26.9, 8.6], [19.9, 1.3], [13.9, 12.4]]
         .filter(([r, c]) => roadMapGrid[Math.floor(r)][Math.floor(c)] === ".")
-        .map(([r, c]) => at("sign", c * T, r * T)),
+        .map(([r, c]) => {
+          // 警戒標識(右方/左方屈曲): この先、北へ進むと道がどちらへ曲がるか
+          const colAt = (row) => {
+            let best = ROAD_CURVE[0];
+            for (const p of ROAD_CURVE) if (Math.abs(p[0] - row) < Math.abs(best[0] - row)) best = p;
+            return best[1];
+          };
+          const right = colAt(r - 5) > colAt(r);
+          return at(right ? "sign" : "signL", c * T, r * T);
+        }),
       at("tires", 7 * T, 45.5 * T),
       // 待避所のガードレール: 調べると、何回でも富士山の全景を見わたせる
       {
@@ -512,7 +522,7 @@
   };
 
   // ---- ほうとう屋の中(古民家): 左が土間とかまど、右が板の間とちゃぶ台 ----
-  const TANSU_FOOT = [12 * T, 2.9 * T];
+  const TANSU_FOOT = [8.2 * T, 2.9 * T];
   const SHOP = {
     tile: T,
     bg: "#140f12",
@@ -541,7 +551,7 @@
     objects: [
       at("kamado", 3 * T, 3.9 * T),
       // 囲炉裏。自在鉤に吊った土鍋で、土星を煮ている(水に浮くから)
-      at("irori", 11.9 * T, 7.4 * T, {
+      at("irori", 11.4 * T, 7.6 * T, {
         id: "pot",
         headY: 40,
         range: 44,
@@ -567,7 +577,7 @@
         },
       }),
       // ちゃんの座布団
-      at("zabuton", 8.3 * T, 4.4 * T, {
+      at("zabuton", 7.6 * T, 4.5 * T, {
         id: "chair",
         sortDy: -20,
         range: 30,
@@ -586,9 +596,13 @@
           );
         },
       }),
-      at("chabudai", 8.3 * T, 6.3 * T),
+      at("chabudai", 7.6 * T, 6.3 * T),
+      // 囲炉裏のまわりの座布団(奥は自在鉤の竿がかかるので空ける)
+      at("zabuton", 9.5 * T, 6.4 * T, { sortDy: -20 }),
+      at("zabuton", 13.4 * T, 6.4 * T, { sortDy: -20 }),
+      at("zabuton", 11.4 * T, 8.7 * T, { sortDy: -20 }),
       // きーの小さな座布団
-      at("zabutonS", 8.3 * T, 7.7 * T, { sortDy: -20 }),
+      at("zabutonS", 7.6 * T, 7.7 * T, { sortDy: -20 }),
       {
         id: "noren",
         x: 3.5 * T,
@@ -1413,7 +1427,8 @@
         s_car: "s_car.png",
         s_houtou: "s_houtou.png",
         s_tires: "s_tires.png",
-        s_sign: "s_sign.png",
+        s_sign_r: "s_sign_r.png",
+        s_sign_l: "s_sign_l.png",
         s_shard: "s_shard.png",
         k_wall: "k_wall.png",
         k_kamado: "k_kamado.png",
