@@ -553,6 +553,7 @@
     arm_stand: { img: "arm_stand", w: 32, h: 64, top: 3, bottom: 61, solid: [16, 8] },
     exhibit1: { img: "exhibit1", w: 96, h: 48, top: 5, bottom: 48, solid: [80, 18] },
     exhibit2: { img: "exhibit2", w: 96, h: 48, top: 6, bottom: 48, solid: [84, 18] },
+    wheelchair_back: { img: "wheelchair_back", w: 48, h: 48, top: 5, bottom: 43, solid: [30, 10] },
     wheelchair: { img: "wheelchair", w: 48, h: 48, top: 5, bottom: 44, solid: [26, 10] },
     telescope: { img: "telescope", w: 32, h: 48, top: 8, bottom: 48, solid: [16, 8] },
     tv: { img: "tv", w: 48, h: 48, top: 6, bottom: 43, solid: [30, 12] },
@@ -600,7 +601,7 @@
     d_band4: { img: "d_band4", w: 48, h: 64, top: 6, bottom: 60 },
     d_band5: { img: "d_band5", w: 48, h: 64, top: 7, bottom: 60 },
     wx_bed: { img: "wx_bed", w: 48, h: 64, top: 4, bottom: 60, solid: [38, 44] },
-    wx_chair: { img: "wx_chair", w: 32, h: 32, top: 2, bottom: 30, solid: [22, 10] },
+    wx_chair: { img: "wx_chair", w: 32, h: 32, top: 3, bottom: 30, solid: [22, 10] },
     wx_gramophone: { img: "wx_gramophone", w: 32, h: 48, top: 2, bottom: 45, solid: [20, 10] },
     wx_lamp: { img: "wx_lamp", w: 32, h: 64, top: 5, bottom: 59, solid: [12, 6] },
     wx_teatable: { img: "wx_teatable", w: 32, h: 32, top: 3, bottom: 30, solid: [22, 10] },
@@ -851,7 +852,8 @@
         }, { sortDy: 60, iy: 60, range: 56 })
       ),
       // 客席: 車椅子を一列に
-      ...[5, 6.5, 8, 9.5, 11].map((c) => hat("wheelchair", c * T, 7.2 * T)),
+      // 客席: 舞台のほうを向いた車椅子(こちらからは背中が見える)
+      ...[5, 6.5, 8, 9.5, 11].map((c) => hat("wheelchair_back", c * T, 7.2 * T)),
       // 作品展示: 盆栽をずらりと二列
       ...[1.5, 2.5, 3.5, 4.5, 5.5].map((c, i) => hat(`bonsai${(i % 5) + 1}`, c * T, 9 * T)),
       ...[1.5, 2.5, 3.5, 4.5, 5.5].map((c, i) => hat(`bonsai${((i + 2) % 5) + 1}`, c * T, 10.6 * T)),
@@ -922,8 +924,9 @@
     ],
     legend: {
       X: { solid: true, color: "#2a1d17", lowerOf: ["ward"] },
-      U: { solid: true, img: "wall", crop: [0, 0], lowerOf: ["ward"] },
-      L: { solid: true, img: "wall", crop: [0, 32], lowerOf: ["ward"] },
+      // 奥の壁は個室との間の内壁(窓はない。外が見えるのは個室の障子窓)
+      U: { solid: true, img: "wall_in", crop: [0, 0], lowerOf: ["ward"] },
+      L: { solid: true, img: "wall_in", crop: [0, 32], lowerOf: ["ward"] },
       u: { solid: true, img: "wall2", crop: [0, 0], lowerOf: ["ward"] },
       l: { solid: true, img: "wall2", crop: [0, 32], lowerOf: ["ward"] },
       O: { solid: true, color: "#1a120d", lowerOf: ["ward"] }, // 階段の口
@@ -1095,7 +1098,7 @@
     hat("wx_bed", 1.9 * T, 4 * T),
     hat("wx_lamp", 3.2 * T, 3 * T),
     hat("wx_teatable", 4.5 * T, 4.3 * T),
-    hat("wx_chair", 5.5 * T, 4.4 * T),
+    hat("wx_chair", 5.4 * T, 4.3 * T), // テーブルのほうを向いた肘掛け椅子
     hat("wx_gramophone", 7.4 * T, 3.1 * T),
     wallPhoto("photo_wedding", 4.5 * T, "v_photo_wedding"),
   ]);
@@ -1269,7 +1272,7 @@
       name: "廃兵院",
       assetBase: "./assets/worlds/haihei/",
       images: Object.fromEntries(
-        ["facade", "arch", "yakisoba", "wataame", "shateki", "uketsuke", "wheelchair", "ginkgo", "stage", "exhibit1", "exhibit2", "bed", "telescope", "tv", "iv", "legshelf", "nursedesk", "oxyvase", "starchart", "photo_wedding", "photo_fighter", "d_family", "d_visitors", "tansu", "futon", "hibachi", "tricycle", "kyodai", "stairs", "door", "bed_f", "bonsai1", "bonsai2", "bonsai3", "bonsai4", "bonsai5", "rwall", "rwall_p", "rwall_w", "prosthetic_rack", "workbench", "arm_stand", "deskphoto", "sunset", "wx_bed", "wx_chair", "wx_gramophone", "wx_lamp", "wx_teatable", "wx_rug", "rwallx", "rwallx_p", "rwallx_w", "art_fuji", "art_moon", "art_ginkgo", "art_blob", "art_self", "art_group", "art_banana", "art_squad", "cot", "radio", "wall", "wall2", "wang_yard", "wang_ward",
+        ["facade", "arch", "yakisoba", "wataame", "shateki", "uketsuke", "wheelchair", "ginkgo", "stage", "exhibit1", "exhibit2", "bed", "telescope", "tv", "iv", "legshelf", "nursedesk", "oxyvase", "starchart", "photo_wedding", "photo_fighter", "d_family", "d_visitors", "tansu", "futon", "hibachi", "tricycle", "kyodai", "stairs", "door", "bed_f", "bonsai1", "bonsai2", "bonsai3", "bonsai4", "bonsai5", "rwall", "rwall_p", "rwall_w", "wall_in", "wheelchair_back", "prosthetic_rack", "workbench", "arm_stand", "deskphoto", "sunset", "wx_bed", "wx_chair", "wx_gramophone", "wx_lamp", "wx_teatable", "wx_rug", "rwallx", "rwallx_p", "rwallx_w", "art_fuji", "art_moon", "art_ginkgo", "art_blob", "art_self", "art_group", "art_banana", "art_squad", "cot", "radio", "wall", "wall2", "wang_yard", "wang_ward",
           "d_uketsuke", "d_shateki", "d_yakisoba", "d_carver", "d_band1", "d_band2", "d_band3", "d_band4", "d_band5", "d_wheel", "d_bedman", "d_scope",
           "v_uketsuke", "v_yakisoba", "v_stall", "v_carver", "v_stage", "v_wheel", "v_bed", "v_cockpit", "v_roof", "v_photo_wedding", "v_photo_fighter", "v_view", "v_moon", "v_family", "v_wataame", "v_art_fuji", "v_art_moon", "v_art_ginkgo", "v_art_blob", "v_art_self", "v_art_group", "v_art_banana", "v_art_squad"]
           .map((k) => [k, `${k}.png`])
