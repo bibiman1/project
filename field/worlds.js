@@ -822,12 +822,9 @@
     kyodai: { img: "kyodai", w: 32, h: 48, top: 5, bottom: 47, solid: [22, 8] },
     stairs: { img: "stairs", w: 64, h: 64, top: 0, bottom: 64 },
     door: { img: "door", w: 32, h: 64, top: 10, bottom: 56 },
+    bonsai_table1: { img: "bonsai_table1", w: 128, h: 48, top: 12, bottom: 45, solid: [124, 14] },
+    bonsai_table2: { img: "bonsai_table2", w: 128, h: 48, top: 12, bottom: 45, solid: [124, 14] },
     bed_f: { img: "bed_f", w: 32, h: 64, top: 5, bottom: 59, solid: [26, 40] },
-    bonsai1: { img: "bonsai1", w: 32, h: 32, top: 3, bottom: 29, solid: [16, 8] },
-    bonsai2: { img: "bonsai2", w: 32, h: 32, top: 3, bottom: 31, solid: [16, 8] },
-    bonsai3: { img: "bonsai3", w: 32, h: 32, top: 3, bottom: 31, solid: [16, 8] },
-    bonsai4: { img: "bonsai4", w: 32, h: 32, top: 2, bottom: 30, solid: [16, 8] },
-    bonsai5: { img: "bonsai5", w: 32, h: 32, top: 4, bottom: 29, solid: [16, 8] },
     cot: { img: "cot", w: 32, h: 32, top: 2, bottom: 32, solid: [20, 10] },
     d_uketsuke: { img: "d_uketsuke", w: 64, h: 64, top: 11, bottom: 54 },
     d_shateki: { img: "d_shateki", w: 64, h: 64, top: 5, bottom: 58, solid: [24, 10] },
@@ -1199,9 +1196,9 @@
       // 客席: 車椅子を一列に
       // 客席: 舞台のほうを向いた車椅子(こちらからは背中が見える)
       ...[5, 6.5, 8, 9.5, 11].map((c) => hat("wheelchair_back", c * T, 7.2 * T)),
-      // 作品展示: 盆栽をずらりと二列
-      ...[1.5, 2.5, 3.5, 4.5].map((c, i) => hat(`bonsai${(i % 5) + 1}`, c * T, 9 * T)),
-      ...[1.5, 2.5, 3.5, 4.5].map((c, i) => hat(`bonsai${((i + 2) % 5) + 1}`, c * T, 10.6 * T)),
+      // 作品展示: 白い布を掛けた長机に、盆栽を並べる
+      hat("bonsai_table1", 3 * T, 9.3 * T),
+      hat("bonsai_table2", 3 * T, 10.9 * T),
       // 作りかけのおたかポッポ(手すさび)が並ぶ台
       hat("exhibit2", 11.5 * T, 9.5 * T, {
         id: "exhibit2",
@@ -1623,7 +1620,7 @@
       name: "廃兵院",
       assetBase: "./assets/worlds/haihei/",
       images: Object.fromEntries(
-        ["facade", "arch", "yakisoba", "wataame", "shateki", "uketsuke", "wheelchair", "crutch", "ginkgo", "stage", "exhibit1", "exhibit2", "bed", "telescope", "tv_on", "tv_off", "iv", "legshelf", "oxyvase", "starchart", "photo_wedding", "photo_fighter", "d_family", "d_visitors", "tansu", "futon", "hibachi", "tricycle", "kyodai", "stairs", "door", "bed_f", "bonsai1", "bonsai2", "bonsai3", "bonsai4", "bonsai5", "rwall", "rwall_p", "rwall_w", "aw", "aw_g", "aw_p", "aw_pg", "aw_w", "aw_wg", "aw_pw", "wheelchair_back", "prosthetic_rack", "workbench", "arm_stand", "deskphoto", "sunset", "noticeboard", "v_board", "guestbook", "v_guestbook", "wx_bed", "wx_chair", "wx_gramophone", "wx_lamp", "wx_teatable", "wx_rug", "rwallx", "rwallx_p", "rwallx_w", "art_fuji", "art_moon", "art_ginkgo", "art_blob", "art_self", "art_group", "art_banana", "art_squad", "art_roof", "cot", "radio", "wang_yard", "wang_ward",
+        ["facade", "arch", "yakisoba", "wataame", "shateki", "uketsuke", "wheelchair", "crutch", "ginkgo", "stage", "exhibit1", "exhibit2", "telescope", "tv_on", "tv_off", "iv", "legshelf", "oxyvase", "starchart", "photo_wedding", "photo_fighter", "d_family", "d_visitors", "tansu", "futon", "hibachi", "tricycle", "kyodai", "stairs", "door", "bed_f", "bonsai_table1", "bonsai_table2", "rwall", "rwall_p", "rwall_w", "aw", "aw_g", "aw_p", "aw_pg", "aw_w", "aw_wg", "aw_pw", "wheelchair_back", "prosthetic_rack", "workbench", "arm_stand", "deskphoto", "sunset", "noticeboard", "v_board", "guestbook", "v_guestbook", "wx_bed", "wx_chair", "wx_gramophone", "wx_lamp", "wx_teatable", "wx_rug", "rwallx", "rwallx_p", "rwallx_w", "art_fuji", "art_moon", "art_ginkgo", "art_blob", "art_self", "art_group", "art_banana", "art_squad", "art_roof", "cot", "radio", "wang_yard", "wang_ward",
           "d_uketsuke", "d_shateki", "d_yakisoba", "d_carver", "d_band1", "d_band2", "d_band3", "d_band4", "d_band5", "d_wheel", "d_bedman", "d_scope",
           "v_uketsuke", "v_yakisoba", "v_stall", "v_carver", "v_stage", "v_wheel", "v_bed", "v_cockpit", "v_photo_wedding", "v_photo_fighter", "v_view", "v_moon", "v_family", "v_wataame", "v_art_fuji", "v_art_moon", "v_art_ginkgo", "v_art_blob", "v_art_self", "v_art_group", "v_art_banana", "v_art_squad", "v_art_roof", "v_tv"]
           .map((k) => [k, `${k}.png`])
