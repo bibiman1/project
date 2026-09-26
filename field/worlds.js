@@ -558,6 +558,8 @@
     nursedesk: { img: "nursedesk", w: 96, h: 64, top: 9, bottom: 56, solid: [52, 18] },
     oxyvase: { img: "oxyvase", w: 32, h: 32, top: 5, bottom: 31 },
     starchart: { img: "starchart", w: 32, h: 32, top: 0, bottom: 30 },
+    photo_wedding: { img: "photo_wedding", w: 32, h: 32, top: 0, bottom: 30 },
+    photo_fighter: { img: "photo_fighter", w: 32, h: 32, top: 0, bottom: 30 },
     stairs: { img: "stairs", w: 64, h: 64, top: 0, bottom: 62 },
     cot: { img: "cot", w: 32, h: 32, top: 2, bottom: 32, solid: [20, 10] },
     radio: { img: "radio", w: 32, h: 32, top: 5, bottom: 27 },
@@ -859,6 +861,16 @@
       dead("d_wheel", "wheel", 5.6 * T, 6.9 * T, "v_wheel"),
       // 病室
       hat("oxyvase", 7.6 * T, 2.9 * T),
+      // 枕元の壁: 宇宙軍の礼装と花嫁の写真
+      hat("photo_wedding", 8.4 * T, 1.9 * T, {
+        id: "photo_wedding",
+        sortDy: -40,
+        iy: 20,
+        range: 40,
+        interact(api) {
+          api.show("v_photo_wedding");
+        },
+      }),
       dead("d_bedman", "bedman", 9.2 * T, 4.3 * T, "v_bed"),
       hat("iv", 10.8 * T, 3.6 * T, {
         id: "iv",
@@ -878,6 +890,16 @@
       }),
       dead("d_scope", "scope", 15.6 * T, 4.2 * T, "v_cockpit"),
       hat("telescope", 17.2 * T, 3.4 * T),
+      // 窓辺の壁: クラシックな宇宙戦闘機の写真
+      hat("photo_fighter", 16.4 * T, 1.9 * T, {
+        id: "photo_fighter",
+        sortDy: -40,
+        iy: 20,
+        range: 40,
+        interact(api) {
+          api.show("v_photo_fighter");
+        },
+      }),
       // 叩くと木琴のように鳴る義足の棚
       hat("legshelf", 12 * T, 7.9 * T, {
         id: "legshelf",
@@ -991,9 +1013,9 @@
       name: "廃兵院",
       assetBase: "./assets/worlds/haihei/",
       images: Object.fromEntries(
-        ["facade", "arch", "yakisoba", "wataame", "shateki", "uketsuke", "wheelchair", "ginkgo", "stage", "exhibit1", "exhibit2", "bed", "telescope", "tv", "iv", "legshelf", "nursedesk", "oxyvase", "starchart", "stairs", "cot", "radio", "wall", "wall2", "wang_yard", "wang_ward",
+        ["facade", "arch", "yakisoba", "wataame", "shateki", "uketsuke", "wheelchair", "ginkgo", "stage", "exhibit1", "exhibit2", "bed", "telescope", "tv", "iv", "legshelf", "nursedesk", "oxyvase", "starchart", "photo_wedding", "photo_fighter", "stairs", "cot", "radio", "wall", "wall2", "wang_yard", "wang_ward",
           "d_uketsuke", "d_shateki", "d_yakisoba", "d_carver", "d_band1", "d_band2", "d_wheel", "d_bedman", "d_scope",
-          "v_uketsuke", "v_yakisoba", "v_stall", "v_carver", "v_stage", "v_wheel", "v_bed", "v_cockpit", "v_roof"]
+          "v_uketsuke", "v_yakisoba", "v_stall", "v_carver", "v_stage", "v_wheel", "v_bed", "v_cockpit", "v_roof", "v_photo_wedding", "v_photo_fighter"]
           .map((k) => [k, `${k}.png`])
           .concat([["ki", "./assets/worlds/lake/ki_walk.png"]])
       ),
