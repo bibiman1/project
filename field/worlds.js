@@ -220,6 +220,7 @@
     backdrop: { img: "fuji", x: 0, y: 16, scale: 2 },
     drawGround(ctx, ox, oy, img) {
       if (!this.layer) {
+        if (typeof img !== "function") return; // 古い rpg.js と混ざったとき(キャッシュ)に止まらないように
         const tile = img("wang_road");
         if (!tile) return;
         this.layer = buildRoadLayer(tile, ROAD_CURVE, ROAD_COLS, ROAD_ROWS, 8);
