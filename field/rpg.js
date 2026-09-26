@@ -225,6 +225,38 @@
       return map.objects.filter((o) => !o.hidden || !o.hidden(world.api));
     }
 
+    // 線の壁(map.rails: 点列の配列)。ぶつかると、はじき返す
+    const RAIL_R = 9;
+    function railHit(fx, fy) {
+      for (const run of map.rails || []) {
+        for (let i = 0; i < run.length - 1; i++) {
+          const [ax, ay] = run[i];
+          const [bx, by] = run[i + 1];
+          const dx = bx - ax;
+          const dy = by - ay;
+          const l2 = dx * dx + dy * dy || 1;
+          const t = Math.max(0, Math.min(1, ((fx - ax) * dx + (fy - ay) * dy) / l2));
+          const qx = ax + dx * t;
+          const qy = ay + dy * t;
+          const d = Math.hypot(fx - qx, fy - qy);
+          if (d < RAIL_R) {
+            // いまいる側へ、はじく
+            let nx = player.x - qx;
+            let ny = player.y - qy;
+            const nl = Math.hypot(nx, ny) || 1;
+            nx /= nl;
+            ny /= nl;
+            player.kx = nx * 230;
+            player.ky = ny * 230;
+            player.vx = 0;
+            player.vy = 0;
+            return true;
+          }
+        }
+      }
+      return false;
+    }
+
     function solidAt(fx, fy) {
       const x0 = fx - FEET_W / 2;
       const x1 = fx + FEET_W / 2;
@@ -279,7 +311,8 @@
       }
       if (cutscene) return;
 
-      const onIce = !!(tileAt(player.x, player.y) || {}).ice;
+      const onIce =
+        !!(tileAt(player.x, player.y) || {}).ice || !!(map.slippery && map.slippery(world.api, player.x, player.y));
       const tx = input.x * SPEED;
       const ty = input.y * SPEED;
       if (onIce) {
@@ -291,11 +324,18 @@
         player.vy = ty;
       }
 
-      const nx = player.x + player.vx * dt;
-      if (!solidAt(nx, player.y)) player.x = nx;
+      // はじかれた勢い(ガードレールなど)。少しずつ弱まる
+      const kd = Math.exp(-7 * dt);
+      player.kx = (player.kx || 0) * kd;
+      player.ky = (player.ky || 0) * kd;
+      const mvx = player.vx + player.kx;
+      const mvy = player.vy + player.ky;
+
+      const nx = player.x + mvx * dt;
+      if (!solidAt(nx, player.y) && !railHit(nx, player.y)) player.x = nx;
       else player.vx = 0;
-      const ny = player.y + player.vy * dt;
-      if (!solidAt(player.x, ny)) player.y = ny;
+      const ny = player.y + mvy * dt;
+      if (!solidAt(player.x, ny) && !railHit(player.x, ny)) player.y = ny;
       else player.vy = 0;
 
       player.moving = Math.hypot(player.vx, player.vy) > 8;
@@ -426,7 +466,7 @@
         }
       }
 
-      if (map.drawGround) map.drawGround(ctx, ox, oy, img);
+      if (map.drawGround) map.drawGround(ctx, ox, oy, img, world.api);
 
       // y順に並べて、手前のものほど後に描く
       const drawables = visibleObjects().map((o) => ({ y: o.y + (o.sortDy || 0), o }));

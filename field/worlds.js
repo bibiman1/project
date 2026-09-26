@@ -89,7 +89,7 @@
 
   // センターライン: 道の中心を点線でなぞる
   function centerLine(ctx, ox, oy, points) {
-    ctx.fillStyle = "#e7c34a";
+    ctx.fillStyle = "#f4f6f8";
     const DASH = 10;
     const GAP = 8;
     let run = 0;
@@ -236,6 +236,8 @@
     if (cur.length) runs.push(cur);
     return runs.filter((r) => r.length > 4);
   })();
+  // 帰り道(ほうとうを食べたあと): 道に雪が積もって、つるつるすべる
+  const homeward = (api) => api.flag("ate");
   // 峠の待避所(行と列)。崖の縁にガードレール、谷の向こうに富士山
   const LAYBY = { c0: 3.5, c1: 13.5, r0: 8.35, r1: 11 };
 
@@ -253,7 +255,15 @@
     },
     wang: { road: { img: "wang_road", size: 32, lookup: WANG16 } },
     backdrop: { img: "fuji", x: 0, y: 16, scale: 2 },
-    drawGround(ctx, ox, oy, img) {
+    rails: [[[LAYBY.c0 * T - 2, 8.55 * T], [LAYBY.c1 * T + 2, 8.55 * T]], ...ROAD_RAILS],
+    slippery(api, x, y) {
+      if (!homeward(api)) return false;
+      const r = Math.floor(y / T);
+      const c = Math.floor(x / T);
+      const inLayby = x > LAYBY.c0 * T && x < LAYBY.c1 * T && y > LAYBY.r0 * T && y < LAYBY.r1 * T;
+      return inLayby || (roadMapGrid[r] && roadMapGrid[r][c] === "=");
+    },
+    drawGround(ctx, ox, oy, img, api) {
       if (typeof img !== "function") return; // 古い rpg.js と混ざったとき(キャッシュ)に止まらないように
       const tile = img("wang_road");
       if (!tile) return;
@@ -287,7 +297,42 @@
         ctx.fill();
         ctx.restore();
       }
-      centerLine(ctx, ox, oy, ROAD_CURVE.filter(([r]) => r > 10.9).map(([r, c]) => [(c + 0.5) * T, (r + 0.5) * T]));
+      if (api && homeward(api)) {
+        // 積もった雪: 道の上を白くなぞる(センターラインは雪の下)
+        ctx.save();
+        ctx.translate(ox, oy);
+        ctx.beginPath();
+        ROAD_CURVE.forEach(([r, c], i) => {
+          const x = (c + 0.5) * T;
+          const y = Math.max(8 * T, (r + 0.5) * T);
+          if (i === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        });
+        ctx.lineJoin = "round";
+        ctx.strokeStyle = "rgba(243, 246, 249, 0.88)";
+        ctx.lineWidth = 90;
+        ctx.stroke();
+        ctx.fillStyle = "rgba(243, 246, 249, 0.88)";
+        ctx.beginPath();
+        ctx.roundRect(LAYBY.c0 * T, LAYBY.r0 * T, (LAYBY.c1 - LAYBY.c0) * T, (LAYBY.r1 - LAYBY.r0) * T, 14);
+        ctx.fill();
+        // わだち
+        ctx.strokeStyle = "rgba(170, 190, 204, 0.5)";
+        ctx.lineWidth = 3;
+        for (const off of [-12, 12]) {
+          ctx.beginPath();
+          ROAD_CURVE.forEach(([r, c], i) => {
+            const x = (c + 0.5) * T + off;
+            const y = Math.max(8 * T, (r + 0.5) * T);
+            if (i === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+          });
+          ctx.stroke();
+        }
+        ctx.restore();
+      } else {
+        centerLine(ctx, ox, oy, ROAD_CURVE.filter(([r]) => r > 10.9).map(([r, c]) => [(c + 0.5) * T, (r + 0.5) * T]));
+      }
       // ガードレール: 待避所の崖側と、峠道のカーブの外側
       guardrail(ctx, ox, oy, [[LAYBY.c0 * T - 2, 8.55 * T], [LAYBY.c1 * T + 2, 8.55 * T]]);
       ROAD_RAILS.forEach((run) => guardrail(ctx, ox, oy, run));
@@ -400,7 +445,15 @@
       ice: { img: "wang_ice", size: 32, lookup: WANG16 },
     },
     backdrop: { img: "fuji", x: 0, y: 16, scale: 2 },
-    drawGround(ctx, ox, oy) {
+    slippery(api, x, y) {
+      return homeward(api) && y > 17 * T && y < 19 * T;
+    },
+    drawGround(ctx, ox, oy, img, api) {
+      if (api && homeward(api)) {
+        ctx.fillStyle = "rgba(243, 246, 249, 0.88)";
+        ctx.fillRect(ox, 17 * T + oy, 16 * T, 2 * T);
+        return;
+      }
       centerLine(ctx, ox, oy, [[-T, 18 * T], [16 * T, 18 * T]]);
     },
     spawns: {
