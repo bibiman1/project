@@ -347,7 +347,18 @@
     },
     triggers: [
       // 道のはじまり(来たところ)から、懲罰空間へ戻る
-      { id: "leave", x: 5.5 * T, y: 59.35 * T, w: 4 * T, h: T, run: (api) => api.exit() },
+      {
+        id: "leave",
+        x: 5.5 * T,
+        y: 59.35 * T,
+        w: 4 * T,
+        h: T,
+        run(api) {
+          // 帰り道: エリアを出る前に、ちゃんの車で帰っていく絵
+          if (homeward(api)) api.show("v_road", () => api.exit());
+          else api.exit();
+        },
+      },
       // 峠: 森が切れて、富士山が見えてくる(北へ越えるたびに)
       {
         id: "vista",
@@ -634,7 +645,7 @@
             api.show("v_table", () => {
               api.setFlag("ate");
               api.setFlag("homeward");
-              api.later(500, () => api.show("v_road", () => api.clear()));
+              api.clear();
             })
           );
         },
@@ -801,6 +812,7 @@
     art_group: { img: "art_group", w: 32, h: 32, top: 4, bottom: 23 },
     art_banana: { img: "art_banana", w: 32, h: 32, top: 4, bottom: 23 },
     art_squad: { img: "art_squad", w: 32, h: 32, top: 4, bottom: 23 },
+    art_roof: { img: "art_roof", w: 32, h: 32, top: 4, bottom: 23 },
     d_family: { img: "d_family", w: 96, h: 64, top: 17, bottom: 55, solid: [60, 14] },
     d_visitors: { img: "d_visitors", w: 64, h: 64, top: 4, bottom: 60 },
     tansu: { img: "tansu", w: 32, h: 64, top: 3, bottom: 61, solid: [28, 12] },
@@ -1158,7 +1170,7 @@
       },
     });
   // 廊下の作品展: 患者たちの絵と、写真
-  const CORRIDOR_ARTS = [["fuji", 2], ["moon", 6], ["ginkgo", 10], ["blob", 13], ["self", 15], ["group", 19], ["banana", 23], ["squad", 26]];
+  const CORRIDOR_ARTS = [["fuji", 2], ["moon", 6], ["ginkgo", 10], ["roof", 11.7], ["blob", 13], ["self", 15], ["group", 19], ["banana", 23], ["squad", 26]];
   // ---- 廊下(個室のドアと、絵や写真の展示が並ぶ。途中に詰所、突き当たりに屋上への階段) ----
   const WARD_W = 31;
   const DOORS = { sick: 4, window: 8, room1: 17, room2: 21, workshop: 25 }; // ドアの列
@@ -1446,11 +1458,10 @@
             api.show("v_view");
             return;
           }
+          // いまの高原の景色だけ(文化祭の日の屋上からの絵は、廊下に掛けてある)
           api.show("v_view", () => {
-            api.show("v_roof", () => {
-              api.mutter("はい　へい　うぃん", 3000);
-              api.clear();
-            });
+            api.mutter("はい　へい　うぃん", 3000);
+            api.clear();
           });
         },
       },
@@ -1530,9 +1541,9 @@
       name: "廃兵院",
       assetBase: "./assets/worlds/haihei/",
       images: Object.fromEntries(
-        ["facade", "arch", "yakisoba", "wataame", "shateki", "uketsuke", "wheelchair", "ginkgo", "stage", "exhibit1", "exhibit2", "bed", "telescope", "tv", "iv", "legshelf", "nursedesk", "oxyvase", "starchart", "photo_wedding", "photo_fighter", "d_family", "d_visitors", "tansu", "futon", "hibachi", "tricycle", "kyodai", "stairs", "door", "bed_f", "bonsai1", "bonsai2", "bonsai3", "bonsai4", "bonsai5", "rwall", "rwall_p", "rwall_w", "wall_in", "wheelchair_back", "prosthetic_rack", "workbench", "arm_stand", "deskphoto", "sunset", "noticeboard", "v_board", "guestbook", "v_guestbook", "wx_bed", "wx_chair", "wx_gramophone", "wx_lamp", "wx_teatable", "wx_rug", "rwallx", "rwallx_p", "rwallx_w", "art_fuji", "art_moon", "art_ginkgo", "art_blob", "art_self", "art_group", "art_banana", "art_squad", "cot", "radio", "wall", "wall2", "wang_yard", "wang_ward",
+        ["facade", "arch", "yakisoba", "wataame", "shateki", "uketsuke", "wheelchair", "ginkgo", "stage", "exhibit1", "exhibit2", "bed", "telescope", "tv", "iv", "legshelf", "nursedesk", "oxyvase", "starchart", "photo_wedding", "photo_fighter", "d_family", "d_visitors", "tansu", "futon", "hibachi", "tricycle", "kyodai", "stairs", "door", "bed_f", "bonsai1", "bonsai2", "bonsai3", "bonsai4", "bonsai5", "rwall", "rwall_p", "rwall_w", "wall_in", "wheelchair_back", "prosthetic_rack", "workbench", "arm_stand", "deskphoto", "sunset", "noticeboard", "v_board", "guestbook", "v_guestbook", "wx_bed", "wx_chair", "wx_gramophone", "wx_lamp", "wx_teatable", "wx_rug", "rwallx", "rwallx_p", "rwallx_w", "art_fuji", "art_moon", "art_ginkgo", "art_blob", "art_self", "art_group", "art_banana", "art_squad", "art_roof", "cot", "radio", "wall", "wall2", "wang_yard", "wang_ward",
           "d_uketsuke", "d_shateki", "d_yakisoba", "d_carver", "d_band1", "d_band2", "d_band3", "d_band4", "d_band5", "d_wheel", "d_bedman", "d_scope",
-          "v_uketsuke", "v_yakisoba", "v_stall", "v_carver", "v_stage", "v_wheel", "v_bed", "v_cockpit", "v_roof", "v_photo_wedding", "v_photo_fighter", "v_view", "v_moon", "v_family", "v_wataame", "v_art_fuji", "v_art_moon", "v_art_ginkgo", "v_art_blob", "v_art_self", "v_art_group", "v_art_banana", "v_art_squad"]
+          "v_uketsuke", "v_yakisoba", "v_stall", "v_carver", "v_stage", "v_wheel", "v_bed", "v_cockpit", "v_photo_wedding", "v_photo_fighter", "v_view", "v_moon", "v_family", "v_wataame", "v_art_fuji", "v_art_moon", "v_art_ginkgo", "v_art_blob", "v_art_self", "v_art_group", "v_art_banana", "v_art_squad", "v_art_roof"]
           .map((k) => [k, `${k}.png`])
           .concat([["ki", "./assets/worlds/lake/ki_walk.png"]])
       ),
