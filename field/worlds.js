@@ -800,7 +800,7 @@
     iv: { img: "iv", w: 20, h: 58, top: 0, bottom: 57, solid: [10, 6] },
     legshelf: { img: "legshelf", w: 64, h: 64, top: 3, bottom: 56, solid: [46, 14] },
     oxyvase: { img: "oxyvase", w: 32, h: 32, top: 5, bottom: 31 },
-    starchart: { img: "starchart", w: 24, h: 28, top: 0, bottom: 27 },
+    starchart: { img: "starchart", w: 32, h: 37, top: 0, bottom: 36 },
     photo_wedding: { img: "photo_wedding", w: 32, h: 32, top: 0, bottom: 30 },
     guestbook: { img: "guestbook", w: 32, h: 32, top: 12, bottom: 23 }, // 来場者ノート
     noticeboard: { img: "noticeboard", w: 64, h: 64, top: 5, bottom: 62, solid: [48, 8] }, // 掲示板(ガリ版刷りの文化祭のビラ、献立表、消灯時刻)
@@ -1442,7 +1442,7 @@
       },
     }),
     dead("d_bedman_h", "bedman", 5.9 * T, 3.6 * T, "v_bed"),
-    hat("starchart", 7.5 * T, 1.25 * T, { sortDy: -40 }),
+    hat("starchart", 7.45 * T, 1.45 * T, { sortDy: -40 }),
   ], "PWWWPWWAP");
   // 窓辺の部屋: 机の上のコックピットの写真(焦げたぼぎのマスコット)、ロッキングチェアのガイコツ、宇宙戦闘機の写真
   const ROOM_WINDOW = room("window", "wood", [
