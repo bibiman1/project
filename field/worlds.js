@@ -766,7 +766,7 @@
 
   const VOID_FRAGMENTS = [
     fragment("lake", "凍った湖と富士山", "きーが見た風景。", "frag_lake", 22, 12),
-    fragment("haihei", "廃兵院", "Hi Hey Win！", "frag_haihei", 33, 21, "lake"),
+    fragment("haihei", "アンバリッド・ホテル", "Hi Hey Win！", "frag_haihei", 33, 21, "lake"),
     fragment("kasumi", "霞ヶ浦のエクラノプラン", "ミイラさまの遊覧飛行。", "frag_kasumi", 12, 22, "haihei"),
   ];
 
@@ -1747,7 +1747,11 @@
   ];
   CREW.forEach((c) => (c.baseY = c.y));
   // ジャンプの習い方: クルーが順番に跳んでみせる → どのボタンで跳ぶかを出す → きーが自分で跳べたら覚える
-  const JUMP_KEY = "ontouchstart" in window || navigator.maxTouchPoints > 0 ? "Bボタン" : "Xキー";
+  // どのボタンで跳ぶか: 最後にキーボードを使っていれば「Xキー」、画面をさわっていれば「Bボタン」
+  let lastInputTouch = false;
+  window.addEventListener("keydown", () => (lastInputTouch = false), true);
+  window.addEventListener("touchstart", () => (lastInputTouch = true), { capture: true, passive: true });
+  const jumpKey = () => (lastInputTouch ? "Bボタン" : "Xキー");
   const hintB = (on) => {
     const b = document.getElementById("actionBtnB");
     if (b) b.classList.toggle("hint", on);
@@ -1765,7 +1769,7 @@
       CREW.forEach((c) => (c.y = c.baseY));
       if (api.flag("jumpLearned")) return;
       api.setFlag("jump"); // ここから跳べる(まだ覚えてはいない)
-      api.toast(`${JUMP_KEY}で　とんでみよう`, 8);
+      api.toast(`${jumpKey()}で　とんでみよう`, 8);
       hintB(true);
     });
   }
@@ -1775,7 +1779,7 @@
     api.later(500, () => {
       crewHop(0); // クルーも一緒に跳ぶ
       api.setFlag("jumpLearned");
-      api.toast(`ジャンプ（${JUMP_KEY}）`, 3.2);
+      api.toast(`ジャンプ（${jumpKey()}）`, 3.2);
     });
   }
   const K_HANGAR = {
@@ -1838,7 +1842,8 @@
     [[6, 6], [22.5, 6], [22.5, 10], [6, 10]], // 胴体の上面(T字尾翼の下と、操縦席の窓には上がらない)
   ];
   // 背中の発射筒(一段高い筒)は歩けない
-  const WING_TUBES = [8, 11.1, 14.2].flatMap((x0) => [[x0, 6, x0 + 2.6, 6.8], [x0, 8.8, x0 + 2.6, 9.6]]);
+  // 南の列のいちばん後ろ(翼の付け根の上)は、翼から胴体へ上がる通り道として2マス分あける
+  const WING_TUBES = [8, 11.1, 14.2].flatMap((x0) => [[x0, 6, x0 + 2.6, 6.8], [x0, 8.8, x0 === 14.2 ? 16.2 : x0 + 2.6, 9.6]]);
 
   const inPoly = (x, y, poly) => {
     let inside = false;
@@ -2139,7 +2144,7 @@
     // 次の世界へのカギ: 道具「おたかぽっぽ」(スタンプの特典)
     haihei: {
       id: "haihei",
-      name: "廃兵院",
+      name: "アンバリッド・ホテル", // ゲームの中では「廃兵院」と書かない(Hi Hey Win とアンバリッドのことば遊びで気づかせる)
       assetBase: "./assets/worlds/haihei/",
       images: Object.fromEntries(
         ["facade", "arch", "yakisoba", "wataame", "shateki", "uketsuke", "wheelchair", "crutch", "ginkgo", "ginkgo_big", "stage", "exhibit1", "exhibit2", "telescope", "tv_on", "tv_off", "iv", "legshelf", "oxyvase", "starchart", "photo_wedding", "photo_fighter", "d_family", "d_visitors", "poppo_row", "portrait", "bench", "clock", "firebucket", "plant", "rail", "tansu", "futon", "hibachi", "tricycle", "kyodai", "stairs", "door", "bed_f", "bonsai_table1", "bonsai_table2", "bed_h", "d_bedman_h", "cabinet_radio", "rwall", "rwall_p", "rwall_w", "aw", "aw_g", "aw_p", "aw_pg", "aw_w", "aw_wg", "aw_pw", "wheelchair_back", "prosthetic_rack", "workbench", "arm_stand", "deskphoto", "sunset", "noticeboard", "v_board", "guestbook", "v_guestbook", "wx_bed", "wx_chair", "wx_gramophone", "wx_lamp", "wx_teatable", "wx_rug", "rwallx", "rwallx_p", "rwallx_w", "art_fuji", "art_moon", "art_ginkgo", "art_blob", "art_self", "art_group", "art_banana", "art_squad", "art_roof", "cot", "radio", "wang_yard", "wang_ward",
