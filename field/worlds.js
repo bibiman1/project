@@ -748,7 +748,7 @@
           ctx.restore();
         },
       },
-      // 最初に触れたとき: 断片の名前と言葉を出して、そのまま中へ
+      // 最初に触れたとき: そのまま中へ(名前や言葉は出さない。ネタバレになるので)
       trigger: {
         id: `touch_${id}`,
         x: fx - 50,
@@ -759,7 +759,7 @@
         run(api) {
           if (found(api)) return;
           api.setFlag(`found.${id}`);
-          api.say([{ title, text }], () => api.enterWorld(id));
+          api.enterWorld(id);
         },
       },
       spawn: { x: fx, y: fy + 1.6 * T, facing: "south" },
