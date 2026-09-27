@@ -645,10 +645,9 @@
       const h = headOf(o.id, ox, oy) || { x: o.x + ox, y: o.y + oy };
       const x = Math.round(h.x);
       const y = Math.round(h.y - 10 + (Math.sin(t * 5) > 0 ? 1 : 0));
-      // 黒いふちの白い ▼(幅 7 ドット)
+      // 黒いふちの白い ▼(幅 7 ドット)。ふちは左右と下だけ(上に線を出さない)
       ctx.fillStyle = "#000";
-      for (let i = 0; i < 5; i++) ctx.fillRect(x - 4 + i, y + i - 1, 9 - i * 2, 1);
-      ctx.fillRect(x - 5, y - 1, 11, 1);
+      for (let i = 0; i < 5; i++) ctx.fillRect(x - 4 + i, y + i, 9 - i * 2, 1);
       ctx.fillStyle = "#fff";
       for (let i = 0; i < 4; i++) ctx.fillRect(x - 3 + i, y + i, 7 - i * 2, 1);
     }
