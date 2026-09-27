@@ -207,7 +207,7 @@ body {
 .fade-overlay {
   position: absolute;
   inset: 0;
-  background: #f4f7f9;
+  background: #0c0b10;
   opacity: 0;
   pointer-events: none;
   transition: opacity 450ms ease;
@@ -314,6 +314,15 @@ body {
   background: rgba(110, 108, 100, 0.85);
 }
 
+.action-btn.hint {
+  animation: btn-hint 0.8s ease-in-out infinite alternate;
+}
+
+@keyframes btn-hint {
+  from { box-shadow: 0 0 0 0 rgba(255, 236, 170, 0.9); transform: scale(1); }
+  to { box-shadow: 0 0 0 10px rgba(255, 236, 170, 0); transform: scale(1.15); }
+}
+
 .action-btn:active {
   filter: brightness(1.1);
 }
@@ -387,4 +396,10 @@ body.landscape-compact .field-footer {
   .field-header {
     padding: 24px 16px 16px;
   }
+}
+
+/* 一枚絵を見ているあいだは、絵にかぶらないようスティックとボタンを薄く */
+body.viewing .joystick,
+body.viewing .action-btn {
+  opacity: 0.25;
 }

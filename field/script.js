@@ -295,10 +295,13 @@
     fadeOverlay.classList.add("on");
     setTimeout(() => {
       fn();
-      fadeOverlay.classList.remove("on");
-      setTimeout(() => {
-        transitioning = false;
-      }, 300);
+      // 画像を読み終わるまで暗いまま。読み終わったらフェードイン
+      rpg.whenReady(() => {
+        fadeOverlay.classList.remove("on");
+        setTimeout(() => {
+          transitioning = false;
+        }, 300);
+      });
     }, 480);
   }
 
@@ -377,6 +380,11 @@
     }
     if (isAction) {
       if (!transitioning && !e.repeat) rpg.interact();
+      e.preventDefault();
+      return;
+    }
+    if (e.code === "KeyX" || e.code === "ShiftLeft" || e.code === "ShiftRight") {
+      if (!transitioning && !e.repeat) rpg.jump();
       e.preventDefault();
       return;
     }
@@ -461,7 +469,8 @@
   actionBtnB.addEventListener("pointerdown", (e) => {
     e.preventDefault();
     e.stopPropagation();
-    skipStory();
+    if (story) skipStory();
+    else if (!transitioning) rpg.jump(); // B: ジャンプ(覚えたあと)
   });
 
   function readInput() {
@@ -522,9 +531,12 @@
       rpg.update(dt, t, input);
     }
     rpg.draw(t);
+    document.body.classList.toggle("viewing", rpg.viewing);
   }
 
   rpg.enter(window.BOGI_WORLDS[HUB]);
   updateStatus();
+  // 最初も、画像を読み終わってからフェードイン
+  rpg.whenReady(() => fadeOverlay.classList.remove("on"));
   requestAnimationFrame(loop);
 })();
