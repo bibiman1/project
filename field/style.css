@@ -211,7 +211,7 @@ body {
   opacity: 0;
   pointer-events: none;
   /* 明けるほう(フェードイン)はゆっくり。入った直後に動く人や車椅子が位置につく間も隠れるように */
-  transition: opacity 1500ms ease;
+  transition: opacity 1500ms ease-in-out;
 }
 
 .fade-overlay.on {

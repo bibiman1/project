@@ -771,6 +771,9 @@
       const input = readInput();
       if (input.x || input.y) dismissIntro();
       rpg.update(dt, t, input);
+    } else if (transitioning) {
+      // 暗転しているあいだも世界の時間は進める(入った直後に動き出す人や車椅子が、明ける前に位置についておくように)
+      rpg.update(dt, t, { x: 0, y: 0 });
     }
     rpg.draw(t);
     document.body.classList.toggle("viewing", rpg.viewing);
