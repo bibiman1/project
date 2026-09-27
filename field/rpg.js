@@ -278,6 +278,29 @@
       return false;
     }
 
+    // 進もうとした先がふさがっていても、横に少し(CORNER_SLIDE まで)ずらせば通れるなら、そちらへ寄せる。
+    // スマホのジョイスティックでは狭い通り道にぴったり合わせにくいので
+    const CORNER_SLIDE = 12;
+    function slideAround(tx, ty, vertical, dt) {
+      const step = SPEED * 0.7 * dt;
+      for (let s = 2; s <= CORNER_SLIDE; s += 2) {
+        for (const sign of [-1, 1]) {
+          const ox = vertical ? tx + sign * s : tx;
+          const oy = vertical ? ty : ty + sign * s;
+          if (!solidAt(ox, oy) && !railHit(ox, oy)) {
+            if (vertical) {
+              const nx = player.x + sign * Math.min(step, s);
+              if (!solidAt(nx, player.y)) player.x = nx;
+            } else {
+              const ny = player.y + sign * Math.min(step, s);
+              if (!solidAt(player.x, ny)) player.y = ny;
+            }
+            return;
+          }
+        }
+      }
+    }
+
     function solidAt(fx, fy) {
       const x0 = fx - FEET_W / 2;
       const x1 = fx + FEET_W / 2;
@@ -375,10 +398,16 @@
 
       const nx = player.x + mvx * dt;
       if (!solidAt(nx, player.y) && !railHit(nx, player.y)) player.x = nx;
-      else player.vx = 0;
+      else {
+        player.vx = 0;
+        if (Math.abs(mvx) > Math.abs(mvy)) slideAround(nx, player.y, false, dt); // 角に少し引っかかったら、あいている側へずらす
+      }
       const ny = player.y + mvy * dt;
       if (!solidAt(player.x, ny) && !railHit(player.x, ny)) player.y = ny;
-      else player.vy = 0;
+      else {
+        player.vy = 0;
+        if (Math.abs(mvy) > Math.abs(mvx)) slideAround(player.x, ny, true, dt);
+      }
 
       player.moving = Math.hypot(player.vx, player.vy) > 8;
       if (Math.abs(input.x) > 0.1 || Math.abs(input.y) > 0.1) {

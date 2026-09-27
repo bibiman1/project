@@ -297,10 +297,13 @@
       fn();
       // 画像を読み終わるまで暗いまま。読み終わったらフェードイン
       rpg.whenReady(() => {
-        fadeOverlay.classList.remove("on");
+        // 読み終わってからも少しだけ暗いまま待つ(入った直後に位置を決め直す人や車椅子が、一瞬ワープして見えないように)
         setTimeout(() => {
-          transitioning = false;
-        }, 300);
+          fadeOverlay.classList.remove("on");
+          setTimeout(() => {
+            transitioning = false;
+          }, 300);
+        }, 350);
       });
     }, 480);
   }
