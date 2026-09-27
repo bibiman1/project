@@ -702,13 +702,16 @@
     return g.map((row) => row.join(""));
   }
 
+  // テストプレイ用: true のあいだは、先の断片を終えていなくても全部の断片が現れる(本番の順番に戻すときは false)
+  const SHOW_ALL_FRAGMENTS = true;
+
   // 断片: 台座の上の小さな模型。触れると、その断片の世界に入る
   // requires: この断片が現れる前に終えておく断片の世界
   function fragment(id, title, text, icon, col, row, requires) {
     const fx = col * T;
     const fy = row * T;
     const found = (api) => api.flag(`found.${id}`);
-    const present = (api) => !requires || api.cleared(requires);
+    const present = (api) => SHOW_ALL_FRAGMENTS || !requires || api.cleared(requires);
     return {
       object: {
         id: `frag_${id}`,
