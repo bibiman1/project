@@ -478,7 +478,8 @@
     const texts = hub.fragmentTexts || {};
     return (hub.fragments || []).map((id) =>
       gameState.flags[`${HUB}.found.${id}`]
-        ? { text: window.BOGI_WORLDS[id].name, done: gameState.cleared.includes(id), note: texts[id] }
+        ? // 説明は終えた断片にだけ(入る前に読むとネタバレになる)
+          { text: window.BOGI_WORLDS[id].name, done: gameState.cleared.includes(id), note: gameState.cleared.includes(id) ? texts[id] : null }
         : { text: "？？？？", dim: true }
     );
   }
