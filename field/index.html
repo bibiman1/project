@@ -11,7 +11,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DotGothic16&display=swap">
-  <link rel="stylesheet" href="./style.css?v=59">
+  <link rel="stylesheet" href="./style.css?v=63">
 </head>
 <body>
   <header class="field-header">
@@ -24,25 +24,20 @@
     <div class="game-frame">
       <canvas id="fieldCanvas" width="960" height="600" aria-label="懲罰空間"></canvas>
 
-      <div id="introHint" class="intro-hint">……ここには、まだ何もない。</div>
+      <!-- エラーのときだけ使う(最初の一言はキャンバスに描く) -->
+      <div id="introHint" class="intro-hint hidden"></div>
 
       <div id="storyOverlay" class="story-overlay" hidden>
-        <div class="story-card">
-          <p id="storyTitle" class="story-title"></p>
-          <p id="storyText" class="story-text"></p>
-          <p class="story-hint">クリック / Enterキーで進む</p>
-        </div>
       </div>
 
-      <!-- ステータス画面(C キー / C ボタンで開く。スーファミのドラクエのような黒い窓) -->
-      <!-- ステータス画面(C キー / C ボタン)。320×200 の小さなキャンバスに描いて、ぼかさずに拡大する(スーファミの荒いドット文字) -->
+      <!-- ステータス画面(C キー / C ボタン)。480×300 のキャンバスに描いて、ぼかさずに 2 倍へ(マップの絵と同じドット) -->
       <div id="statusOverlay" class="status-overlay" hidden>
-        <canvas id="statusCanvas" width="320" height="200" aria-label="ステータス"></canvas>
+        <canvas id="statusCanvas" width="480" height="300" aria-label="ステータス"></canvas>
       </div>
 
       <div id="fadeOverlay" class="fade-overlay on"></div>
 
-      <button type="button" id="fullscreenBtn" class="fullscreen-btn" aria-label="全画面表示">⛶</button>
+      <button type="button" id="fullscreenBtn" class="fullscreen-btn" aria-label="全画面表示"></button>
     </div>
 
     <div class="field-status">
@@ -63,8 +58,8 @@
     <small>© Character Project</small>
   </footer>
 
-  <script src="./rpg.js?v=59"></script>
-  <script src="./worlds.js?v=59"></script>
-  <script src="./script.js?v=59"></script>
+  <script src="./rpg.js?v=63"></script>
+  <script src="./worlds.js?v=63"></script>
+  <script src="./script.js?v=63"></script>
 </body>
 </html>

@@ -12,8 +12,6 @@
   const progressText = document.getElementById("progressText");
   const inventoryText = document.getElementById("inventoryText");
   const storyOverlay = document.getElementById("storyOverlay");
-  const storyTitleEl = document.getElementById("storyTitle");
-  const storyTextEl = document.getElementById("storyText");
   const joystick = document.getElementById("joystick");
   const joystickKnob = document.getElementById("joystickKnob");
   const actionBtnA = document.getElementById("actionBtnA");
@@ -200,25 +198,28 @@
     });
 
     document.addEventListener("fullscreenchange", () => {
-      fullscreenBtn.textContent = isFullscreen() ? "⤢" : "⛶";
+      fullscreenBtn.classList.toggle("is-full", isFullscreen());
     });
     document.addEventListener("webkitfullscreenchange", () => {
-      fullscreenBtn.textContent = isFullscreen() ? "⤢" : "⛶";
+      fullscreenBtn.classList.toggle("is-full", isFullscreen());
     });
   }
 
   // ---- 会話(文字の出る窓) ----
+  // 画面下の黒い窓にドット文字で出す(ステータスや吹き出しと同じ文字と窓)。1 ページは 3 行まで、あふれたら次のページへ
   const STORY_REVEAL_CHARS_PER_SEC = 38;
-  let story = null; // { pages, index, text, revealed, onDone }
+  const MSG = { x: 12, y: 186, w: 456, h: 102, lines: 3, textW: 420 }; // 480×300 の単位(マップの絵と同じドット)
+  let story = null; // { pages, index, lines, total, revealed, onDone }
 
   // pages: 文字列(ナレーション) / [話者, 台詞] / { title, text } の配列
   function startDialog(pages, onDone) {
-    const norm = pages.map((p) => {
-      if (typeof p === "string") return { title: "", text: p };
-      if (Array.isArray(p)) return { title: p[0], text: p[1] };
-      return p;
-    });
-    story = { pages: norm, index: 0, text: "", revealed: 0, onDone: onDone || null };
+    const norm = [];
+    for (const p of pages) {
+      const page = typeof p === "string" ? { title: "", text: p } : Array.isArray(p) ? { title: p[0], text: p[1] } : p;
+      const lines = window.bogiPix.wrap(page.text, MSG.textW);
+      for (let i = 0; i < lines.length; i += MSG.lines) norm.push({ title: page.title, lines: lines.slice(i, i + MSG.lines) });
+    }
+    story = { pages: norm, index: 0, lines: [], total: 0, revealed: 0, onDone: onDone || null };
     showStoryPage();
     storyOverlay.hidden = false;
     resetJoy();
@@ -227,16 +228,35 @@
 
   function showStoryPage() {
     const page = story.pages[story.index];
-    story.text = page.text;
+    story.lines = page.lines;
+    story.title = page.title;
+    story.total = page.lines.join("").length;
     story.revealed = 0;
-    storyTitleEl.textContent = page.title;
-    storyTitleEl.hidden = !page.title;
-    storyTextEl.textContent = "";
   }
 
   function updateStory(dt) {
-    story.revealed = Math.min(story.text.length, story.revealed + STORY_REVEAL_CHARS_PER_SEC * dt);
-    storyTextEl.textContent = story.text.slice(0, Math.floor(story.revealed));
+    story.revealed = Math.min(story.total, story.revealed + STORY_REVEAL_CHARS_PER_SEC * dt);
+  }
+
+  function drawStory(t) {
+    const P = window.bogiPix;
+    const S = 2;
+    // 話者(題)は窓の上に小さな窓で
+    if (story.title) {
+      const tw = P.width(story.title) + 20;
+      P.win(ctx, MSG.x * S, (MSG.y - 30) * S, tw * S, 30 * S, S);
+      P.text(ctx, story.title, (MSG.x + 10) * S, (MSG.y - 23) * S, S, "#ffe08a");
+    }
+    P.win(ctx, MSG.x * S, MSG.y * S, MSG.w * S, MSG.h * S, S);
+    let left = Math.floor(story.revealed);
+    story.lines.forEach((line, i) => {
+      if (left <= 0) return;
+      const part = line.slice(0, left);
+      left -= line.length;
+      P.text(ctx, part, (MSG.x + 16) * S, (MSG.y + 12 + i * 26) * S, S);
+    });
+    // 読み終わったら ▼ を点滅(次へ)
+    if (story.revealed >= story.total && Math.floor(t * 2.5) % 2 === 0) P.text(ctx, "▼", (MSG.x + MSG.w - 26) * S, (MSG.y + MSG.h - 24) * S, S);
   }
 
   function closeStory() {
@@ -249,9 +269,8 @@
 
   function advanceStory() {
     if (!story) return;
-    if (story.revealed < story.text.length) {
-      story.revealed = story.text.length;
-      storyTextEl.textContent = story.text;
+    if (story.revealed < story.total) {
+      story.revealed = story.total;
       return;
     }
     if (story.index < story.pages.length - 1) {
@@ -362,70 +381,23 @@
   let statusOpen = false;
   const stCanvas = document.getElementById("statusCanvas");
   const stCtx = stCanvas.getContext("2d");
-  const ST_FONT = () =>
-    `12px ${document.fonts && document.fonts.check("12px DotGothic16") ? '"DotGothic16", ' : ""}"Hiragino Kaku Gothic ProN", "Yu Gothic", "Meiryo", sans-serif`;
-  const stTmp = document.createElement("canvas");
-  const stTmpCtx = stTmp.getContext("2d", { willReadFrequently: true });
-  // 文字を一度描いて、にじみを 2 値(ある / ない)に落としてから色をのせる
+  // 文字はほかの画面と同じ(window.bogiPix)。このキャンバスは 1 倍で描いて CSS で拡大する
+  const ST_FONT = () => "";
+  const stTmpCtx = { measureText: (t) => ({ width: window.bogiPix.width(t) }), set font(v) {} };
   function stText(text, x, y, color = "#ffffff", maxW = 999) {
-    stTmpCtx.font = ST_FONT();
+    const P = window.bogiPix;
     let t = text;
-    while (t.length > 1 && stTmpCtx.measureText(t).width > maxW) t = t.slice(0, -1);
+    while (t.length > 1 && P.width(t) > maxW) t = t.slice(0, -1);
     if (t !== text) t = t.slice(0, -1) + "…";
-    const w = Math.ceil(stTmpCtx.measureText(t).width) + 2;
-    const h = 16;
-    stTmp.width = w;
-    stTmp.height = h;
-    stTmpCtx.font = ST_FONT();
-    stTmpCtx.textBaseline = "top";
-    stTmpCtx.fillStyle = "#fff";
-    stTmpCtx.fillText(t, 1, 1);
-    const img = stTmpCtx.getImageData(0, 0, w, h);
-    const d = img.data;
-    const [r, g, b] = [1, 3, 5].map((i) => parseInt(color.slice(i, i + 2), 16));
-    for (let i = 0; i < d.length; i += 4) {
-      const on = d[i + 3] > 110;
-      d[i] = r;
-      d[i + 1] = g;
-      d[i + 2] = b;
-      d[i + 3] = on ? 255 : 0;
-    }
-    stTmpCtx.putImageData(img, 0, 0);
-    stCtx.drawImage(stTmp, x - 1, y - 1);
+    P.text(stCtx, t, x, y, 1, color);
   }
   // 白い二重枠の窓(角を 1 ドット落とす)
   function stWindow(x, y, w, h) {
-    const c = stCtx;
-    c.fillStyle = "#000";
-    c.fillRect(x, y, w, h);
-    c.fillStyle = "#fff";
-    c.fillRect(x + 2, y, w - 4, 2);
-    c.fillRect(x + 2, y + h - 2, w - 4, 2);
-    c.fillRect(x, y + 2, 2, h - 4);
-    c.fillRect(x + w - 2, y + 2, 2, h - 4);
-    c.fillRect(x + 1, y + 1, 1, 1);
-    c.fillRect(x + w - 2, y + 1, 1, 1);
-    c.fillRect(x + 1, y + h - 2, 1, 1);
-    c.fillRect(x + w - 2, y + h - 2, 1, 1);
-    c.fillStyle = "#7a7a7a";
-    c.fillRect(x + 3, y + 3, w - 6, 1);
-    c.fillRect(x + 3, y + h - 4, w - 6, 1);
-    c.fillRect(x + 3, y + 3, 1, h - 6);
-    c.fillRect(x + w - 4, y + 3, 1, h - 6);
+    window.bogiPix.win(stCtx, x, y, w, h, 1);
   }
-  function stList(title, rows, x, y, w, h) {
-    stWindow(x, y, w, h);
-    stText(title, x + 8, y + 7);
-    const LH = 15;
-    const maxRows = Math.floor((h - 26) / LH);
-    rows.slice(0, maxRows).forEach((r, i) => {
-      const ty = y + 23 + i * LH;
-      if (r.done) stText("✓", x + 8, ty);
-      stText(r.text, x + 20, ty, r.dim ? "#8a8a8a" : "#ffffff", w - 28);
-    });
-  }
+
   // 2段構え(スーファミのドラクエ風): 左のコマンドで選ぶ → 一覧(あふれたらページ送り)。右は数だけの要約
-  const ST_PAGE = 6; // 一覧の1ページの行数
+  const ST_PAGE = 5; // 一覧の1ページの行数
   const stMenu = { mode: "top", cmd: 0, cur: 0 };
   const ST_CMDS = [
     { key: "items", label: "どうぐ" },
@@ -451,67 +423,58 @@
   function stCursor(x, y) {
     // ▶ をドットで描く
     stCtx.fillStyle = "#fff";
-    for (let i = 0; i < 4; i++) stCtx.fillRect(x + i, y + i, 1, 9 - i * 2);
+    for (let i = 0; i < 6; i++) stCtx.fillRect(x + i, y + i, 1, 13 - i * 2);
   }
   function renderStatus() {
     const hub = window.BOGI_WORLDS[HUB];
     stCtx.fillStyle = "#000";
-    stCtx.fillRect(0, 0, 320, 200);
+    stCtx.fillRect(0, 0, 480, 300);
     // 左: コマンド
-    stWindow(8, 8, 104, 78);
+    stWindow(12, 12, 156, 118);
     ST_CMDS.forEach((c, i) => {
-      stText(c.label, 30, 17 + i * 15);
-      if (stMenu.mode === "top" ? stMenu.cmd === i : stMenu.cmd === i) stCursor(17, 19 + i * 15);
+      stText(c.label, 42, 24 + i * 24);
+      if (stMenu.cmd === i) stCursor(24, 27 + i * 24);
     });
     // 右: 要約(数だけ。いくつ増えてもあふれない)
     const frags = hub.fragments || [];
     const found = frags.filter((id) => gameState.flags[`${HUB}.found.${id}`]).length;
-    stWindow(118, 8, 194, 78);
-    stText("きー", 128, 17);
-    stText(`ばしょ：${rpg.isHub ? hub.name : rpg.worldName}`, 128, 32, "#ffffff", 178);
-    stText(`断片　${found}/${frags.length}`, 128, 47);
-    stText(`どうぐ　${gameState.items.length}　ことば　${gameState.words.length}`, 128, 62);
+    stWindow(176, 12, 292, 118);
+    stText("きー", 192, 24);
+    stText(`ばしょ：${rpg.isHub ? hub.name : rpg.worldName}`, 192, 48, "#ffffff", 264);
+    stText(`断片　${found}/${frags.length}`, 192, 72);
+    stText(`どうぐ　${gameState.items.length}　ことば　${gameState.words.length}`, 192, 96);
     if (stMenu.mode === "list") {
       const cmd = ST_CMDS[stMenu.cmd];
       const rows = stRows(cmd.key);
       const pages = Math.max(1, Math.ceil(rows.length / ST_PAGE));
       const page = Math.floor(stMenu.cur / ST_PAGE);
-      stWindow(8, 92, 304, 104);
-      stText(cmd.label, 18, 99);
-      if (pages > 1) stText(`${page + 1}/${pages}`, 280, 99, "#8a8a8a");
-      if (!rows.length) stText("なし", 34, 114, "#8a8a8a");
+      stWindow(12, 138, 456, 150);
+      stText(cmd.label, 28, 150);
+      if (pages > 1) stText(`${page + 1}/${pages}`, 420, 150, "#8a8a8a");
+      if (!rows.length) stText("なし", 50, 174, "#8a8a8a");
       rows.slice(page * ST_PAGE, page * ST_PAGE + ST_PAGE).forEach((r, i) => {
-        const ty = 114 + i * 12;
-        if (page * ST_PAGE + i === stMenu.cur) stCursor(18, ty + 1);
-        if (r.done) stText("✓", 26, ty);
-        stText(r.text, 38, ty, r.dim ? "#8a8a8a" : "#ffffff", 150);
+        const ty = 174 + i * 22;
+        if (page * ST_PAGE + i === stMenu.cur) stCursor(28, ty + 2);
+        if (r.done) stText("✓", 40, ty);
+        stText(r.text, 58, ty, r.dim ? "#8a8a8a" : "#ffffff", 220);
       });
-      if (page < pages - 1) stText("▼", 292, 178);
+      if (page < pages - 1) stText("▼", 440, 264);
       // 選んでいるものの説明(あれば)
       const sel = rows[stMenu.cur];
       if (sel && sel.note) {
-        stWindow(194, 110, 112, 64);
-        wrapText(sel.note, 202, 118, 100, 3);
+        stWindow(290, 164, 168, 96);
+        wrapText(sel.note, 302, 176, 146, 3);
       }
     } else {
-      stText("A でひらく　C でとじる", 150, 186, "#8a8a8a");
+      stText("A でひらく　C でとじる", 262, 276, "#8a8a8a");
     }
   }
-  // 窓の幅で折り返す(1 文字ずつ測る)
+  // 窓の幅で折り返す
   function wrapText(text, x, y, w, maxLines) {
-    stTmpCtx.font = ST_FONT();
-    let line = "";
-    let n = 0;
-    for (const ch of text) {
-      if (stTmpCtx.measureText(line + ch).width > w) {
-        stText(line, x, y + n * 13);
-        n++;
-        line = "";
-        if (n >= maxLines) return;
-      }
-      line += ch;
-    }
-    if (line) stText(line, x, y + n * 13);
+    window.bogiPix
+      .wrap(text, w)
+      .slice(0, maxLines)
+      .forEach((line, i) => stText(line, x, y + i * 22));
   }
   // スマホ: ジョイスティックを倒すたびに1つ動く(倒しっぱなしなら少しずつ送る)
   let stJoyDir = null;
@@ -564,12 +527,27 @@
     document.body.classList.toggle("status-open", open);
   }
 
+  // 最初の一言(……ここには、まだ何もない。)。ほかの文字と同じ窓とドット文字で、歩き出すと消えていく
+  const INTRO_TEXT = "……ここには、まだ何もない。";
   let moved = false;
+  let introFade = 1;
   function dismissIntro() {
-    if (!moved) {
-      moved = true;
-      introHint.classList.add("hidden");
-    }
+    moved = true;
+  }
+  function drawIntro(dt) {
+    if (moved) introFade = Math.max(0, introFade - dt / 0.9);
+    if (introFade <= 0) return;
+    const P = window.bogiPix;
+    const S = 2;
+    const w = (P.width(INTRO_TEXT) + 24) * S;
+    const h = 28 * S;
+    const x = Math.round((VW - w) / 2 / S) * S;
+    const y = Math.round((VH / 2 - h / 2) / S) * S;
+    ctx.save();
+    ctx.globalAlpha = introFade;
+    P.win(ctx, x, y, w, h, S);
+    P.text(ctx, INTRO_TEXT, x + 12 * S, y + 6 * S, S);
+    ctx.restore();
   }
 
   // ---- 入力 ----
@@ -776,6 +754,8 @@
       rpg.update(dt, t, { x: 0, y: 0 });
     }
     rpg.draw(t);
+    drawIntro(dt);
+    if (story) drawStory(t);
     document.body.classList.toggle("viewing", rpg.viewing);
   }
 

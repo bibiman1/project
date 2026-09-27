@@ -621,46 +621,35 @@
     function drawBubble(b, ox, oy) {
       const h = headOf(b.who, ox, oy);
       if (!h) return;
-      ctx.font = "bold 9px sans-serif";
-      const w = Math.max(20, Math.ceil(ctx.measureText(b.text).width) + 12);
-      const bx = Math.round(clamp(h.x - w / 2, 3, vw - w - 3));
-      const by = Math.round(h.y - 22);
-      const hx = Math.round(h.x);
-      ctx.fillStyle = "#fffdf6";
-      ctx.strokeStyle = "#2a2230";
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.roundRect(bx + 0.5, by + 0.5, w, 15, 3);
-      ctx.fill();
-      ctx.stroke();
-      ctx.beginPath();
-      ctx.moveTo(hx - 3.5, by + 15.5);
-      ctx.lineTo(hx + 0.5, by + 20.5);
-      ctx.lineTo(hx + 3.5, by + 15.5);
-      ctx.fill();
-      ctx.stroke();
-      ctx.fillRect(hx - 3, by + 14, 6, 2);
-      ctx.fillStyle = "#2a2230";
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillText(b.text, bx + w / 2 + 0.5, by + 8.5);
+      // 世界は ZOOM 倍で描いているので、画面の座標に直してからドット文字の窓を描く
+      const s = PIX_S;
+      const w = (bogiPix.width(b.text) + 16) * s;
+      const hh = 26 * s;
+      const hx = Math.round(h.x * ZOOM);
+      const bx = clamp(hx - w / 2, 6, VW - w - 6);
+      const by = Math.round(h.y * ZOOM) - hh - 6 * s;
+      ctx.save();
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      bogiPix.win(ctx, bx, by, w, hh, s);
+      // しっぽ(白い三角、ドット)
+      ctx.fillStyle = "#fff";
+      const tx = Math.round(hx / s) * s;
+      const ty = Math.round((by + hh) / s) * s - s;
+      for (let i = 0; i < 4; i++) ctx.fillRect(tx - (3 - i) * s, ty + i * s, (7 - i * 2) * s, s);
+      bogiPix.text(ctx, b.text, Math.round(bx / s) * s + 8 * s, Math.round(by / s) * s + 5 * s, s);
+      ctx.restore();
     }
 
-    // 調べられるものの上に、小さな印を出す(文字は出さない)
+    // 調べられるものの上に、小さな印を出す(文字は出さない)。ほかの文字と同じく、ドットで描く
     function drawActionMark(o, ox, oy, t) {
       const h = headOf(o.id, ox, oy) || { x: o.x + ox, y: o.y + oy };
       const x = Math.round(h.x);
-      const y = Math.round(h.y - 6 + Math.sin(t * 5) * 2);
-      ctx.fillStyle = "#fffdf6";
-      ctx.strokeStyle = "#2a2230";
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.moveTo(x - 4, y - 5);
-      ctx.lineTo(x + 4, y - 5);
-      ctx.lineTo(x, y);
-      ctx.closePath();
-      ctx.fill();
-      ctx.stroke();
+      const y = Math.round(h.y - 10 + (Math.sin(t * 5) > 0 ? 1 : 0));
+      // 黒いふちの白い ▼(幅 7 ドット)。ふちは左右と下だけ(上に線を出さない)
+      ctx.fillStyle = "#000";
+      for (let i = 0; i < 5; i++) ctx.fillRect(x - 4 + i, y + i, 9 - i * 2, 1);
+      ctx.fillStyle = "#fff";
+      for (let i = 0; i < 4; i++) ctx.fillRect(x - 3 + i, y + i, 7 - i * 2, 1);
     }
 
     function drawSnow() {
@@ -669,17 +658,12 @@
     }
 
     function drawToast() {
-      ctx.font = "bold 14px sans-serif";
-      const w = ctx.measureText(toast.text).width + 36;
-      const x = VW / 2 - w / 2;
-      ctx.fillStyle = "rgba(20, 18, 30, 0.8)";
-      ctx.beginPath();
-      ctx.roundRect(x, 18, w, 30, 4);
-      ctx.fill();
-      ctx.fillStyle = "#e8f4ff";
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillText(`◆ ${toast.text}`, VW / 2, 33);
+      const s = PIX_S;
+      const w = (bogiPix.width(toast.text) + 20) * s;
+      const h = 26 * s;
+      const x = Math.round((VW - w) / 2 / s) * s;
+      bogiPix.win(ctx, x, 8 * s, w, h, s);
+      bogiPix.text(ctx, toast.text, x + 10 * s, 13 * s, s);
     }
 
     function drawCutscene() {
@@ -755,6 +739,112 @@
       },
     };
   }
+
+  // ---- ドット文字と窓(ゲームの中の文字はすべてこれで描く: スーファミのドラクエ風) ----
+  // 12px のゴシックを 1 倍で描いて白黒の 2 値に落とし、s 倍に拡大して描く。窓は黒地に白の二重枠
+  const bogiPix = (() => {
+    // ドットで作られた字体(DotGothic16)を、その 16 ドットの升目どおりに描く。読み込めるまでは普通のゴシック
+    const font = () =>
+      `16px ${document.fonts && document.fonts.check("16px DotGothic16") ? '"DotGothic16", ' : ""}"Hiragino Kaku Gothic ProN", "Yu Gothic", "Meiryo", sans-serif`;
+    const meas = document.createElement("canvas").getContext("2d");
+    const cache = new Map();
+    if (document.fonts && document.fonts.load) {
+      document.fonts.load("16px DotGothic16").then(() => cache.clear()).catch(() => {});
+    }
+    function width(text) {
+      meas.font = font();
+      return Math.ceil(meas.measureText(text).width);
+    }
+    function glyphs(text, color = "#ffffff") {
+      const key = `${color}|${text}`;
+      let c = cache.get(key);
+      if (c) return c;
+      if (cache.size > 400) cache.clear();
+      c = document.createElement("canvas");
+      c.width = Math.max(1, width(text) + 2);
+      c.height = 20;
+      const g = c.getContext("2d", { willReadFrequently: true });
+      g.font = font();
+      g.textBaseline = "top";
+      g.fillStyle = "#fff";
+      g.fillText(text, 1, 1);
+      const img = g.getImageData(0, 0, c.width, c.height);
+      const d = img.data;
+      const [cr, cg, cb] = [1, 3, 5].map((i) => parseInt(color.slice(i, i + 2), 16));
+      for (let i = 0; i < d.length; i += 4) {
+        const on = d[i + 3] > 110;
+        d[i] = cr;
+        d[i + 1] = cg;
+        d[i + 2] = cb;
+        d[i + 3] = on ? 255 : 0;
+      }
+      g.putImageData(img, 0, 0);
+      cache.set(key, c);
+      return c;
+    }
+    // (x, y) は描く先の座標。s はドット 1 つの大きさ
+    function text(ctx, str, x, y, s, color) {
+      if (!str) return;
+      const c = glyphs(str, color);
+      const sm = ctx.imageSmoothingEnabled;
+      ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(c, Math.round(x - s), Math.round(y - s), c.width * s, c.height * s);
+      ctx.imageSmoothingEnabled = sm;
+    }
+    // 窓: (x, y, w, h) は描く先の座標(s の倍数にそろえる)
+    function win(ctx, x, y, w, h, s) {
+      x = Math.round(x / s) * s;
+      y = Math.round(y / s) * s;
+      w = Math.round(w / s) * s;
+      h = Math.round(h / s) * s;
+      // 黒地(四隅の 1 ドットは透かす)
+      ctx.fillStyle = "#000";
+      ctx.fillRect(x + 2 * s, y, w - 4 * s, h);
+      ctx.fillRect(x, y + 2 * s, w, h - 4 * s);
+      ctx.fillRect(x + s, y + s, w - 2 * s, h - 2 * s);
+      ctx.fillStyle = "#fff";
+      ctx.fillRect(x + 2 * s, y, w - 4 * s, 2 * s);
+      ctx.fillRect(x + 2 * s, y + h - 2 * s, w - 4 * s, 2 * s);
+      ctx.fillRect(x, y + 2 * s, 2 * s, h - 4 * s);
+      ctx.fillRect(x + w - 2 * s, y + 2 * s, 2 * s, h - 4 * s);
+      ctx.fillRect(x + s, y + s, s, s);
+      ctx.fillRect(x + w - 2 * s, y + s, s, s);
+      ctx.fillRect(x + s, y + h - 2 * s, s, s);
+      ctx.fillRect(x + w - 2 * s, y + h - 2 * s, s, s);
+      ctx.fillStyle = "#7a7a7a";
+      ctx.fillRect(x + 3 * s, y + 3 * s, w - 6 * s, s);
+      ctx.fillRect(x + 3 * s, y + h - 4 * s, w - 6 * s, s);
+      ctx.fillRect(x + 3 * s, y + 3 * s, s, h - 6 * s);
+      ctx.fillRect(x + w - 4 * s, y + 3 * s, s, h - 6 * s);
+    }
+    // 1 倍の幅 maxW で折り返した行の配列(改行も守る)
+    function wrap(str, maxW) {
+      meas.font = font();
+      const lines = [];
+      for (const para of String(str).split("\n")) {
+        let line = "";
+        for (const ch of para) {
+          if (line && meas.measureText(line + ch).width > maxW) {
+            // 句読点は行頭に来ないように前の行へ
+            if ("、。」）！？…".includes(ch)) {
+              lines.push(line + ch);
+              line = "";
+              continue;
+            }
+            lines.push(line);
+            line = "";
+          }
+          line += ch;
+        }
+        lines.push(line);
+      }
+      return lines;
+    }
+    return { width, glyphs, text, win, wrap };
+  })();
+  window.bogiPix = bogiPix;
+  // ゲーム画面の文字のドットの大きさ。マップの絵のドット(ZOOM 2)とそろえる(960×600 のキャンバスで 480×300 相当)
+  const PIX_S = 2;
 
   window.createBogiRPG = createRPG;
 })();
