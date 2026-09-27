@@ -467,14 +467,13 @@
     { key: "skills", label: "とくぎ" },
     { key: "frags", label: "断片" },
   ];
+  // きーの能力(とくぎ)。断片で習得する。新しい能力はここに 1 行足し、断片で api.learnAbility(id) を呼ぶ
+  const ABILITIES = [{ id: "jump", text: "ジャンプ", note: "Bボタン / Xキーで　とぶ。" }];
   function stRows(key) {
     const hub = window.BOGI_WORLDS[HUB];
     if (key === "items") return gameState.items.map((t) => ({ text: t }));
     if (key === "words") return gameState.words.map((t) => ({ text: t }));
-    if (key === "skills") {
-      const jumped = Object.keys(gameState.flags).some((k) => /\.jump$/.test(k) && gameState.flags[k]);
-      return jumped ? [{ text: "ジャンプ", note: "Bボタン / Xキーで　とぶ。" }] : [];
-    }
+    if (key === "skills") return ABILITIES.filter((a) => rpg.hasAbility(a.id)).map((a) => ({ text: a.text, note: a.note }));
     const texts = hub.fragmentTexts || {};
     return (hub.fragments || []).map((id) =>
       gameState.flags[`${HUB}.found.${id}`]
