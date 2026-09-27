@@ -713,6 +713,8 @@
     const found = (api) => api.flag(`found.${id}`);
     const present = (api) => SHOW_ALL_FRAGMENTS || !requires || api.cleared(requires);
     return {
+      id,
+      text, // ステータス画面の断片の説明にも使う
       object: {
         id: `frag_${id}`,
         x: fx,
@@ -2078,6 +2080,7 @@
       name: "懲罰空間",
       hub: true,
       fragments: ["lake", "haihei", "kasumi"],
+      fragmentTexts: Object.fromEntries(VOID_FRAGMENTS.map((f) => [f.id, f.text])),
       assetBase: "./assets/worlds/void/",
       images: {
         wang_void: "wang_void.png",

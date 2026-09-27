@@ -430,7 +430,3 @@ body.viewing .action-btn {
   background: rgba(40, 40, 40, 0.85);
 }
 
-body.status-open .joystick,
-body.status-open .action-btn-a {
-  opacity: 0.25;
-}
