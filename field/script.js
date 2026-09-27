@@ -540,13 +540,13 @@
     const P = window.bogiPix;
     const S = 2;
     const w = (P.width(INTRO_TEXT) + 24) * S;
-    const h = 28 * S;
+    const h = 30 * S;
     const x = Math.round((VW - w) / 2 / S) * S;
     const y = Math.round((VH / 2 - h / 2) / S) * S;
     ctx.save();
     ctx.globalAlpha = introFade;
     P.win(ctx, x, y, w, h, S);
-    P.text(ctx, INTRO_TEXT, x + 12 * S, y + 6 * S, S);
+    P.text(ctx, INTRO_TEXT, x + 12 * S, y + 7 * S, S);
     ctx.restore();
   }
 
