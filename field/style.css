@@ -406,90 +406,24 @@ body.viewing .action-btn {
   opacity: 0.25;
 }
 
-/* ---- ステータス画面: 黒バックに白い枠の窓、ゴシック体(スーファミのドラクエ風) ---- */
+/* ---- ステータス画面: 小さなキャンバスをドットのまま拡大(描くのは script.js) ---- */
 .status-overlay {
   position: absolute;
   inset: 0;
   z-index: 30;
   background: #000;
-  display: grid;
-  grid-template-columns: 1fr 1.25fr;
-  grid-template-rows: auto auto 1fr auto;
-  grid-template-areas:
-    "name items"
-    "skill items"
-    "frags words"
-    "close close";
-  gap: calc(14px * var(--u, 1));
-  padding: calc(24px * var(--u, 1));
-  color: #fff;
-  font-family: "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Yu Gothic", "Meiryo", "Noto Sans JP", sans-serif;
-  font-weight: 700;
-  font-size: calc(22px * var(--u, 1));
-  line-height: 1.55;
-  letter-spacing: 0.08em;
 }
 
 .status-overlay[hidden] {
   display: none;
 }
 
-.st-win {
-  border: calc(3px * var(--u, 1)) solid #fff;
-  border-radius: calc(8px * var(--u, 1));
-  box-shadow: inset 0 0 0 calc(2px * var(--u, 1)) #000, inset 0 0 0 calc(3px * var(--u, 1)) #9a9a9a;
-  padding: calc(12px * var(--u, 1)) calc(18px * var(--u, 1));
-  min-height: 0;
-  overflow: hidden;
-}
-
-.st-win p,
-.st-win ul {
-  margin: 0;
-}
-
-.st-win ul {
-  list-style: none;
-  padding: 0;
-}
-
-.st-win li {
-  padding-left: 1.2em;
-  position: relative;
-}
-
-.st-win li.done::before {
-  content: "✓";
-  position: absolute;
-  left: 0;
-}
-
-.st-win li.none {
-  color: #8a8a8a;
-}
-
-.st-head {
-  color: #fff;
-  margin-bottom: calc(6px * var(--u, 1)) !important;
-}
-
-.st-sub {
-  font-size: 0.8em;
-  color: #cfcfcf;
-}
-
-.st-name { grid-area: name; }
-.st-skill { grid-area: skill; }
-.st-items { grid-area: items; }
-.st-words { grid-area: words; }
-.st-frags { grid-area: frags; }
-
-.st-close {
-  grid-area: close;
-  margin: 0;
-  text-align: right;
-  font-size: 0.7em;
-  color: #9a9a9a;
+.status-overlay canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
 }
 
 .action-btn-c {

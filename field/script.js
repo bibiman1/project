@@ -72,7 +72,6 @@
     }
     gameFrame.style.width = `${w}px`;
     gameFrame.style.height = `${h}px`;
-    gameFrame.style.setProperty("--u", (h / 600).toFixed(4)); // ステータス画面の文字や枠を画面の大きさに合わせる
   }
 
   function diagonalPair(cx, cy) {
@@ -359,37 +358,100 @@
   }
 
   // ---- ステータス画面 ----
+  // スーファミのドラクエ風: 320×200 に描き、文字は白黒の2値にしてから CSS でぼかさず拡大する
   let statusOpen = false;
-  function fillList(el, rows) {
-    el.innerHTML = "";
-    for (const r of rows) {
-      const li = document.createElement("li");
-      li.textContent = r.text;
-      if (r.cls) li.className = r.cls;
-      el.appendChild(li);
+  const stCanvas = document.getElementById("statusCanvas");
+  const stCtx = stCanvas.getContext("2d");
+  const ST_FONT = () =>
+    `12px ${document.fonts && document.fonts.check("12px DotGothic16") ? '"DotGothic16", ' : ""}"Hiragino Kaku Gothic ProN", "Yu Gothic", "Meiryo", sans-serif`;
+  const stTmp = document.createElement("canvas");
+  const stTmpCtx = stTmp.getContext("2d", { willReadFrequently: true });
+  // 文字を一度描いて、にじみを 2 値(ある / ない)に落としてから色をのせる
+  function stText(text, x, y, color = "#ffffff", maxW = 999) {
+    stTmpCtx.font = ST_FONT();
+    let t = text;
+    while (t.length > 1 && stTmpCtx.measureText(t).width > maxW) t = t.slice(0, -1);
+    if (t !== text) t = t.slice(0, -1) + "…";
+    const w = Math.ceil(stTmpCtx.measureText(t).width) + 2;
+    const h = 16;
+    stTmp.width = w;
+    stTmp.height = h;
+    stTmpCtx.font = ST_FONT();
+    stTmpCtx.textBaseline = "top";
+    stTmpCtx.fillStyle = "#fff";
+    stTmpCtx.fillText(t, 1, 1);
+    const img = stTmpCtx.getImageData(0, 0, w, h);
+    const d = img.data;
+    const [r, g, b] = [1, 3, 5].map((i) => parseInt(color.slice(i, i + 2), 16));
+    for (let i = 0; i < d.length; i += 4) {
+      const on = d[i + 3] > 110;
+      d[i] = r;
+      d[i + 1] = g;
+      d[i + 2] = b;
+      d[i + 3] = on ? 255 : 0;
     }
+    stTmpCtx.putImageData(img, 0, 0);
+    stCtx.drawImage(stTmp, x - 1, y - 1);
+  }
+  // 白い二重枠の窓(角を 1 ドット落とす)
+  function stWindow(x, y, w, h) {
+    const c = stCtx;
+    c.fillStyle = "#000";
+    c.fillRect(x, y, w, h);
+    c.fillStyle = "#fff";
+    c.fillRect(x + 2, y, w - 4, 2);
+    c.fillRect(x + 2, y + h - 2, w - 4, 2);
+    c.fillRect(x, y + 2, 2, h - 4);
+    c.fillRect(x + w - 2, y + 2, 2, h - 4);
+    c.fillRect(x + 1, y + 1, 1, 1);
+    c.fillRect(x + w - 2, y + 1, 1, 1);
+    c.fillRect(x + 1, y + h - 2, 1, 1);
+    c.fillRect(x + w - 2, y + h - 2, 1, 1);
+    c.fillStyle = "#7a7a7a";
+    c.fillRect(x + 3, y + 3, w - 6, 1);
+    c.fillRect(x + 3, y + h - 4, w - 6, 1);
+    c.fillRect(x + 3, y + 3, 1, h - 6);
+    c.fillRect(x + w - 4, y + 3, 1, h - 6);
+  }
+  function stList(title, rows, x, y, w, h) {
+    stWindow(x, y, w, h);
+    stText(title, x + 8, y + 7);
+    const LH = 15;
+    const maxRows = Math.floor((h - 26) / LH);
+    rows.slice(0, maxRows).forEach((r, i) => {
+      const ty = y + 23 + i * LH;
+      if (r.done) stText("✓", x + 8, ty);
+      stText(r.text, x + 20, ty, r.dim ? "#8a8a8a" : "#ffffff", w - 28);
+    });
   }
   function renderStatus() {
     const hub = window.BOGI_WORLDS[HUB];
-    document.getElementById("stPlace").textContent = `ばしょ：${rpg.isHub ? hub.name : rpg.worldName}`;
-    const none = [{ text: "なし", cls: "none" }];
-    const skills = Object.keys(gameState.flags).some((k) => /\.jump$/.test(k) && gameState.flags[k])
-      ? [{ text: "ジャンプ　B／Xキー" }]
-      : none;
-    fillList(document.getElementById("stSkills"), skills);
-    fillList(document.getElementById("stItems"), gameState.items.length ? gameState.items.map((t) => ({ text: t })) : none);
-    fillList(document.getElementById("stWords"), gameState.words.length ? gameState.words.map((t) => ({ text: t })) : none);
+    stCtx.fillStyle = "#000";
+    stCtx.fillRect(0, 0, 320, 200);
+    const none = [{ text: "なし", dim: true }];
+    // 名前と、いまいる場所
+    stWindow(8, 8, 304, 26);
+    stText("きー", 16, 15);
+    stText(`ばしょ：${rpg.isHub ? hub.name : rpg.worldName}`, 64, 15, "#ffffff", 240);
+    const jumped = Object.keys(gameState.flags).some((k) => /\.jump$/.test(k) && gameState.flags[k]);
+    stList("とくぎ", jumped ? [{ text: "ジャンプ　B/X" }] : none, 8, 40, 170, 44);
+    stList("どうぐ", gameState.items.length ? gameState.items.map((t) => ({ text: t })) : none, 184, 40, 128, 86);
     const frags = hub.fragments || [];
     const found = frags.filter((id) => gameState.flags[`${HUB}.found.${id}`]);
-    document.getElementById("stFragHead").textContent = `みつけた断片　${found.length} / ${frags.length}`;
-    fillList(
-      document.getElementById("stFrags"),
+    stList(
+      `みつけた断片　${found.length}/${frags.length}`,
       frags.map((id) =>
         found.includes(id)
-          ? { text: window.BOGI_WORLDS[id].name, cls: gameState.cleared.includes(id) ? "done" : "" }
-          : { text: "？？？？", cls: "none" }
-      )
+          ? { text: window.BOGI_WORLDS[id].name, done: gameState.cleared.includes(id) }
+          : { text: "？？？？", dim: true }
+      ),
+      8,
+      90,
+      170,
+      92
     );
+    stList("ことば", gameState.words.length ? gameState.words.map((t) => ({ text: t })) : none, 184, 132, 128, 50);
+    stText("C/B でとじる", 236, 186, "#8a8a8a");
   }
   function toggleStatus(open = !statusOpen) {
     if (open && (story || transitioning || rpg.viewing)) return;

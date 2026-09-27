@@ -8,7 +8,10 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="mobile-web-app-capable" content="yes">
   <title>ぼぎだぢ - 懲罰空間</title>
-  <link rel="stylesheet" href="./style.css?v=54">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DotGothic16&display=swap">
+  <link rel="stylesheet" href="./style.css?v=56">
 </head>
 <body>
   <header class="field-header">
@@ -32,13 +35,9 @@
       </div>
 
       <!-- ステータス画面(C キー / C ボタンで開く。スーファミのドラクエのような黒い窓) -->
+      <!-- ステータス画面(C キー / C ボタン)。320×200 の小さなキャンバスに描いて、ぼかさずに拡大する(スーファミの荒いドット文字) -->
       <div id="statusOverlay" class="status-overlay" hidden>
-        <div class="st-win st-name"><p id="stName">きー</p><p id="stPlace" class="st-sub"></p></div>
-        <div class="st-win st-skill"><p class="st-head">とくぎ</p><ul id="stSkills"></ul></div>
-        <div class="st-win st-items"><p class="st-head">どうぐ</p><ul id="stItems"></ul></div>
-        <div class="st-win st-words"><p class="st-head">ことば</p><ul id="stWords"></ul></div>
-        <div class="st-win st-frags"><p class="st-head" id="stFragHead">みつけた断片</p><ul id="stFrags"></ul></div>
-        <p class="st-close">C / B でとじる</p>
+        <canvas id="statusCanvas" width="320" height="200" aria-label="ステータス"></canvas>
       </div>
 
       <div id="fadeOverlay" class="fade-overlay on"></div>
@@ -64,8 +63,8 @@
     <small>© Character Project</small>
   </footer>
 
-  <script src="./rpg.js?v=54"></script>
-  <script src="./worlds.js?v=54"></script>
-  <script src="./script.js?v=54"></script>
+  <script src="./rpg.js?v=56"></script>
+  <script src="./worlds.js?v=56"></script>
+  <script src="./script.js?v=56"></script>
 </body>
 </html>
