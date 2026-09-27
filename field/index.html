@@ -8,13 +8,16 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="mobile-web-app-capable" content="yes">
   <title>ぼぎだぢ - 懲罰空間</title>
-  <link rel="stylesheet" href="./style.css?v=53">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DotGothic16&display=swap">
+  <link rel="stylesheet" href="./style.css?v=59">
 </head>
 <body>
   <header class="field-header">
     <a class="back-link" href="../index.html">← キャラクター一覧に戻る</a>
     <h1>ぼぎだぢ - 懲罰空間</h1>
-    <p class="lead">矢印キー / WASDで歩きまわろう。近づくと、何もなかった場所に何かが見えてくる。</p>
+    <p class="lead">矢印キー / WASDで歩きまわろう。Cキーでステータス。近づくと、何もなかった場所に何かが見えてくる。</p>
   </header>
 
   <main class="field-wrap">
@@ -29,6 +32,12 @@
           <p id="storyText" class="story-text"></p>
           <p class="story-hint">クリック / Enterキーで進む</p>
         </div>
+      </div>
+
+      <!-- ステータス画面(C キー / C ボタンで開く。スーファミのドラクエのような黒い窓) -->
+      <!-- ステータス画面(C キー / C ボタン)。320×200 の小さなキャンバスに描いて、ぼかさずに拡大する(スーファミの荒いドット文字) -->
+      <div id="statusOverlay" class="status-overlay" hidden>
+        <canvas id="statusCanvas" width="320" height="200" aria-label="ステータス"></canvas>
       </div>
 
       <div id="fadeOverlay" class="fade-overlay on"></div>
@@ -48,13 +57,14 @@
 
   <button type="button" id="actionBtnB" class="action-btn action-btn-b" aria-label="キャンセル">B</button>
   <button type="button" id="actionBtnA" class="action-btn action-btn-a" aria-label="決定">A</button>
+  <button type="button" id="actionBtnC" class="action-btn action-btn-c" aria-label="ステータス">C</button>
 
   <footer class="field-footer">
     <small>© Character Project</small>
   </footer>
 
-  <script src="./rpg.js?v=53"></script>
-  <script src="./worlds.js?v=53"></script>
-  <script src="./script.js?v=53"></script>
+  <script src="./rpg.js?v=59"></script>
+  <script src="./worlds.js?v=59"></script>
+  <script src="./script.js?v=59"></script>
 </body>
 </html>

@@ -211,7 +211,7 @@ body {
   opacity: 0;
   pointer-events: none;
   /* 明けるほう(フェードイン)はゆっくり。入った直後に動く人や車椅子が位置につく間も隠れるように */
-  transition: opacity 1500ms ease;
+  transition: opacity 1500ms ease-in-out;
 }
 
 .fade-overlay.on {
@@ -405,3 +405,28 @@ body.viewing .joystick,
 body.viewing .action-btn {
   opacity: 0.25;
 }
+
+/* ---- ステータス画面: 小さなキャンバスをドットのまま拡大(描くのは script.js) ---- */
+.status-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  background: #000;
+}
+
+.status-overlay[hidden] {
+  display: none;
+}
+
+.status-overlay canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+.action-btn-c {
+  background: rgba(40, 40, 40, 0.85);
+}
+

@@ -18,12 +18,15 @@
   const joystickKnob = document.getElementById("joystickKnob");
   const actionBtnA = document.getElementById("actionBtnA");
   const actionBtnB = document.getElementById("actionBtnB");
+  const actionBtnC = document.getElementById("actionBtnC");
+  const statusOverlay = document.getElementById("statusOverlay");
   const fadeOverlay = document.getElementById("fadeOverlay");
   const isTouchDevice = "ontouchstart" in window || navigator.maxTouchPoints > 0;
   if (isTouchDevice) {
     joystick.classList.add("touch-enabled");
     actionBtnA.classList.add("touch-enabled");
     actionBtnB.classList.add("touch-enabled");
+    actionBtnC.classList.add("touch-enabled");
   }
 
   const gameFrame = document.querySelector(".game-frame");
@@ -127,6 +130,9 @@
     actionBtnA.style.top = `${aTop}px`;
     actionBtnB.style.left = `${bLeft}px`;
     actionBtnB.style.top = `${bTop}px`;
+    // C(ステータス)は A の上に
+    actionBtnC.style.left = `${aLeft}px`;
+    actionBtnC.style.top = `${aTop - 70}px`;
   }
 
   function updateLayoutMode() {
@@ -351,6 +357,213 @@
     inventoryText.hidden = parts.length === 0;
   }
 
+  // ---- ステータス画面 ----
+  // スーファミのドラクエ風: 320×200 に描き、文字は白黒の2値にしてから CSS でぼかさず拡大する
+  let statusOpen = false;
+  const stCanvas = document.getElementById("statusCanvas");
+  const stCtx = stCanvas.getContext("2d");
+  const ST_FONT = () =>
+    `12px ${document.fonts && document.fonts.check("12px DotGothic16") ? '"DotGothic16", ' : ""}"Hiragino Kaku Gothic ProN", "Yu Gothic", "Meiryo", sans-serif`;
+  const stTmp = document.createElement("canvas");
+  const stTmpCtx = stTmp.getContext("2d", { willReadFrequently: true });
+  // 文字を一度描いて、にじみを 2 値(ある / ない)に落としてから色をのせる
+  function stText(text, x, y, color = "#ffffff", maxW = 999) {
+    stTmpCtx.font = ST_FONT();
+    let t = text;
+    while (t.length > 1 && stTmpCtx.measureText(t).width > maxW) t = t.slice(0, -1);
+    if (t !== text) t = t.slice(0, -1) + "…";
+    const w = Math.ceil(stTmpCtx.measureText(t).width) + 2;
+    const h = 16;
+    stTmp.width = w;
+    stTmp.height = h;
+    stTmpCtx.font = ST_FONT();
+    stTmpCtx.textBaseline = "top";
+    stTmpCtx.fillStyle = "#fff";
+    stTmpCtx.fillText(t, 1, 1);
+    const img = stTmpCtx.getImageData(0, 0, w, h);
+    const d = img.data;
+    const [r, g, b] = [1, 3, 5].map((i) => parseInt(color.slice(i, i + 2), 16));
+    for (let i = 0; i < d.length; i += 4) {
+      const on = d[i + 3] > 110;
+      d[i] = r;
+      d[i + 1] = g;
+      d[i + 2] = b;
+      d[i + 3] = on ? 255 : 0;
+    }
+    stTmpCtx.putImageData(img, 0, 0);
+    stCtx.drawImage(stTmp, x - 1, y - 1);
+  }
+  // 白い二重枠の窓(角を 1 ドット落とす)
+  function stWindow(x, y, w, h) {
+    const c = stCtx;
+    c.fillStyle = "#000";
+    c.fillRect(x, y, w, h);
+    c.fillStyle = "#fff";
+    c.fillRect(x + 2, y, w - 4, 2);
+    c.fillRect(x + 2, y + h - 2, w - 4, 2);
+    c.fillRect(x, y + 2, 2, h - 4);
+    c.fillRect(x + w - 2, y + 2, 2, h - 4);
+    c.fillRect(x + 1, y + 1, 1, 1);
+    c.fillRect(x + w - 2, y + 1, 1, 1);
+    c.fillRect(x + 1, y + h - 2, 1, 1);
+    c.fillRect(x + w - 2, y + h - 2, 1, 1);
+    c.fillStyle = "#7a7a7a";
+    c.fillRect(x + 3, y + 3, w - 6, 1);
+    c.fillRect(x + 3, y + h - 4, w - 6, 1);
+    c.fillRect(x + 3, y + 3, 1, h - 6);
+    c.fillRect(x + w - 4, y + 3, 1, h - 6);
+  }
+  function stList(title, rows, x, y, w, h) {
+    stWindow(x, y, w, h);
+    stText(title, x + 8, y + 7);
+    const LH = 15;
+    const maxRows = Math.floor((h - 26) / LH);
+    rows.slice(0, maxRows).forEach((r, i) => {
+      const ty = y + 23 + i * LH;
+      if (r.done) stText("✓", x + 8, ty);
+      stText(r.text, x + 20, ty, r.dim ? "#8a8a8a" : "#ffffff", w - 28);
+    });
+  }
+  // 2段構え(スーファミのドラクエ風): 左のコマンドで選ぶ → 一覧(あふれたらページ送り)。右は数だけの要約
+  const ST_PAGE = 6; // 一覧の1ページの行数
+  const stMenu = { mode: "top", cmd: 0, cur: 0 };
+  const ST_CMDS = [
+    { key: "items", label: "どうぐ" },
+    { key: "words", label: "ことば" },
+    { key: "skills", label: "とくぎ" },
+    { key: "frags", label: "断片" },
+  ];
+  function stRows(key) {
+    const hub = window.BOGI_WORLDS[HUB];
+    if (key === "items") return gameState.items.map((t) => ({ text: t }));
+    if (key === "words") return gameState.words.map((t) => ({ text: t }));
+    if (key === "skills") {
+      const jumped = Object.keys(gameState.flags).some((k) => /\.jump$/.test(k) && gameState.flags[k]);
+      return jumped ? [{ text: "ジャンプ", note: "Bボタン / Xキーで　とぶ。" }] : [];
+    }
+    const texts = hub.fragmentTexts || {};
+    return (hub.fragments || []).map((id) =>
+      gameState.flags[`${HUB}.found.${id}`]
+        ? { text: window.BOGI_WORLDS[id].name, done: gameState.cleared.includes(id), note: texts[id] }
+        : { text: "？？？？", dim: true }
+    );
+  }
+  function stCursor(x, y) {
+    // ▶ をドットで描く
+    stCtx.fillStyle = "#fff";
+    for (let i = 0; i < 4; i++) stCtx.fillRect(x + i, y + i, 1, 9 - i * 2);
+  }
+  function renderStatus() {
+    const hub = window.BOGI_WORLDS[HUB];
+    stCtx.fillStyle = "#000";
+    stCtx.fillRect(0, 0, 320, 200);
+    // 左: コマンド
+    stWindow(8, 8, 104, 78);
+    ST_CMDS.forEach((c, i) => {
+      stText(c.label, 30, 17 + i * 15);
+      if (stMenu.mode === "top" ? stMenu.cmd === i : stMenu.cmd === i) stCursor(17, 19 + i * 15);
+    });
+    // 右: 要約(数だけ。いくつ増えてもあふれない)
+    const frags = hub.fragments || [];
+    const found = frags.filter((id) => gameState.flags[`${HUB}.found.${id}`]).length;
+    stWindow(118, 8, 194, 78);
+    stText("きー", 128, 17);
+    stText(`ばしょ：${rpg.isHub ? hub.name : rpg.worldName}`, 128, 32, "#ffffff", 178);
+    stText(`断片　${found}/${frags.length}`, 128, 47);
+    stText(`どうぐ　${gameState.items.length}　ことば　${gameState.words.length}`, 128, 62);
+    if (stMenu.mode === "list") {
+      const cmd = ST_CMDS[stMenu.cmd];
+      const rows = stRows(cmd.key);
+      const pages = Math.max(1, Math.ceil(rows.length / ST_PAGE));
+      const page = Math.floor(stMenu.cur / ST_PAGE);
+      stWindow(8, 92, 304, 104);
+      stText(cmd.label, 18, 99);
+      if (pages > 1) stText(`${page + 1}/${pages}`, 280, 99, "#8a8a8a");
+      if (!rows.length) stText("なし", 34, 114, "#8a8a8a");
+      rows.slice(page * ST_PAGE, page * ST_PAGE + ST_PAGE).forEach((r, i) => {
+        const ty = 114 + i * 12;
+        if (page * ST_PAGE + i === stMenu.cur) stCursor(18, ty + 1);
+        if (r.done) stText("✓", 26, ty);
+        stText(r.text, 38, ty, r.dim ? "#8a8a8a" : "#ffffff", 150);
+      });
+      if (page < pages - 1) stText("▼", 292, 178);
+      // 選んでいるものの説明(あれば)
+      const sel = rows[stMenu.cur];
+      if (sel && sel.note) {
+        stWindow(194, 110, 112, 64);
+        wrapText(sel.note, 202, 118, 100, 3);
+      }
+    } else {
+      stText("A でひらく　C でとじる", 150, 186, "#8a8a8a");
+    }
+  }
+  // 窓の幅で折り返す(1 文字ずつ測る)
+  function wrapText(text, x, y, w, maxLines) {
+    stTmpCtx.font = ST_FONT();
+    let line = "";
+    let n = 0;
+    for (const ch of text) {
+      if (stTmpCtx.measureText(line + ch).width > w) {
+        stText(line, x, y + n * 13);
+        n++;
+        line = "";
+        if (n >= maxLines) return;
+      }
+      line += ch;
+    }
+    if (line) stText(line, x, y + n * 13);
+  }
+  // スマホ: ジョイスティックを倒すたびに1つ動く(倒しっぱなしなら少しずつ送る)
+  let stJoyDir = null;
+  let stJoyNext = 0;
+  function statusJoystick() {
+    const now = performance.now();
+    let dir = null;
+    if (joyActive) {
+      if (joyVec.y < -0.6) dir = "up";
+      else if (joyVec.y > 0.6) dir = "down";
+      else if (joyVec.x < -0.6) dir = "left";
+      else if (joyVec.x > 0.6) dir = "right";
+    }
+    if (dir && (dir !== stJoyDir || now >= stJoyNext)) {
+      statusInput(dir);
+      stJoyNext = now + (dir !== stJoyDir ? 420 : 160);
+    }
+    stJoyDir = dir;
+  }
+  // 操作: 上下で選ぶ、A でひらく、B / C でひとつ戻る(最初の画面ならとじる)
+  function statusInput(action) {
+    if (stMenu.mode === "top") {
+      if (action === "up") stMenu.cmd = (stMenu.cmd + ST_CMDS.length - 1) % ST_CMDS.length;
+      else if (action === "down") stMenu.cmd = (stMenu.cmd + 1) % ST_CMDS.length;
+      else if (action === "a") {
+        stMenu.mode = "list";
+        stMenu.cur = 0;
+      } else if (action === "b" || action === "c") return toggleStatus(false);
+    } else {
+      const n = stRows(ST_CMDS[stMenu.cmd].key).length;
+      if (action === "up" && n) stMenu.cur = (stMenu.cur + n - 1) % n;
+      else if (action === "down" && n) stMenu.cur = (stMenu.cur + 1) % n;
+      else if (action === "left" && n) stMenu.cur = Math.max(0, stMenu.cur - ST_PAGE);
+      else if (action === "right" && n) stMenu.cur = Math.min(n - 1, stMenu.cur + ST_PAGE);
+      else if (action === "b" || action === "c") stMenu.mode = "top"; // 一覧からは C でもひとつ戻る
+    }
+    renderStatus();
+  }
+  function toggleStatus(open = !statusOpen) {
+    if (open && (story || transitioning || rpg.viewing)) return;
+    statusOpen = open;
+    if (open) {
+      stMenu.mode = "top";
+      stMenu.cur = 0;
+      renderStatus();
+      resetJoy();
+      for (const k in keys) keys[k] = false;
+    }
+    statusOverlay.hidden = !open;
+    document.body.classList.toggle("status-open", open);
+  }
+
   let moved = false;
   function dismissIntro() {
     if (!moved) {
@@ -374,6 +587,23 @@
 
   window.addEventListener("keydown", (e) => {
     const isAction = e.code === "Enter" || e.code === "Space" || e.code === "KeyZ";
+    // ステータス画面: C で開閉。開いているあいだは C・B(X)・Esc・決定でとじ、ほかの操作は止める
+    if (statusOpen) {
+      const dir = KEY_MAP[e.code];
+      if (dir) statusInput(dir);
+      else if (!e.repeat) {
+        if (isAction) statusInput("a");
+        else if (e.code === "KeyX" || e.code === "Escape" || e.code === "Backspace") statusInput("b");
+        else if (e.code === "KeyC") statusInput("c");
+      }
+      if (!e.code.startsWith("F")) e.preventDefault();
+      return;
+    }
+    if (e.code === "KeyC" && !story) {
+      if (!e.repeat) toggleStatus(true);
+      e.preventDefault();
+      return;
+    }
     if (story) {
       if (isAction) {
         advanceStory();
@@ -466,12 +696,20 @@
   actionBtnA.addEventListener("pointerdown", (e) => {
     e.preventDefault();
     e.stopPropagation();
-    if (story) advanceStory();
+    if (statusOpen) statusInput("a");
+    else if (story) advanceStory();
     else if (!transitioning) rpg.interact();
+  });
+  actionBtnC.addEventListener("pointerdown", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (statusOpen) statusInput("c");
+    else toggleStatus(true);
   });
   actionBtnB.addEventListener("pointerdown", (e) => {
     e.preventDefault();
     e.stopPropagation();
+    if (statusOpen) return statusInput("b");
     if (story) skipStory();
     else if (!transitioning) rpg.jump(); // B: ジャンプ(覚えたあと)
   });
@@ -527,11 +765,15 @@
     lastTime = timestamp;
     const t = timestamp / 1000;
 
+    if (statusOpen) statusJoystick();
     if (story) updateStory(dt);
-    else if (!transitioning) {
+    else if (!transitioning && !statusOpen) {
       const input = readInput();
       if (input.x || input.y) dismissIntro();
       rpg.update(dt, t, input);
+    } else if (transitioning) {
+      // 暗転しているあいだも世界の時間は進める(入った直後に動き出す人や車椅子が、明ける前に位置についておくように)
+      rpg.update(dt, t, { x: 0, y: 0 });
     }
     rpg.draw(t);
     document.body.classList.toggle("viewing", rpg.viewing);
