@@ -18,12 +18,15 @@
   const joystickKnob = document.getElementById("joystickKnob");
   const actionBtnA = document.getElementById("actionBtnA");
   const actionBtnB = document.getElementById("actionBtnB");
+  const actionBtnC = document.getElementById("actionBtnC");
+  const statusOverlay = document.getElementById("statusOverlay");
   const fadeOverlay = document.getElementById("fadeOverlay");
   const isTouchDevice = "ontouchstart" in window || navigator.maxTouchPoints > 0;
   if (isTouchDevice) {
     joystick.classList.add("touch-enabled");
     actionBtnA.classList.add("touch-enabled");
     actionBtnB.classList.add("touch-enabled");
+    actionBtnC.classList.add("touch-enabled");
   }
 
   const gameFrame = document.querySelector(".game-frame");
@@ -69,6 +72,7 @@
     }
     gameFrame.style.width = `${w}px`;
     gameFrame.style.height = `${h}px`;
+    gameFrame.style.setProperty("--u", (h / 600).toFixed(4)); // ステータス画面の文字や枠を画面の大きさに合わせる
   }
 
   function diagonalPair(cx, cy) {
@@ -127,6 +131,9 @@
     actionBtnA.style.top = `${aTop}px`;
     actionBtnB.style.left = `${bLeft}px`;
     actionBtnB.style.top = `${bTop}px`;
+    // C(ステータス)は A の上に
+    actionBtnC.style.left = `${aLeft}px`;
+    actionBtnC.style.top = `${aTop - 70}px`;
   }
 
   function updateLayoutMode() {
@@ -351,6 +358,51 @@
     inventoryText.hidden = parts.length === 0;
   }
 
+  // ---- ステータス画面 ----
+  let statusOpen = false;
+  function fillList(el, rows) {
+    el.innerHTML = "";
+    for (const r of rows) {
+      const li = document.createElement("li");
+      li.textContent = r.text;
+      if (r.cls) li.className = r.cls;
+      el.appendChild(li);
+    }
+  }
+  function renderStatus() {
+    const hub = window.BOGI_WORLDS[HUB];
+    document.getElementById("stPlace").textContent = `ばしょ：${rpg.isHub ? hub.name : rpg.worldName}`;
+    const none = [{ text: "なし", cls: "none" }];
+    const skills = Object.keys(gameState.flags).some((k) => /\.jump$/.test(k) && gameState.flags[k])
+      ? [{ text: "ジャンプ　B／Xキー" }]
+      : none;
+    fillList(document.getElementById("stSkills"), skills);
+    fillList(document.getElementById("stItems"), gameState.items.length ? gameState.items.map((t) => ({ text: t })) : none);
+    fillList(document.getElementById("stWords"), gameState.words.length ? gameState.words.map((t) => ({ text: t })) : none);
+    const frags = hub.fragments || [];
+    const found = frags.filter((id) => gameState.flags[`${HUB}.found.${id}`]);
+    document.getElementById("stFragHead").textContent = `みつけた断片　${found.length} / ${frags.length}`;
+    fillList(
+      document.getElementById("stFrags"),
+      frags.map((id) =>
+        found.includes(id)
+          ? { text: window.BOGI_WORLDS[id].name, cls: gameState.cleared.includes(id) ? "done" : "" }
+          : { text: "？？？？", cls: "none" }
+      )
+    );
+  }
+  function toggleStatus(open = !statusOpen) {
+    if (open && (story || transitioning || rpg.viewing)) return;
+    statusOpen = open;
+    if (open) {
+      renderStatus();
+      resetJoy();
+      for (const k in keys) keys[k] = false;
+    }
+    statusOverlay.hidden = !open;
+    document.body.classList.toggle("status-open", open);
+  }
+
   let moved = false;
   function dismissIntro() {
     if (!moved) {
@@ -374,6 +426,17 @@
 
   window.addEventListener("keydown", (e) => {
     const isAction = e.code === "Enter" || e.code === "Space" || e.code === "KeyZ";
+    // ステータス画面: C で開閉。開いているあいだは C・B(X)・Esc・決定でとじ、ほかの操作は止める
+    if (statusOpen) {
+      if (!e.repeat && (e.code === "KeyC" || e.code === "Escape" || e.code === "KeyX" || isAction)) toggleStatus(false);
+      if (!e.code.startsWith("F")) e.preventDefault();
+      return;
+    }
+    if (e.code === "KeyC" && !story) {
+      if (!e.repeat) toggleStatus(true);
+      e.preventDefault();
+      return;
+    }
     if (story) {
       if (isAction) {
         advanceStory();
@@ -466,12 +529,19 @@
   actionBtnA.addEventListener("pointerdown", (e) => {
     e.preventDefault();
     e.stopPropagation();
-    if (story) advanceStory();
+    if (statusOpen) toggleStatus(false);
+    else if (story) advanceStory();
     else if (!transitioning) rpg.interact();
+  });
+  actionBtnC.addEventListener("pointerdown", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    toggleStatus();
   });
   actionBtnB.addEventListener("pointerdown", (e) => {
     e.preventDefault();
     e.stopPropagation();
+    if (statusOpen) return toggleStatus(false);
     if (story) skipStory();
     else if (!transitioning) rpg.jump(); // B: ジャンプ(覚えたあと)
   });
@@ -528,7 +598,7 @@
     const t = timestamp / 1000;
 
     if (story) updateStory(dt);
-    else if (!transitioning) {
+    else if (!transitioning && !statusOpen) {
       const input = readInput();
       if (input.x || input.y) dismissIntro();
       rpg.update(dt, t, input);

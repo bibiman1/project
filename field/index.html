@@ -8,13 +8,13 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="mobile-web-app-capable" content="yes">
   <title>ぼぎだぢ - 懲罰空間</title>
-  <link rel="stylesheet" href="./style.css?v=53">
+  <link rel="stylesheet" href="./style.css?v=54">
 </head>
 <body>
   <header class="field-header">
     <a class="back-link" href="../index.html">← キャラクター一覧に戻る</a>
     <h1>ぼぎだぢ - 懲罰空間</h1>
-    <p class="lead">矢印キー / WASDで歩きまわろう。近づくと、何もなかった場所に何かが見えてくる。</p>
+    <p class="lead">矢印キー / WASDで歩きまわろう。Cキーでステータス。近づくと、何もなかった場所に何かが見えてくる。</p>
   </header>
 
   <main class="field-wrap">
@@ -29,6 +29,16 @@
           <p id="storyText" class="story-text"></p>
           <p class="story-hint">クリック / Enterキーで進む</p>
         </div>
+      </div>
+
+      <!-- ステータス画面(C キー / C ボタンで開く。スーファミのドラクエのような黒い窓) -->
+      <div id="statusOverlay" class="status-overlay" hidden>
+        <div class="st-win st-name"><p id="stName">きー</p><p id="stPlace" class="st-sub"></p></div>
+        <div class="st-win st-skill"><p class="st-head">とくぎ</p><ul id="stSkills"></ul></div>
+        <div class="st-win st-items"><p class="st-head">どうぐ</p><ul id="stItems"></ul></div>
+        <div class="st-win st-words"><p class="st-head">ことば</p><ul id="stWords"></ul></div>
+        <div class="st-win st-frags"><p class="st-head" id="stFragHead">みつけた断片</p><ul id="stFrags"></ul></div>
+        <p class="st-close">C / B でとじる</p>
       </div>
 
       <div id="fadeOverlay" class="fade-overlay on"></div>
@@ -48,13 +58,14 @@
 
   <button type="button" id="actionBtnB" class="action-btn action-btn-b" aria-label="キャンセル">B</button>
   <button type="button" id="actionBtnA" class="action-btn action-btn-a" aria-label="決定">A</button>
+  <button type="button" id="actionBtnC" class="action-btn action-btn-c" aria-label="ステータス">C</button>
 
   <footer class="field-footer">
     <small>© Character Project</small>
   </footer>
 
-  <script src="./rpg.js?v=53"></script>
-  <script src="./worlds.js?v=53"></script>
-  <script src="./script.js?v=53"></script>
+  <script src="./rpg.js?v=54"></script>
+  <script src="./worlds.js?v=54"></script>
+  <script src="./script.js?v=54"></script>
 </body>
 </html>
