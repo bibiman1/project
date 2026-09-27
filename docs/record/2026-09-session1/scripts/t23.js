@@ -1,0 +1,22 @@
+const { chromium } = require('playwright');
+(async () => {
+  const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome' });
+  const p = await b.newPage({ viewport: { width: 1100, height: 900 } });
+  const errs=[]; p.on('pageerror', e=>errs.push(e.message)); p.on('console', m=>{if(m.type()==='error'&&!m.text().includes('404'))errs.push(m.text())});
+  await p.goto('http://localhost:8765/field/index.html?debug');
+  await p.evaluate(()=>{localStorage.clear(); localStorage.setItem('bogidachi.field.v1', JSON.stringify({items:[],words:[],cleared:['lake'],flags:{'void.found.lake':true}}));});
+  await p.reload(); await p.waitForTimeout(1000);
+  const W=ms=>p.waitForTimeout(ms);
+  const shot=n=>p.locator('.game-frame').screenshot({path:`k_${n}.png`});
+  const st=()=>p.evaluate(()=>bogiDebug.rpg.debug.state());
+  const tp=(x,y)=>p.evaluate(([x,y])=>bogiDebug.rpg.debug.teleport(x,y),[x,y]);
+  const load=(m,s)=>p.evaluate(([m,s])=>bogiDebug.rpg.debug.load(m,s),[m,s]);
+  const E=async(ms=700)=>{await p.keyboard.press('Enter'); await W(ms);};
+  await p.evaluate(()=>{bogiDebug.gameState.flags['lake.memory']=true;});
+  await p.evaluate(()=>bogiDebug.enterWorld('lake')); await W(1500);
+  await load('shop','door'); await W(500);
+  let pos=null;
+  for (const [x,y] of [[8.3,3.6],[7.6,4.4],[9,4.4],[8.3,5.2],[7.4,4.0],[9.2,4.0]]) { await tp(x*32,y*32); await W(200); const s=await st(); if (s.near==='chair'){pos=[x,y];break;} }
+  console.log('pos',pos);
+  for (const i of [1,2]) { await E(2400); await shot('tb'+i); await E(1500); await shot('rd'+i); await E(1500); }
+  console.log('errors',errs); await b.close(); })();
