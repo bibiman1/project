@@ -561,6 +561,7 @@
         ctx.fillRect(0, 0, vw, vh);
       }
       if (map.snow) drawSnow();
+      bubblePlaced.length = 0; // 重なる吹き出しは上へ積む(このフレームで置いた位置)
       for (const b of bubbles) drawBubble(b, ox, oy);
       if (nearObj && !busy()) drawActionMark(nearObj, ox, oy, t);
       ctx.restore();
@@ -618,6 +619,7 @@
       return { x: o.x + ox, y: o.y + oy - (o.headY || o.h / 2) };
     }
 
+    const bubblePlaced = [];
     function drawBubble(b, ox, oy) {
       const h = headOf(b.who, ox, oy);
       if (!h) return;
@@ -627,15 +629,36 @@
       const hh = 26 * s;
       const hx = Math.round(h.x * ZOOM);
       const bx = clamp(hx - w / 2, 6, VW - w - 6);
-      const by = Math.round(h.y * ZOOM) - hh - 6 * s;
+      const by0 = Math.round(h.y * ZOOM) - hh - 6 * s;
+      // ほかの吹き出しと重なるなら段をずらす(かけ声のように何人もいっせいに話すとき)。
+      // まず上へ、画面の上にはみ出すなら下へ。いちばん近い、あいている段に置く
+      const step = hh + 2 * s;
+      const free = (y) => y >= 4 && y + hh <= VH - 4 && !bubblePlaced.some((p) => bx < p.x + p.w && bx + w > p.x && y < p.y + p.h && y + hh > p.y);
+      let by = by0;
+      if (!free(by)) {
+        for (let k = 1; k <= 6; k++) {
+          if (free(by0 - k * step)) {
+            by = by0 - k * step;
+            break;
+          }
+          if (free(by0 + k * step)) {
+            by = by0 + k * step;
+            break;
+          }
+        }
+      }
+      by = clamp(by, 4, VH - hh - 4);
+      bubblePlaced.push({ x: bx, y: by, w, h: hh });
       ctx.save();
       ctx.setTransform(1, 0, 0, 1, 0, 0);
       bogiPix.win(ctx, bx, by, w, hh, s);
-      // しっぽ(白い三角、ドット)
-      ctx.fillStyle = "#fff";
-      const tx = Math.round(hx / s) * s;
-      const ty = Math.round((by + hh) / s) * s - s;
-      for (let i = 0; i < 4; i++) ctx.fillRect(tx - (3 - i) * s, ty + i * s, (7 - i * 2) * s, s);
+      // しっぽ(白い三角、ドット)。頭のすぐ上の段にあるときだけ出す
+      if (by === by0) {
+        ctx.fillStyle = "#fff";
+        const tx = Math.round(hx / s) * s;
+        const ty = Math.round((by + hh) / s) * s - s;
+        for (let i = 0; i < 4; i++) ctx.fillRect(tx - (3 - i) * s, ty + i * s, (7 - i * 2) * s, s);
+      }
       bogiPix.text(ctx, b.text, Math.round(bx / s) * s + 8 * s, Math.round(by / s) * s + 5 * s, s);
       ctx.restore();
     }
@@ -737,6 +760,7 @@
           player.y = y;
         },
         load: (mapId, spawn) => loadMap(mapId, spawn),
+        api: () => world && world.api,
       },
     };
   }
