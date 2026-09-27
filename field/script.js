@@ -531,7 +531,7 @@
     }
     stJoyDir = dir;
   }
-  // 操作: 上下で選ぶ、A でひらく、B でひとつ戻る(最初の画面ならとじる)、C でとじる
+  // 操作: 上下で選ぶ、A でひらく、B / C でひとつ戻る(最初の画面ならとじる)
   function statusInput(action) {
     if (stMenu.mode === "top") {
       if (action === "up") stMenu.cmd = (stMenu.cmd + ST_CMDS.length - 1) % ST_CMDS.length;
@@ -546,8 +546,7 @@
       else if (action === "down" && n) stMenu.cur = (stMenu.cur + 1) % n;
       else if (action === "left" && n) stMenu.cur = Math.max(0, stMenu.cur - ST_PAGE);
       else if (action === "right" && n) stMenu.cur = Math.min(n - 1, stMenu.cur + ST_PAGE);
-      else if (action === "b") stMenu.mode = "top";
-      else if (action === "c") return toggleStatus(false);
+      else if (action === "b" || action === "c") stMenu.mode = "top"; // 一覧からは C でもひとつ戻る
     }
     renderStatus();
   }
