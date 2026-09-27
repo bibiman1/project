@@ -79,9 +79,9 @@
         mutter(text, ms) {
           api.bubble("player", text, ms);
         },
-        // 一枚絵。A / Enter で閉じる
-        show(imgKey, onDone) {
-          cutscene = { img: imgKey, t0: clock, onDone: onDone || null };
+        // 一枚絵。A / Enter で閉じる。{ full: true } なら余白なしで画面いっぱいに(キメの一枚絵)
+        show(imgKey, onDone, opts) {
+          cutscene = { img: imgKey, t0: clock, onDone: onDone || null, full: !!(opts && opts.full) };
         },
         // カメラを y まで動かして、しばらく見せてから戻す
         pan(y, holdMs, onDone) {
@@ -662,7 +662,9 @@
       if (!im) return;
       // 枠の角の丸みやスマホのボタンで端が欠けないよう、まわりに余白を残して描く。
       // 整数倍でくっきり拡大してから、余白に収まる大きさへなめらかに縮める
-      const fit = Math.min((VW * 0.9) / im.width, (VH * 0.86) / im.height);
+      const fit = cutscene.full
+        ? Math.max(VW / im.width, VH / im.height) // 画面を覆う(はみ出した端は少し切れる)
+        : Math.min((VW * 0.9) / im.width, (VH * 0.86) / im.height);
       const s = Math.max(1, Math.ceil(fit));
       if (!cutscene.buf || cutscene.buf.src !== im) {
         const c = document.createElement("canvas");

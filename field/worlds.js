@@ -1907,7 +1907,7 @@
     objects: WING_CREW,
   };
 
-  // C'' 機内(背中の乗降口から、はしごで胴体の中の通路へ。機関士席と通信士席の横を抜け、前のはしごと与圧扉から操縦席の床へ上がる)
+  // C'' 機内(背中の乗降口から、はしごで胴体の中の通路へ。機関士席と通信士席の横を抜け、右へそのまま進むと操縦席)
   // 当たり判定は背景の絵に合わせる(奥の壁、酸素ボンベの架台、機関士の座席、通信士の腰掛け、ロッカー)
   const CABIN_SOLID = (c, r) =>
     r <= 2 ||
@@ -1921,13 +1921,13 @@
     drawGround: kImage("bg_cabin", 15 * T, 8 * T),
     spawns: {
       aft: { x: 2 * T, y: 3.8 * T, facing: "south" }, // 後ろのはしごの下
-      fore: { x: 13.9 * T, y: 3.8 * T, facing: "south" }, // 前のはしごの下
+      fore: { x: 13.6 * T, y: 5.5 * T, facing: "west" }, // 操縦席から出たところ(右端)
     },
-    // はしごは、歩いて触れるのではなく、調べて上る(入った直後に上を押したままでも、戻されない)
-    triggers: [],
+    // 後ろのはしごは、歩いて触れるのではなく、調べて上る(入った直後に上を押したままでも、戻されない)
+    // 前(右)はそのまま操縦席へ抜ける
+    triggers: [{ id: "cockpit", x: 14.6 * T, y: 3 * T, w: T, h: 4 * T, warp: { map: "cockpit", spawn: "door" } }],
     objects: [
       { id: "ladderAft", x: 2 * T, y: 3.1 * T, w: 1, h: 1, range: 44, interact: (api) => api.warp("wing", "hatch") },
-      { id: "ladderFore", x: 13.9 * T, y: 3.1 * T, w: 1, h: 1, range: 44, interact: (api) => api.warp("cockpit", "door") },
     ],
   };
 
@@ -2049,10 +2049,14 @@
     onEnter(api) {
       tourT0 = performance.now() / 1000;
       api.later(TOUR_TIME * 1000 + 600, () =>
-        api.show("v_flight", () => {
-          api.clear();
-          api.warp("shore", "slip"); // 乗りこむ前の傾斜路にもどってくる
-        })
+        api.show(
+          "v_flight",
+          () => {
+            api.clear();
+            api.warp("shore", "slip"); // 乗りこむ前の傾斜路にもどってくる
+          },
+          { full: true } // キメの一枚絵は画面いっぱいに
+        )
       );
     },
     triggers: [],
