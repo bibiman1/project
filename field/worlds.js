@@ -1828,15 +1828,15 @@
   };
 
   // C' エクラノプランの上(翼に跳び乗ってから、背中を歩いて乗降口へ。機首から尾翼まで歩ける)
-  // 背景は設計図(全長24マス・翼幅12マス)の上面図の下絵から生成。歩けるのは胴体・主翼・水平尾翼の上だけ
-  const WING_CY = 8;
+  // 背景は設計図(全長24マス・翼幅12マス)から、ほかのマップと同じ斜め上から見た下絵を描いて生成。歩けるのは胴体と主翼の上だけ
   const WING_POLYS = [
-    [[11, WING_CY - 1.4], [17, WING_CY - 1.4], [15.6, 1.2], [13.2, 1.2]], // 北の主翼
-    [[11, WING_CY + 1.4], [17, WING_CY + 1.4], [15.6, 14.8], [13.2, 14.8]], // 南の主翼(岸の側)
-    [[1.5, WING_CY - 0.3], [5.8, WING_CY - 0.3], [5.4, WING_CY - 4], [1.9, WING_CY - 4]], // 水平尾翼
-    [[1.5, WING_CY + 0.3], [5.8, WING_CY + 0.3], [5.4, WING_CY + 4], [1.9, WING_CY + 4]],
-    [[2, WING_CY - 1.4], [22, WING_CY - 1.5], [22, WING_CY + 1.5], [2, WING_CY + 1.4]], // 胴体(操縦席の窓の手前まで)
+    [[11, 6], [17, 6], [15.6, 1.5], [13.2, 1.5]], // 北の主翼(奥)
+    [[11, 10], [17, 10], [15.6, 14.8], [13.2, 14.8]], // 南の主翼(手前、岸の側)
+    [[6, 6], [22.5, 6], [22.5, 10], [6, 10]], // 胴体の上面(T字尾翼の下と、操縦席の窓には上がらない)
   ];
+  // 背中の発射筒(一段高い筒)は歩けない
+  const WING_TUBES = [8, 11.1, 14.2].flatMap((x0) => [[x0, 6, x0 + 2.6, 6.8], [x0, 8.8, x0 + 2.6, 9.6]]);
+
   const inPoly = (x, y, poly) => {
     let inside = false;
     for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
@@ -1846,7 +1846,9 @@
     }
     return inside;
   };
-  const WING_SOLID = (c, r) => !WING_POLYS.some((p) => inPoly(c + 0.5, r + 0.5, p));
+  const WING_SOLID = (c, r) =>
+    !WING_POLYS.some((p) => inPoly(c + 0.5, r + 0.5, p)) ||
+    WING_TUBES.some(([x0, y0, x1, y1]) => c + 0.5 > x0 && c + 0.5 < x1 && r + 0.5 > y0 && r + 0.5 < y1);
   // 機体の脇で、地上ぼぎクルーが直している(カン、カン)
   const repairCrew = (id, img, fx, fy, phase) =>
     hat(img, fx, fy, {
@@ -1879,9 +1881,9 @@
       },
     });
   const WING_CREW = [
-    repairCrew("fix1", "crew_hawk", 19.4 * T, 9.1 * T, 0), // 南のジェットの付け根
+    repairCrew("fix1", "crew_hawk", 19.6 * T, 9.7 * T, 0), // 南のジェットの付け根
     repairCrew("fix2", "crew_wagtail", 15.4 * T, 11.4 * T, 0.45), // 主翼の錆
-    repairCrew("fix3", "crew_rooster", 3.7 * T, 5.4 * T, 0.8), // 尾翼
+    repairCrew("fix3", "crew_rooster", 6.7 * T, 7.6 * T, 0.8), // 尾翼の付け根
   ];
   WING_CREW.forEach((c) => (c.baseY = c.y));
   const K_WING = {
@@ -1983,14 +1985,15 @@
     triggers: [],
     objects: [],
   };
-  // 湖を一周(上から見た霞ヶ浦。基地跡の傾斜路から出て、ぐるりと回って帰ってくる)
+  // 湖を一周(南岸の上空から北を見下ろす鳥瞰図。基地跡の傾斜路から出て、ぐるりと回って帰ってくる)
+  // 画面(480×300)ちょうどの絵。機体は横から見た姿で、奥へ行くほど小さく
   let tourT0 = 0;
-  const TOUR_TIME = 12;
+  const TOUR_TIME = 13;
   const K_TOUR = {
     tile: T,
     bg: "#000",
     hidePlayer: true,
-    map: kGrid(15, 10, () => false),
+    map: kGrid(15, 10, () => false), // 高さ320にしておくと、カメラが上端(0〜300)にそろう
     legend: K_LEGEND,
     drawGround(ctx, ox, oy, img) {
       const get = (k) => (typeof img === "function" ? img(k) : null);
@@ -1998,21 +2001,25 @@
       if (lake) ctx.drawImage(lake, ox, oy);
       const t = Math.min(1, (performance.now() / 1000 - tourT0) / TOUR_TIME);
       const u = t * t * (3 - 2 * t); // ゆっくり出て、ゆっくり帰る
-      const a = Math.PI / 2 - u * Math.PI * 2; // 南の岸から、左回り(反時計回り)に一周
-      const x = 240 + Math.cos(a) * 168;
-      const y = 178 + Math.sin(a) * 92;
-      const dir = Math.atan2(-Math.cos(a) * 92, Math.sin(a) * 168); // 進む向き
-      const draw = (k, dx, dy) => {
-        const im = get(k);
-        if (!im) return;
-        ctx.save();
-        ctx.translate(Math.round(x + dx + ox), Math.round(y + dy + oy));
-        ctx.rotate(dir);
-        ctx.drawImage(im, -im.width / 2, -im.height / 2);
-        ctx.restore();
-      };
-      draw("fl_ekrano_shadow", 4, 6); // 湖面すれすれなので、影がすぐ下にある
-      draw("fl_ekrano_top", 0, 0);
+      const a = Math.PI / 2 - u * Math.PI * 2; // 手前(南岸)から、右回りに奥へ、左から手前へ
+      const x = 240 + Math.cos(a) * 170;
+      const y = 178 + Math.sin(a) * 78; // 奥行きがつぶれて見える
+      const ek = get("fl_ekrano");
+      if (!ek) return;
+      const s = 0.1 + ((y - 100) / 160) * 0.14; // 手前ほど大きい
+      const east = Math.sin(a) >= 0; // 画面の右へ進んでいるか
+      const w = ek.width * s;
+      const h = ek.height * s;
+      ctx.save();
+      ctx.fillStyle = "rgba(60, 60, 90, 0.25)"; // 湖面すれすれなので、影がすぐ下にある
+      ctx.beginPath();
+      ctx.ellipse(Math.round(x + ox), Math.round(y + oy + h * 0.35), w * 0.45, Math.max(1.5, h * 0.12), 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.translate(Math.round(x + ox), Math.round(y + oy));
+      if (!east) ctx.scale(-1, 1); // 機首を進む向きへ
+      ctx.imageSmoothingEnabled = true;
+      ctx.drawImage(ek, -w / 2, -h / 2, w, h);
+      ctx.restore();
     },
     spawns: { view: { x: 7 * T, y: 5 * T, facing: "east" } },
     onEnter(api) {
