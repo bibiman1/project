@@ -561,7 +561,14 @@
         ctx.fillRect(0, 0, vw, vh);
       }
       if (map.snow) drawSnow();
-      for (const b of bubbles) drawBubble(b, ox, oy);
+      bubblePlaced.length = 0; // 重なる吹き出しは上へ積む(このフレームで置いた位置)
+      // 同じ言葉をいっせいに言っているとき(かけ声)は、ひとつの吹き出しにまとめて、しっぽを全員に
+      const groups = new Map();
+      for (const b of bubbles) {
+        if (!groups.has(b.text)) groups.set(b.text, []);
+        groups.get(b.text).push(b);
+      }
+      for (const [text, bs] of groups) drawBubble({ text, whos: bs.map((b) => b.who) }, ox, oy);
       if (nearObj && !busy()) drawActionMark(nearObj, ox, oy, t);
       ctx.restore();
       if (toast) drawToast();
@@ -618,25 +625,43 @@
       return { x: o.x + ox, y: o.y + oy - (o.headY || o.h / 2) };
     }
 
+    const bubblePlaced = [];
     function drawBubble(b, ox, oy) {
-      const h = headOf(b.who, ox, oy);
-      if (!h) return;
+      const heads = (b.whos || [b.who]).map((w) => headOf(w, ox, oy)).filter(Boolean);
+      if (!heads.length) return;
       // 世界は ZOOM 倍で描いているので、画面の座標に直してからドット文字の窓を描く
       const s = PIX_S;
-      const w = (bogiPix.width(b.text) + 16) * s;
+      const xs = heads.map((h) => Math.round(h.x * ZOOM));
+      const textW = (bogiPix.width(b.text) + 16) * s;
+      // かけ声は、話している全員の上にかかる幅にする(文字は真ん中)
+      const w = Math.max(textW, Math.max(...xs) - Math.min(...xs) + 24 * s);
       const hh = 26 * s;
-      const hx = Math.round(h.x * ZOOM);
-      const bx = clamp(hx - w / 2, 6, VW - w - 6);
-      const by = Math.round(h.y * ZOOM) - hh - 6 * s;
+      const cx = (Math.min(...xs) + Math.max(...xs)) / 2;
+      const bx = clamp(cx - w / 2, 6, VW - w - 6);
+      let by = Math.min(...heads.map((h) => Math.round(h.y * ZOOM))) - hh - 6 * s;
+      // ほかの吹き出しと重なるなら、上へずらして積む(画面の上にはみ出すなら下へ)
+      let raised = false;
+      for (let k = 0; k < 6; k++) {
+        const hit = bubblePlaced.find((p) => bx < p.x + p.w && bx + w > p.x && by < p.y + p.h && by + hh > p.y);
+        if (!hit) break;
+        by = hit.y - hh - s >= 4 ? hit.y - hh - s : hit.y + hit.h + s;
+        raised = true;
+      }
+      by = Math.max(4, by);
+      bubblePlaced.push({ x: bx, y: by, w, h: hh });
       ctx.save();
       ctx.setTransform(1, 0, 0, 1, 0, 0);
       bogiPix.win(ctx, bx, by, w, hh, s);
-      // しっぽ(白い三角、ドット)
-      ctx.fillStyle = "#fff";
-      const tx = Math.round(hx / s) * s;
-      const ty = Math.round((by + hh) / s) * s - s;
-      for (let i = 0; i < 4; i++) ctx.fillRect(tx - (3 - i) * s, ty + i * s, (7 - i * 2) * s, s);
-      bogiPix.text(ctx, b.text, Math.round(bx / s) * s + 8 * s, Math.round(by / s) * s + 5 * s, s);
+      // しっぽ(白い三角、ドット)。話している人の数だけ、窓の下から頭のほうへ。積み上げた窓には出さない
+      if (!raised) {
+        ctx.fillStyle = "#fff";
+        const ty = Math.round((by + hh) / s) * s - s;
+        for (const hx of xs) {
+          const tx = Math.round(clamp(hx, bx + 6 * s, bx + w - 6 * s) / s) * s;
+          for (let i = 0; i < 4; i++) ctx.fillRect(tx - (3 - i) * s, ty + i * s, (7 - i * 2) * s, s);
+        }
+      }
+      bogiPix.text(ctx, b.text, Math.round((bx + (w - textW) / 2) / s) * s + 8 * s, Math.round(by / s) * s + 5 * s, s);
       ctx.restore();
     }
 
@@ -737,6 +762,7 @@
           player.y = y;
         },
         load: (mapId, spawn) => loadMap(mapId, spawn),
+        api: () => world && world.api,
       },
     };
   }
