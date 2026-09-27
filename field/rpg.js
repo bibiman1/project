@@ -113,6 +113,14 @@
           host.save();
           api.toast(`${name}`);
         },
+        // きーの能力(ジャンプなど)。断片で習得し、覚えたあとはどのフィールドでも使える(フラグ「ability.<id>」)
+        hasAbility(id) {
+          return hasAbility(id);
+        },
+        learnAbility(id) {
+          host.state.flags[`ability.${id}`] = true;
+          host.save();
+        },
         hasWord(word) {
           return host.state.words.includes(word);
         },
@@ -325,6 +333,13 @@
       return false;
     }
 
+    // きーの能力。断片で習得すると「ability.<id>」が立つ(jump は、以前の保存データの「kasumi.jumpLearned」も認める)
+    function hasAbility(id) {
+      const f = host.state.flags;
+      if (f[`ability.${id}`]) return true;
+      return id === "jump" && !!f["kasumi.jumpLearned"];
+    }
+
     // ジャンプ(覚えたあと、B ボタン / X キー)。地図は map.onJump(api, player) で受け取れる
     const JUMP_TIME = 0.5;
     let jumpT0 = -1;
@@ -336,7 +351,8 @@
     }
     function jump() {
       if (!world || !player || cutscene || pan) return false;
-      if (!world.api.flag("jump")) return false;
+      // 習得した能力なら、どのフィールドでも跳べる。習得前は、教わっている断片の中(フラグ「jump」)だけ
+      if (!world.api.flag("jump") && !hasAbility("jump")) return false;
       if (jumpT0 >= 0 && clock - jumpT0 < JUMP_TIME) return false;
       jumpT0 = clock;
       if (map.onJump) map.onJump(world.api, { x: player.x, y: player.y, facing: player.facing });
@@ -739,6 +755,7 @@
       draw,
       interact,
       jump,
+      hasAbility,
       image: (key) => img(key), // 会話の顔の絵など、今の世界の画像を host から使う
       get active() {
         return !!world;

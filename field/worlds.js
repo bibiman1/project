@@ -1781,6 +1781,7 @@
     api.later(500, () => {
       crewHop(0); // クルーも一緒に跳ぶ
       api.setFlag("jumpLearned");
+      api.learnAbility("jump"); // ここで習得。ほかのフィールドでも跳べるようになる
       api.toast(`ジャンプ（${jumpKey()}）`, 3.2);
     });
   }
