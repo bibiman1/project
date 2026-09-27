@@ -626,10 +626,10 @@
       // 世界は ZOOM 倍で描いているので、画面の座標に直してからドット文字の窓を描く
       const s = PIX_S;
       const w = (bogiPix.width(b.text) + 16) * s;
-      const hh = 26 * s;
+      const hh = 30 * s; // 文字(17 ドット)が上下の真ん中に来る高さ
       const hx = Math.round(h.x * ZOOM);
       const bx = clamp(hx - w / 2, 6, VW - w - 6);
-      const by0 = Math.round(h.y * ZOOM) - hh - 6 * s;
+      const by0 = Math.max(4, Math.round(h.y * ZOOM) - hh - 6 * s); // 画面の上端より上には出さない
       // ほかの吹き出しと重なるなら段をずらす(かけ声のように何人もいっせいに話すとき)。
       // まず上へ、画面の上にはみ出すなら下へ。いちばん近い、あいている段に置く
       const step = hh + 2 * s;
@@ -659,7 +659,7 @@
         const ty = Math.round((by + hh) / s) * s - s;
         for (let i = 0; i < 4; i++) ctx.fillRect(tx - (3 - i) * s, ty + i * s, (7 - i * 2) * s, s);
       }
-      bogiPix.text(ctx, b.text, Math.round(bx / s) * s + 8 * s, Math.round(by / s) * s + 5 * s, s);
+      bogiPix.text(ctx, b.text, Math.round(bx / s) * s + 8 * s, Math.round(by / s) * s + 7 * s, s);
       ctx.restore();
     }
 
@@ -684,10 +684,10 @@
     function drawToast() {
       const s = PIX_S;
       const w = (bogiPix.width(toast.text) + 20) * s;
-      const h = 26 * s;
+      const h = 30 * s;
       const x = Math.round((VW - w) / 2 / s) * s;
       bogiPix.win(ctx, x, 8 * s, w, h, s);
-      bogiPix.text(ctx, toast.text, x + 10 * s, 13 * s, s);
+      bogiPix.text(ctx, toast.text, x + 10 * s, 15 * s, s);
     }
 
     function drawCutscene() {
@@ -780,6 +780,34 @@
       meas.font = font();
       return Math.ceil(meas.measureText(text).width);
     }
+    const GLYPH_PAD = 8;
+    const GLYPH_H = 40;
+    // この字体で、文字の上端がどの行に描かれるか(見本の文字で一度だけ測る)
+    const inkTops = new Map();
+    function inkTop() {
+      const f = font();
+      if (inkTops.has(f)) return inkTops.get(f);
+      const c = document.createElement("canvas");
+      c.width = 80;
+      c.height = GLYPH_H;
+      const g = c.getContext("2d", { willReadFrequently: true });
+      g.font = f;
+      g.textBaseline = "top";
+      g.fillStyle = "#fff";
+      g.fillText("漢あAgy", 1, GLYPH_PAD);
+      const d = g.getImageData(0, 0, c.width, c.height).data;
+      let top = GLYPH_PAD;
+      for (let y = 0; y < c.height; y++) {
+        let hit = false;
+        for (let x = 0; x < c.width; x++) if (d[(y * c.width + x) * 4 + 3] > 110) hit = true;
+        if (hit) {
+          top = y;
+          break;
+        }
+      }
+      inkTops.set(f, top);
+      return top;
+    }
     function glyphs(text, color = "#ffffff") {
       const key = `${color}|${text}`;
       let c = cache.get(key);
@@ -787,12 +815,13 @@
       if (cache.size > 400) cache.clear();
       c = document.createElement("canvas");
       c.width = Math.max(1, width(text) + 2);
-      c.height = 20;
+      // 下が切れないよう高さに余裕をとる(ブラウザによって文字の縦の位置がちがう。上端は inkTop() でそろえる)
+      c.height = GLYPH_H;
       const g = c.getContext("2d", { willReadFrequently: true });
       g.font = font();
       g.textBaseline = "top";
       g.fillStyle = "#fff";
-      g.fillText(text, 1, 1);
+      g.fillText(text, 1, GLYPH_PAD);
       const img = g.getImageData(0, 0, c.width, c.height);
       const d = img.data;
       const [cr, cg, cb] = [1, 3, 5].map((i) => parseInt(color.slice(i, i + 2), 16));
@@ -813,7 +842,8 @@
       const c = glyphs(str, color);
       const sm = ctx.imageSmoothingEnabled;
       ctx.imageSmoothingEnabled = false;
-      ctx.drawImage(c, Math.round(x - s), Math.round(y - s), c.width * s, c.height * s);
+      // 文字の上端が (y - s) に来るように置く(どのブラウザでも同じ位置)
+      ctx.drawImage(c, Math.round(x - s), Math.round(y - s - inkTop() * s), c.width * s, c.height * s);
       ctx.imageSmoothingEnabled = sm;
     }
     // 窓: (x, y, w, h) は描く先の座標(s の倍数にそろえる)
