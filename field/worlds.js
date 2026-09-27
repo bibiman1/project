@@ -1625,7 +1625,7 @@
   // ================================================================
   // 断片: 霞ヶ浦のエクラノプラン(晩秋の明け方)。廃兵院を終えると懲罰空間に現れる
   // 条件: 格納庫で地上ぼぎクルー(笹野一刀彫)にジャンプを教わる → 傾斜路の先から翼へ跳び乗る
-  //       → 機体の上を歩いて乗降口へ → 操縦席のミイラさまの遊覧飛行 → 懲罰空間に帰る
+  //       → 機体の上を歩いて乗降口へ → 機内を通って操縦席へ → ミイラさまの遊覧飛行 → 懲罰空間に帰る
   // 背景は docs/assets/kasumi の設計図と下絵(*_blockout.png)から生成
   // ================================================================
   const kGrid = (cols, rows, solidAt) => {
@@ -1831,7 +1831,7 @@
   // 背景は設計図(全長24マス・翼幅12マス)から、ほかのマップと同じ斜め上から見た下絵を描いて生成。歩けるのは胴体と主翼の上だけ
   const WING_POLYS = [
     [[11, 6], [17, 6], [15.6, 1.5], [13.2, 1.5]], // 北の主翼(奥)
-    [[11, 10], [17, 10], [15.6, 14.8], [13.2, 14.8]], // 南の主翼(手前、岸の側)
+    [[11, 10], [17.9, 10], [17.9, 10.9], [15.6, 14.8], [13.2, 14.8]], // 南の主翼(手前、岸の側)。付け根の後ろのすみ(発射筒とジェットの間)から胴体の上へ上がれる
     [[6, 6], [22.5, 6], [22.5, 10], [6, 10]], // 胴体の上面(T字尾翼の下と、操縦席の窓には上がらない)
   ];
   // 背中の発射筒(一段高い筒)は歩けない
@@ -1897,7 +1897,7 @@
       land: { x: 14.4 * T, y: 13.6 * T, facing: "north" }, // 南の主翼の先
       hatch: { x: 16.4 * T, y: 8.1 * T, facing: "west" }, // 乗降口のわき
     },
-    triggers: [{ id: "hatch", x: 17.2 * T, y: 7.55 * T, w: 0.7 * T, h: 0.9 * T, warp: { map: "cockpit", spawn: "door" } }],
+    triggers: [{ id: "hatch", x: 17.2 * T, y: 7.55 * T, w: 0.7 * T, h: 0.9 * T, warp: { map: "cabin", spawn: "aft" } }],
     // 南の主翼の先から南へ跳ぶと、傾斜路にもどる
     onJump(api, p) {
       if (p.facing === "south" && p.y > 13 * T && p.x > 12.5 * T && p.x < 16.5 * T) {
@@ -1905,6 +1905,30 @@
       }
     },
     objects: WING_CREW,
+  };
+
+  // C'' 機内(背中の乗降口から、はしごで胴体の中の通路へ。機関士席と通信士席の横を抜け、右へそのまま進むと操縦席)
+  // 当たり判定は背景の絵に合わせる(奥の壁、酸素ボンベの架台、機関士の座席、通信士の腰掛け、ロッカー)
+  const CABIN_SOLID = (c, r) =>
+    r <= 2 ||
+    r >= 7 ||
+    ((r === 3 || r === 4) && (c === 3 || c === 4 || c === 5 || c === 6 || c === 9 || c === 12));
+  const K_CABIN = {
+    tile: T,
+    bg: "#141414",
+    map: kGrid(15, 8, CABIN_SOLID),
+    legend: K_LEGEND,
+    drawGround: kImage("bg_cabin", 15 * T, 8 * T),
+    spawns: {
+      aft: { x: 2 * T, y: 3.8 * T, facing: "south" }, // 後ろのはしごの下
+      fore: { x: 13.6 * T, y: 5.5 * T, facing: "west" }, // 操縦席から出たところ(右端)
+    },
+    // 後ろのはしごは、歩いて触れるのではなく、調べて上る(入った直後に上を押したままでも、戻されない)
+    // 前(右)はそのまま操縦席へ抜ける
+    triggers: [{ id: "cockpit", x: 14.6 * T, y: 3 * T, w: T, h: 4 * T, warp: { map: "cockpit", spawn: "door" } }],
+    objects: [
+      { id: "ladderAft", x: 2 * T, y: 3.1 * T, w: 1, h: 1, range: 44, interact: (api) => api.warp("wing", "hatch") },
+    ],
   };
 
   // D 操縦席(左の機長席にミイラさま。右席にきー)
@@ -1917,7 +1941,7 @@
     drawGround: kImage("bg_cockpit", 10 * T, 7 * T),
     spawns: { door: { x: 5 * T, y: 5.5 * T, facing: "north" } },
     // 床の乗降口(下の段)に下りると外へ
-    triggers: [{ id: "out", x: 3.6 * T, y: 6 * T, w: 2.8 * T, h: T, warp: { map: "wing", spawn: "hatch" } }],
+    triggers: [{ id: "out", x: 3.6 * T, y: 6 * T, w: 2.8 * T, h: T, warp: { map: "cabin", spawn: "fore" } }],
     objects: [
       // 左の機長席のミイラさま(背景に描いてある)。話しかけると遊覧飛行
       {
@@ -2025,10 +2049,14 @@
     onEnter(api) {
       tourT0 = performance.now() / 1000;
       api.later(TOUR_TIME * 1000 + 600, () =>
-        api.show("v_flight", () => {
-          api.clear();
-          api.warp("shore", "slip"); // 乗りこむ前の傾斜路にもどってくる
-        })
+        api.show(
+          "v_flight",
+          () => {
+            api.clear();
+            api.warp("shore", "slip"); // 乗りこむ前の傾斜路にもどってくる
+          },
+          { full: true } // キメの一枚絵は画面いっぱいに
+        )
       );
     },
     triggers: [],
@@ -2128,14 +2156,14 @@
       name: "霞ヶ浦のエクラノプラン",
       assetBase: "./assets/worlds/kasumi/",
       images: Object.fromEntries(
-        ["bg_lotus", "bg_hangar", "bg_wing", "bg_cockpit", "crew_hawk", "crew_wagtail", "crew_rooster", "fl_sky", "fl_hills", "fl_wbase", "fl_ripple", "fl_mist", "fl_ekrano", "fl_ekrano_top", "fl_ekrano_shadow", "fl_lake", "v_flight", "v_summer", "photo_summer"]
+        ["bg_lotus", "bg_hangar", "bg_wing", "bg_cabin", "bg_cockpit", "crew_hawk", "crew_wagtail", "crew_rooster", "fl_sky", "fl_hills", "fl_wbase", "fl_ripple", "fl_mist", "fl_ekrano", "fl_ekrano_top", "fl_ekrano_shadow", "fl_lake", "v_flight", "v_summer", "photo_summer"]
           .map((k) => [k, `${k}.png`])
           .concat([["bg_shore", "bg_shore.png"], ["ki", "./assets/worlds/lake/ki_walk.png"]])
       ),
       playerSprite: { img: "ki", cell: 64, frames: 7, footY: 17 },
       start: "lotus",
       startSpawn: "start",
-      maps: { lotus: K_LOTUS, shore: K_SHORE, hangar: K_HANGAR, wing: K_WING, cockpit: K_COCKPIT, flight: K_FLIGHT, tour: K_TOUR },
+      maps: { lotus: K_LOTUS, shore: K_SHORE, hangar: K_HANGAR, wing: K_WING, cabin: K_CABIN, cockpit: K_COCKPIT, flight: K_FLIGHT, tour: K_TOUR },
     },
   };
 })();
