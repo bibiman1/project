@@ -1963,7 +1963,19 @@
         headY: 90,
         range: 70,
         interact(api) {
-          api.warp("flight", "view");
+          // ミイラさまはロシア語(キリル文字)で話す。「こんにちは、小さな友だち。遊覧飛行をするかい？」はい / いいえ
+          api.say(
+            [
+              {
+                face: "face_mummy",
+                text: "Здравствуй, маленький друг!\nХочешь совершить прогулочный полёт?",
+                choices: ["Да", "Нет"],
+              },
+            ],
+            (choice) => {
+              if (choice === 0) api.warp("flight", "view");
+            }
+          );
         },
       },
     ],
@@ -2167,7 +2179,7 @@
       name: "霞ヶ浦のエクラノプラン",
       assetBase: "./assets/worlds/kasumi/",
       images: Object.fromEntries(
-        ["bg_lotus", "bg_hangar", "bg_wing", "bg_cabin", "bg_cockpit", "crew_hawk", "crew_wagtail", "crew_rooster", "fl_sky", "fl_hills", "fl_wbase", "fl_ripple", "fl_mist", "fl_ekrano", "fl_ekrano_top", "fl_ekrano_shadow", "fl_lake", "v_flight", "v_summer", "photo_summer"]
+        ["bg_lotus", "bg_hangar", "bg_wing", "bg_cabin", "bg_cockpit", "crew_hawk", "crew_wagtail", "crew_rooster", "fl_sky", "fl_hills", "fl_wbase", "fl_ripple", "fl_mist", "fl_ekrano", "fl_ekrano_top", "fl_ekrano_shadow", "fl_lake", "v_flight", "v_summer", "photo_summer", "face_mummy"]
           .map((k) => [k, `${k}.png`])
           .concat([["bg_shore", "bg_shore.png"], ["ki", "./assets/worlds/lake/ki_walk.png"]])
       ),

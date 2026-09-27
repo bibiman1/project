@@ -739,6 +739,7 @@
       draw,
       interact,
       jump,
+      image: (key) => img(key), // 会話の顔の絵など、今の世界の画像を host から使う
       get active() {
         return !!world;
       },
