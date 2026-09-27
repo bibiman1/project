@@ -334,9 +334,14 @@
       if (u >= 1) return 0;
       return Math.sin(u * Math.PI) * 20;
     }
+    // どこかの断片でジャンプを覚えていれば(フラグ「<断片>.jumpLearned」)、ほかのフィールドでも跳べる
+    function jumpLearnedAnywhere() {
+      const f = host.state.flags;
+      return Object.keys(f).some((k) => /\.jumpLearned$/.test(k) && f[k]);
+    }
     function jump() {
       if (!world || !player || cutscene || pan) return false;
-      if (!world.api.flag("jump")) return false;
+      if (!world.api.flag("jump") && !jumpLearnedAnywhere()) return false;
       if (jumpT0 >= 0 && clock - jumpT0 < JUMP_TIME) return false;
       jumpT0 = clock;
       if (map.onJump) map.onJump(world.api, { x: player.x, y: player.y, facing: player.facing });
