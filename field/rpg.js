@@ -562,13 +562,7 @@
       }
       if (map.snow) drawSnow();
       bubblePlaced.length = 0; // 重なる吹き出しは上へ積む(このフレームで置いた位置)
-      // 同じ言葉をいっせいに言っているとき(かけ声)は、ひとつの吹き出しにまとめて、しっぽを全員に
-      const groups = new Map();
-      for (const b of bubbles) {
-        if (!groups.has(b.text)) groups.set(b.text, []);
-        groups.get(b.text).push(b);
-      }
-      for (const [text, bs] of groups) drawBubble({ text, whos: bs.map((b) => b.who) }, ox, oy);
+      for (const b of bubbles) drawBubble(b, ox, oy);
       if (nearObj && !busy()) drawActionMark(nearObj, ox, oy, t);
       ctx.restore();
       if (toast) drawToast();
@@ -627,41 +621,45 @@
 
     const bubblePlaced = [];
     function drawBubble(b, ox, oy) {
-      const heads = (b.whos || [b.who]).map((w) => headOf(w, ox, oy)).filter(Boolean);
-      if (!heads.length) return;
+      const h = headOf(b.who, ox, oy);
+      if (!h) return;
       // 世界は ZOOM 倍で描いているので、画面の座標に直してからドット文字の窓を描く
       const s = PIX_S;
-      const xs = heads.map((h) => Math.round(h.x * ZOOM));
-      const textW = (bogiPix.width(b.text) + 16) * s;
-      // かけ声は、話している全員の上にかかる幅にする(文字は真ん中)
-      const w = Math.max(textW, Math.max(...xs) - Math.min(...xs) + 24 * s);
+      const w = (bogiPix.width(b.text) + 16) * s;
       const hh = 26 * s;
-      const cx = (Math.min(...xs) + Math.max(...xs)) / 2;
-      const bx = clamp(cx - w / 2, 6, VW - w - 6);
-      let by = Math.min(...heads.map((h) => Math.round(h.y * ZOOM))) - hh - 6 * s;
-      // ほかの吹き出しと重なるなら、上へずらして積む(画面の上にはみ出すなら下へ)
-      let raised = false;
-      for (let k = 0; k < 6; k++) {
-        const hit = bubblePlaced.find((p) => bx < p.x + p.w && bx + w > p.x && by < p.y + p.h && by + hh > p.y);
-        if (!hit) break;
-        by = hit.y - hh - s >= 4 ? hit.y - hh - s : hit.y + hit.h + s;
-        raised = true;
+      const hx = Math.round(h.x * ZOOM);
+      const bx = clamp(hx - w / 2, 6, VW - w - 6);
+      const by0 = Math.round(h.y * ZOOM) - hh - 6 * s;
+      // ほかの吹き出しと重なるなら段をずらす(かけ声のように何人もいっせいに話すとき)。
+      // まず上へ、画面の上にはみ出すなら下へ。いちばん近い、あいている段に置く
+      const step = hh + 2 * s;
+      const free = (y) => y >= 4 && y + hh <= VH - 4 && !bubblePlaced.some((p) => bx < p.x + p.w && bx + w > p.x && y < p.y + p.h && y + hh > p.y);
+      let by = by0;
+      if (!free(by)) {
+        for (let k = 1; k <= 6; k++) {
+          if (free(by0 - k * step)) {
+            by = by0 - k * step;
+            break;
+          }
+          if (free(by0 + k * step)) {
+            by = by0 + k * step;
+            break;
+          }
+        }
       }
-      by = Math.max(4, by);
+      by = clamp(by, 4, VH - hh - 4);
       bubblePlaced.push({ x: bx, y: by, w, h: hh });
       ctx.save();
       ctx.setTransform(1, 0, 0, 1, 0, 0);
       bogiPix.win(ctx, bx, by, w, hh, s);
-      // しっぽ(白い三角、ドット)。話している人の数だけ、窓の下から頭のほうへ。積み上げた窓には出さない
-      if (!raised) {
+      // しっぽ(白い三角、ドット)。頭のすぐ上の段にあるときだけ出す
+      if (by === by0) {
         ctx.fillStyle = "#fff";
+        const tx = Math.round(hx / s) * s;
         const ty = Math.round((by + hh) / s) * s - s;
-        for (const hx of xs) {
-          const tx = Math.round(clamp(hx, bx + 6 * s, bx + w - 6 * s) / s) * s;
-          for (let i = 0; i < 4; i++) ctx.fillRect(tx - (3 - i) * s, ty + i * s, (7 - i * 2) * s, s);
-        }
+        for (let i = 0; i < 4; i++) ctx.fillRect(tx - (3 - i) * s, ty + i * s, (7 - i * 2) * s, s);
       }
-      bogiPix.text(ctx, b.text, Math.round((bx + (w - textW) / 2) / s) * s + 8 * s, Math.round(by / s) * s + 5 * s, s);
+      bogiPix.text(ctx, b.text, Math.round(bx / s) * s + 8 * s, Math.round(by / s) * s + 5 * s, s);
       ctx.restore();
     }
 
