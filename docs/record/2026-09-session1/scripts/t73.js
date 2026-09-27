@@ -1,0 +1,24 @@
+const { chromium, devices } = require('playwright');
+(async () => {
+  const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome' });
+  const p = await b.newPage({ viewport: { width: 1100, height: 900 } });
+  const errs=[]; p.on('pageerror', e=>errs.push(e.message));
+  await p.goto('http://localhost:8765/field/index.html?debug');
+  const items=['氷のかけら','スタンプ台紙','おたかぽっぽ','ためしのどうぐ4','ためしのどうぐ5','ためしのどうぐ6','ためしのどうぐ7','ためしのどうぐ8'];
+  await p.evaluate((items)=>{localStorage.clear(); localStorage.setItem('bogidachi.field.v1', JSON.stringify({items,words:['金星の天気予報'],cleared:['lake'],flags:{'void.found.lake':true,'void.found.haihei':true,'kasumi.jump':true}}));}, items);
+  await p.reload(); await p.waitForTimeout(1500);
+  const shot=n=>p.locator('.game-frame').screenshot({path:`q_${n}.png`});
+  await p.keyboard.press('KeyC'); await p.waitForTimeout(300); await shot('m1');
+  await p.keyboard.press('Enter'); await p.waitForTimeout(200); for(let i=0;i<6;i++) await p.keyboard.press('ArrowDown'); await p.waitForTimeout(200); await shot('m2');
+  await p.keyboard.press('KeyX'); for(let i=0;i<3;i++) await p.keyboard.press('ArrowDown'); await p.keyboard.press('Enter'); await p.waitForTimeout(200); await shot('m3');
+  await p.keyboard.press('KeyC'); console.log('closed', await p.evaluate(()=>document.getElementById('statusOverlay').hidden));
+  const ctx = await b.newContext({ ...devices['iPhone 13'], viewport:{width:844,height:390} });
+  const m = await ctx.newPage(); m.on('pageerror', e=>errs.push(e.message));
+  await m.goto('http://localhost:8765/field/index.html'); await m.waitForTimeout(1500);
+  await m.tap('#actionBtnC'); await m.waitForTimeout(200);
+  const j = await m.locator('#joystick').boundingBox();
+  await m.dispatchEvent('#joystick','pointerdown',{pointerId:5,clientX:j.x+j.width/2,clientY:j.y+j.height/2+40,isPrimary:true});
+  await m.waitForTimeout(150);
+  await m.dispatchEvent('#joystick','pointerup',{pointerId:5});
+  await m.tap('#actionBtnA'); await m.waitForTimeout(200); await m.screenshot({path:'q_m4.png'});
+  console.log(errs); await b.close(); })();

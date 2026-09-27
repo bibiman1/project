@@ -1,0 +1,24 @@
+const { chromium } = require('playwright');
+(async () => {
+  const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome' });
+  const p = await b.newPage({ viewport: { width: 1100, height: 900 } });
+  const errs=[]; p.on('pageerror', e=>errs.push(e.message)); p.on('console', m=>{if(m.type()==='error'&&!m.text().includes('404'))errs.push(m.text())});
+  await p.goto('http://localhost:8765/field/index.html?debug');
+  await p.evaluate(()=>{localStorage.clear(); localStorage.setItem('bogidachi.field.v1', JSON.stringify({items:[],words:[],cleared:['lake','haihei'],flags:{'found.lake':true,'found.haihei':true,'found.kasumi':true}}));});
+  await p.reload(); await p.waitForTimeout(1200);
+  const W=ms=>p.waitForTimeout(ms);
+  const shot=n=>p.locator('.game-frame').screenshot({path:`q_${n}.png`});
+  const st=()=>p.evaluate(()=>bogiDebug.rpg.debug.state());
+  const tp=(x,y)=>p.evaluate(([x,y])=>bogiDebug.rpg.debug.teleport(x,y),[x,y]);
+  const E=async(ms=700)=>{await p.keyboard.press('Enter'); await W(ms);};
+  const hold=async(k,ms)=>{await p.keyboard.down(k); await W(ms); await p.keyboard.up(k);};
+  await p.evaluate(()=>bogiDebug.enterWorld('kasumi')); await W(1500); console.log(await st()); await shot('a');
+  await hold('ArrowUp',4200); await W(1200); console.log('shore?',await st()); await shot('b');
+  await tp(9*32,16.6*32); await hold('ArrowUp',300); await W(1200); console.log('hangar?',await st()); await shot('c');
+  await tp(6.2*32,7.6*32); await hold('ArrowUp',120); await W(300); console.log(await st()); await E(300); await W(3200); await shot('c2');
+  console.log('jump flag', await p.evaluate(()=>bogiDebug.gameState.flags.jump));
+  await tp(7*32,9*32); await hold('ArrowDown',600); await W(1200); console.log('back',await st());
+  await tp(16.5*32,9.5*32); await hold('ArrowUp',150); await p.keyboard.press('KeyX'); await W(1600); console.log('cockpit?',await st()); await shot('d');
+  await tp(3*32,4.9*32); await hold('ArrowUp',100); await W(300); await E(300); await W(4000); await shot('e'); await W(6000); await shot('f');
+  await E(900); await W(1200); console.log('after', await st(), await p.evaluate(()=>bogiDebug.gameState.cleared));
+  console.log('errors',errs); await b.close(); })();

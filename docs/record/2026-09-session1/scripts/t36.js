@@ -1,0 +1,25 @@
+const { chromium } = require('playwright');
+(async () => {
+  const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome' });
+  const p = await b.newPage({ viewport: { width: 1100, height: 900 } });
+  const errs=[]; p.on('pageerror', e=>errs.push(e.message)); p.on('console', m=>{if(m.type()==='error'&&!m.text().includes('404'))errs.push(m.text())});
+  await p.goto('http://localhost:8765/field/index.html?debug');
+  await p.evaluate(()=>{localStorage.clear(); localStorage.setItem('bogidachi.field.v1', JSON.stringify({items:[],words:[],cleared:['lake'],flags:{'void.found.lake':true}}));});
+  await p.reload(); await p.waitForTimeout(1000);
+  const W=ms=>p.waitForTimeout(ms);
+  const shot=n=>p.locator('.game-frame').screenshot({path:`k_${n}.png`});
+  const st=()=>p.evaluate(()=>bogiDebug.rpg.debug.state());
+  const tp=(x,y)=>p.evaluate(([x,y])=>bogiDebug.rpg.debug.teleport(x,y),[x,y]);
+  const load=(m,s)=>p.evaluate(([m,s])=>bogiDebug.rpg.debug.load(m,s),[m,s]);
+  const E=async(ms=700)=>{await p.keyboard.press('Enter'); await W(ms);};
+  await p.evaluate(()=>{bogiDebug.gameState.flags['lake.trig.vista']=true;});
+  await p.evaluate(()=>bogiDebug.enterWorld('lake')); await W(1500);
+  await load('shop','door'); await W(500); await tp(8.3*32,3.6*32); await W(300);
+  await p.evaluate(()=>{bogiDebug.gameState.flags['lake.memory']=true;});
+  await E(2400); await shot('lk1'); await E(1500); console.log('after table', await st(), await p.evaluate(()=>bogiDebug.gameState.flags['lake.homeward']));
+  await load('road','start'); await W(500); await tp(7.5*32, 58.8*32); await W(300);
+  await p.keyboard.down('ArrowDown'); await W(900); await p.keyboard.up('ArrowDown'); await W(1500); await shot('lk2'); console.log('at exit', await st());
+  await E(1500); await W(1500); console.log('after road pic', await st());
+  await p.evaluate(()=>bogiDebug.enterWorld('haihei')); await W(1000);
+  await load('ward','west'); await W(400); await tp(12.2*32,2.6*32); await W(300); console.log(await st()); await E(900); await shot('lk3'); await E(600);
+  console.log('errors',errs); await b.close(); })();
