@@ -135,6 +135,13 @@
         player() {
           return { x: player.x, y: player.y, facing: player.facing };
         },
+        // きーを同じマップの別の場所へ置く(段差を跳び上がる、など)
+        place(x, y) {
+          player.x = x;
+          player.y = y;
+          player.vx = 0;
+          player.vy = 0;
+        },
         // ジャンプを演出として跳ばせる(教わる場面など)
         hop() {
           jumpT0 = clock;

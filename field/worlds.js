@@ -770,6 +770,7 @@
     fragment("lake", "凍った湖と富士山", "きーが見た風景。", "frag_lake", 22, 12),
     fragment("haihei", "アンバリッド・ホテル", "Hi Hey Win！", "frag_haihei", 33, 21, "lake"),
     fragment("kasumi", "霞ヶ浦のエクラノプラン", "ミイラさまの遊覧飛行。", "frag_kasumi", 12, 22, "haihei"),
+    fragment("banana", "南極のバナナ農園", "けさの気温 28℃。", "frag_banana", 31, 30, "kasumi"), // 説明の文面は仮
   ];
 
   const VOID = {
@@ -2086,13 +2087,304 @@
     objects: [],
   };
 
+
+  // ======== 南極のバナナ農園 ========
+  // 今の南極・キングジョージ島。ぼぎたちが、人間のテレビ番組をまねて撮り続けている(見ている人はもういない)。
+  // 条件: マンゴーを食べに来たきこりを、ちりんと一緒に追いかける → 氷の段々をジャンプで上り、マンゴーに届く → 一枚絵
+  // 次の世界へのカギ: 道具「マンゴー」
+  // 台詞や鳴き声はすべて仮(文面は作者が決める)。キャラクターの絵も仮(作者が決めて差し替える)
+
+  // きこり: 近づくと、道すじの次の点へ逃げる。最後の点(マップの外)まで行くと、次のマップへ消える
+  function kikoriRunner(route, goneFlag, shownIf, speed) {
+    return {
+      id: "kikori",
+      img: "kikori",
+      w: 32,
+      h: 34,
+      x: route[0][0] * T,
+      y: route[0][1] * T,
+      sortDy: 15,
+      headY: 30,
+      range: 50,
+      i: 0,
+      dir: 1,
+      hidden: (api) => api.flag(goneFlag) || !shownIf(api),
+      update(dt, t, api) {
+        if (api.flag(goneFlag) || !shownIf(api)) return;
+        const [tx, ty] = route[this.i].map((v) => v * T);
+        const dx = tx - this.x;
+        const dy = ty - this.y;
+        const dist = Math.hypot(dx, dy);
+        const p = api.player();
+        if (dist < 3) {
+          if (this.i === route.length - 1) {
+            api.setFlag(goneFlag);
+            return;
+          }
+          if (Math.hypot(p.x - this.x, p.y - this.y) < 96) {
+            if (this.i === 0) api.bubble("kikori", "！", 900); // 仮
+            this.i++;
+          }
+          return;
+        }
+        const step = Math.min(dist, speed * dt);
+        this.x += (dx / dist) * step;
+        this.y += (dy / dist) * step;
+        if (Math.abs(dx) > 1) this.dir = dx > 0 ? -1 : 1; // 絵は左向き
+      },
+      interact(api) {
+        api.bubble("kikori", "！", 900); // 仮
+      },
+      draw() {},
+    };
+  }
+  // きこりの絵(走るときは跳ねる)。img の描画を止めて、向きと跳ねを付けて描く
+  function drawKikori(o) {
+    const base = o.img;
+    o.img = null;
+    o.draw = function (ctx, sx, sy, t, api) {
+      const im = api.image(base);
+      if (!im) return;
+      const hop = Math.round(Math.abs(Math.sin(t * 14)) * 3);
+      ctx.save();
+      ctx.translate(sx, sy - hop);
+      ctx.scale(this.dir || 1, 1);
+      ctx.drawImage(im, -im.width / 2, -im.height / 2);
+      ctx.restore();
+    };
+    o.shadow = { dy: 15, rx: 11, ry: 3 };
+    return o;
+  }
+
+  // ちりん: 最初に近づくと、きーについてくる(きこりに執着している)
+  function chirinFollower(home) {
+    return {
+      id: "chirin",
+      img: null,
+      w: 12,
+      h: 44,
+      x: home ? home[0] * T : 0,
+      y: home ? home[1] * T : 0,
+      sortDy: 22,
+      headY: 40,
+      range: 56,
+      near(api) {
+        if (api.flag("chirinJoined")) return;
+        api.setFlag("chirinJoined");
+        api.bubble("chirin", "ちりん", 1600);
+      },
+      hidden: (api) => !home && !api.flag("chirinJoined"),
+      update(dt, t, api) {
+        if (!api.flag("chirinJoined")) return;
+        const p = api.player();
+        if (this._fresh !== api) {
+          this._fresh = api;
+        }
+        if (this._reset) {
+          this.x = p.x - 20;
+          this.y = p.y + 4;
+          this._reset = false;
+        }
+        const k = Math.min(1, dt * 3);
+        this.x += (p.x - 24 - this.x) * k;
+        this.y += (p.y + 6 - this.y) * k;
+      },
+      draw(ctx, sx, sy, t, api) {
+        const im = api.image("chirin");
+        if (!im) return;
+        const sway = Math.sin(t * 2.4) * 0.12;
+        ctx.save();
+        ctx.translate(sx, sy - 44 + Math.round(Math.sin(t * 1.7) * 2));
+        ctx.rotate(sway);
+        ctx.drawImage(im, -im.width / 2, 0);
+        ctx.restore();
+      },
+    };
+  }
+  const bSprite = (id, img, fx, fy, w, h, text) => ({
+    id,
+    img,
+    w,
+    h,
+    x: fx,
+    y: fy - h / 2 + 4,
+    sortDy: h / 2 - 4,
+    headY: h - 6,
+    solid: { w: w * 0.7, h: 12, dy: h / 2 - 8 },
+    range: 52,
+    interact(api) {
+      api.bubble(id, text, 1600); // 仮
+    },
+  });
+  const chirinEnter = (objs) => () => {
+    const c = objs.find((o) => o.id === "chirin");
+    if (c) c._reset = true;
+  };
+
+  // A 浜(入口。湾に突き出た桟橋から上がる。北の道の先が農園)
+  const B_SHORE_OBJS = [chirinFollower(null)];
+  const B_SHORE = {
+    tile: T,
+    bg: "#dfe8f2",
+    map: kGrid(28, 8, (c, r) => (r >= 5 && !(c === 13 || c === 14)) || (c >= 23 && r <= 4) || (c === 22 && r >= 3 && r <= 4) || (c >= 17 && c <= 20 && r >= 2 && r <= 3)),
+    legend: K_LEGEND,
+    drawGround: kImage("bg_shore", 28 * T, 8 * T),
+    spawns: {
+      start: { x: 14 * T, y: 7 * T, facing: "north" },
+      north: { x: 14 * T, y: 1.2 * T, facing: "south" },
+    },
+    triggers: [
+      { id: "toFarm", x: 13 * T, y: -T, w: 2 * T, h: 1.3 * T, warp: { map: "farm", spawn: "south" } },
+      { id: "leave", x: 13 * T, y: 7.6 * T, w: 2 * T, h: T, run: (api) => api.exit() },
+    ],
+    onEnter: chirinEnter(B_SHORE_OBJS),
+    objects: B_SHORE_OBJS,
+  };
+
+  // B 第三バナナ農園(当たり判定は、下絵で描いたバナナの株の根もと・小屋・撮影の道具・看板)
+  const B_FARM_GRID = [
+    "###...######################",
+    "............................",
+    ".#...#.#.#.#.....#.##..##..#",
+    "............................",
+    ".....................####...",
+    "...#.....#.#.........####...",
+    ".#..#...........####.####..#",
+    "............................",
+    "............................",
+    ".#...#..#..#....#..#.......#",
+    "............................",
+    "............................",
+    "#..#...##........##....#...#",
+    "...............##...........",
+  ];
+  const B_FARM_OBJS = [
+    drawKikori(kikoriRunner([[8, 8], [12.5, 8], [12.5, 3.2], [7, 3.2], [4.5, 1.2], [4.5, -1.5]], "fledFarm", () => true, 170)),
+    chirinFollower([9.5, 8.6]),
+    bSprite("kikikori", "kikikori", 16.6 * T, 7.6 * T, 47, 47, "……"),
+    bSprite("goron", "goron", 20.2 * T, 7.8 * T, 40, 34, "……"),
+  ];
+  const B_FARM = {
+    tile: T,
+    bg: "#8a6a48",
+    map: B_FARM_GRID,
+    legend: K_LEGEND,
+    drawGround: kImage("bg_farm", 28 * T, 14 * T),
+    spawns: {
+      south: { x: 14 * T, y: 12.6 * T, facing: "north" },
+      north: { x: 4.5 * T, y: 1.4 * T, facing: "south" },
+    },
+    triggers: [
+      { id: "toShore", x: 13 * T, y: 13.6 * T, w: 2 * T, h: T, warp: { map: "shore", spawn: "north" } },
+      { id: "toCanal", x: 3 * T, y: -T, w: 3 * T, h: 1.3 * T, warp: { map: "canal", spawn: "south" } },
+    ],
+    onEnter: chirinEnter(B_FARM_OBJS),
+    objects: B_FARM_OBJS,
+  };
+
+  // C 凍った用水路(一面の氷。つるつる滑る)
+  const B_CANAL_OBJS = [
+    drawKikori(kikoriRunner([[9, 2.6], [15, 2.4], [21, 2.2], [25.5, 1.2], [25.5, -1.5]], "fledCanal", (api) => api.flag("fledFarm"), 230)),
+    chirinFollower(null),
+  ];
+  const B_CANAL = {
+    tile: T,
+    bg: "#cfe2ef",
+    map: kGrid(28, 5, (c, r) => (r === 0 && !(c >= 24 && c <= 26)) || (r === 4 && !(c >= 3 && c <= 5))),
+    legend: K_LEGEND,
+    drawGround: kImage("bg_canal", 28 * T, 5 * T),
+    slippery: () => 1.1,
+    spawns: {
+      south: { x: 4.5 * T, y: 3.4 * T, facing: "north" },
+      north: { x: 25.5 * T, y: 1.2 * T, facing: "south" },
+    },
+    triggers: [
+      { id: "toFarm", x: 3 * T, y: 4.6 * T, w: 3 * T, h: T, warp: { map: "farm", spawn: "north" } },
+      { id: "toSteps", x: 24 * T, y: -T, w: 3 * T, h: 1.3 * T, warp: { map: "steps", spawn: "south" } },
+    ],
+    onEnter: chirinEnter(B_CANAL_OBJS),
+    objects: B_CANAL_OBJS,
+  };
+
+  // D 氷の段々とマンゴーの丘。段の崖は、手前で北を向いて跳ぶと上がれる(南を向いて跳ぶと下りる)
+  // 歩ける所: 下の雪原(15〜19 行)、段 1 の上(11〜13 行)、段 2 の上(7〜9 行)。段 3 はマンゴーの木の下で上がれない
+  const STEPS_SOLID = (c, r) =>
+    r <= 6 ||
+    (r >= 7 && r <= 10 && (c < 2 || c > 11 || r === 10)) ||
+    (r >= 11 && r <= 14 && (c < 1 || c > 12 || r === 14)) ||
+    (r === 7 && (c === 5 || c === 6)); // マンゴーの木の幹
+  const B_STEPS_OBJS = [
+    Object.assign(
+      drawKikori({
+        id: "kikori",
+        img: "kikori",
+        w: 32,
+        h: 34,
+        x: 8.2 * T,
+        y: 8.2 * T,
+        sortDy: 15,
+        headY: 30,
+        range: 56,
+        dir: 1,
+        hidden: (api) => !api.flag("fledCanal"),
+        update() {},
+        interact(api) {
+          api.bubble("kikori", "！", 900); // 仮
+        },
+      }),
+      {}
+    ),
+    chirinFollower(null),
+  ];
+  // きこりは木の下で、とどかないマンゴーに跳びつき続けている
+  (() => {
+    const k = B_STEPS_OBJS[0];
+    const d0 = k.draw;
+    k.draw = function (ctx, sx, sy, t, api) {
+      const u = (t * 1.3) % 1;
+      const lift = api.flag("gotMango") ? 0 : Math.round(Math.max(0, Math.sin(u * Math.PI * 2)) * 10);
+      d0.call(this, ctx, sx, sy - lift, t, api);
+    };
+  })();
+  const B_STEPS = {
+    tile: T,
+    bg: "#d6deea",
+    map: kGrid(14, 20, STEPS_SOLID),
+    legend: K_LEGEND,
+    drawGround: kImage("bg_steps", 14 * T, 20 * T),
+    spawns: {
+      south: { x: 7 * T, y: 18.6 * T, facing: "north" },
+    },
+    triggers: [{ id: "toCanal", x: 6 * T, y: 19.6 * T, w: 2 * T, h: T, warp: { map: "canal", spawn: "north" } }],
+    onEnter: chirinEnter(B_STEPS_OBJS),
+    onJump(api, p) {
+      const up = (y) => api.later(240, () => api.place(p.x, y));
+      if (p.facing === "north") {
+        if (p.y >= 15 * T && p.y < 16 * T && p.x > 1 * T && p.x < 13 * T) up(13.4 * T);
+        else if (p.y >= 11 * T && p.y < 12 * T && p.x > 2 * T && p.x < 12 * T) up(9.4 * T);
+        else if (p.y < 8.8 * T && p.x > 3.6 * T && p.x < 9 * T && !api.flag("gotMango") && api.flag("fledCanal")) {
+          // マンゴーに届く → きこりが追いつき、かぶりつく(一枚絵)
+          api.setFlag("gotMango");
+          api.later(300, () => {
+            api.giveItem("マンゴー");
+            api.later(900, () => api.show("v_final", () => api.clear(), { full: true }));
+          });
+        }
+      } else if (p.facing === "south") {
+        if (p.y >= 13 * T && p.y < 14 * T) up(15.5 * T);
+        else if (p.y >= 9 * T && p.y < 10 * T) up(11.5 * T);
+      }
+    },
+    objects: B_STEPS_OBJS,
+  };
+
   window.BOGI_WORLDS = {
     // 懲罰空間(ハブ)。ここから断片の世界に入り、戻ってくる
     void: {
       id: "void",
       name: "懲罰空間",
       hub: true,
-      fragments: ["lake", "haihei", "kasumi"],
+      fragments: ["lake", "haihei", "kasumi", "banana"],
       fragmentTexts: Object.fromEntries(VOID_FRAGMENTS.map((f) => [f.id, f.text])),
       assetBase: "./assets/worlds/void/",
       images: {
@@ -2101,6 +2393,7 @@
         frag_lake: "frag_lake.png",
         frag_haihei: "frag_haihei.png",
         frag_kasumi: "frag_kasumi.png",
+        frag_banana: "frag_banana.png",
         ki: "./assets/worlds/lake/ki_walk.png",
       },
       playerSprite: { img: "ki", cell: 64, frames: 7, footY: 17 },
@@ -2188,6 +2481,25 @@
       start: "lotus",
       startSpawn: "start",
       maps: { lotus: K_LOTUS, shore: K_SHORE, hangar: K_HANGAR, wing: K_WING, cabin: K_CABIN, cockpit: K_COCKPIT, flight: K_FLIGHT, tour: K_TOUR },
+    },
+    // 断片: 南極のバナナ農園。霞ヶ浦を終えると懲罰空間に現れる
+    banana: {
+      id: "banana",
+      name: "南極のバナナ農園",
+      assetBase: "./assets/worlds/banana/",
+      onEnterWorld(api) {
+        // 追いかけっこは入るたびに最初から(マンゴーを手に入れたあとは、そのまま)
+        if (!api.flag("gotMango")) ["fledFarm", "fledCanal", "chirinJoined"].forEach((f) => api.setFlag(f, false));
+      },
+      images: Object.fromEntries(
+        ["bg_shore", "bg_farm", "bg_canal", "bg_steps", "kikori", "chirin", "kikikori", "goron", "v_final"]
+          .map((k) => [k, `${k}.png`])
+          .concat([["ki", "./assets/worlds/lake/ki_walk.png"]])
+      ),
+      playerSprite: { img: "ki", cell: 64, frames: 7, footY: 17 },
+      start: "shore",
+      startSpawn: "start",
+      maps: { shore: B_SHORE, farm: B_FARM, canal: B_CANAL, steps: B_STEPS },
     },
   };
 })();
