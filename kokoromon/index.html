@@ -1,0 +1,589 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="12のしつもんに答えてガチャをまわすと、全16しゅるいのココロモンからあなたの相棒が出てくる性格診断ゲーム。">
+<title>ココロモン診断</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=DotGothic16&family=Zen+Maru+Gothic:wght@500;700;900&display=swap">
+<style>
+/* Layout: one-column capsule-toy machine; single bright "toy shop" look on purpose (not theme-switched) */
+:root{
+  --sun:#FFD84A;       /* shop-front yellow ground */
+  --ink:#2A1F3D;       /* outline / text */
+  --paper:#FFFBF0;     /* card surface */
+  --pink:#FF5A8A;      /* machine + primary action */
+  --teal:#12A897;      /* choice A / progress */
+  --glass:#BFEFFF;     /* machine globe */
+  --mute:#645879;
+  --f-display:'Dela Gothic One','Hiragino Sans','Yu Gothic',sans-serif;
+  --f-body:'Zen Maru Gothic','Hiragino Maru Gothic ProN','Yu Gothic',sans-serif;
+  --f-dot:'DotGothic16','Osaka-Mono',monospace;
+  color-scheme:light;
+}
+html,body{background:var(--sun);color:var(--ink)}
+body{
+  font-family:var(--f-body);font-weight:500;font-size:15px;line-height:1.7;
+  background-image:radial-gradient(rgba(42,31,61,.13) 1.6px,transparent 1.7px);
+  background-size:18px 18px;min-height:100vh;
+}
+.wrap{max-width:560px;margin:0 auto;padding-inline:16px;padding-block:18px 48px}
+button{font:inherit;color:inherit}
+[hidden]{display:none!important}
+:focus-visible{outline:3px solid var(--teal);outline-offset:3px}
+
+/* ---------- shared ---------- */
+.panel{background:var(--paper);border:3px solid var(--ink);border-radius:22px;box-shadow:0 7px 0 var(--ink)}
+.btn{
+  font-family:var(--f-display);font-size:1.1rem;letter-spacing:.04em;
+  background:var(--pink);color:#fff;border:3px solid var(--ink);border-radius:16px;
+  padding:13px 22px;box-shadow:0 6px 0 var(--ink);cursor:pointer;
+  transition:transform .08s,box-shadow .08s;
+}
+.btn:hover{transform:translateY(-2px);box-shadow:0 8px 0 var(--ink)}
+.btn:active{transform:translateY(5px);box-shadow:0 1px 0 var(--ink)}
+.btn.sub{background:var(--paper);color:var(--ink);font-size:.95rem;padding:10px 16px}
+.btn.teal{background:var(--teal)}
+.dot{font-family:var(--f-dot)}
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:16px}
+.homebtn{background:none;border:0;font-family:var(--f-display);font-size:1rem;cursor:pointer;padding:4px 0}
+.homebtn span{color:var(--pink)}
+.chip{display:inline-block;font-family:var(--f-dot);font-size:.8rem;background:var(--ink);color:var(--sun);border-radius:8px;padding:2px 10px}
+
+/* ---------- machine ---------- */
+.machine{width:min(270px,78%);margin:0 auto;position:relative}
+.globe{
+  aspect-ratio:1;border-radius:50%;border:4px solid var(--ink);position:relative;overflow:hidden;
+  background:radial-gradient(circle at 28% 24%,rgba(255,255,255,.95) 0 9%,transparent 10%),var(--glass);
+  box-shadow:inset -16px -16px 0 rgba(42,31,61,.08);
+}
+.globe .mini{position:absolute;width:31%;animation:bob 3s ease-in-out infinite}
+.globe .mini svg{width:100%;height:auto;display:block}
+.mbody{
+  position:relative;z-index:1;margin-top:-22px;background:var(--pink);border:4px solid var(--ink);
+  border-radius:16px 16px 26px 26px;padding:26px 18px 16px;display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;
+}
+.plate{background:var(--paper);border:3px solid var(--ink);border-radius:10px;padding:4px 10px;font-family:var(--f-dot);font-size:.82rem;line-height:1.35;text-align:center}
+.knob{width:62px;height:62px;border-radius:50%;background:var(--paper);border:4px solid var(--ink);position:relative}
+.knob::after{content:"";position:absolute;left:50%;top:50%;width:44px;height:12px;margin:-6px 0 0 -22px;background:var(--ink);border-radius:6px}
+.chute{grid-column:1 / -1;height:34px;background:var(--ink);border-radius:12px;position:relative;overflow:visible}
+.spin .knob{animation:turn .9s ease-in-out 2}
+.cap{position:absolute;left:50%;top:-6px;width:44px;height:44px;margin-left:-22px;border-radius:50%;border:3px solid var(--ink);overflow:hidden;opacity:0}
+.cap::before,.cap::after{content:"";position:absolute;left:0;right:0;height:50%}
+.cap::before{top:0;background:var(--pink)}
+.cap::after{bottom:0;background:#fff;border-top:3px solid var(--ink)}
+.spin .cap{animation:drop .7s cubic-bezier(.3,1.6,.5,1) 1.6s forwards}
+@keyframes turn{to{transform:rotate(360deg)}}
+@keyframes drop{0%{opacity:1;transform:translateY(-30px) scale(.6)}100%{opacity:1;transform:translateY(24px) scale(1)}}
+@keyframes bob{50%{transform:translateY(-5px) rotate(-3deg)}}
+
+/* ---------- start ---------- */
+.hero{text-align:center;display:grid;gap:18px;justify-items:center}
+.logo{font-family:var(--f-display);font-weight:400;font-size:clamp(2.3rem,10vw,3.5rem);line-height:1.05;margin:6px 0 0;text-wrap:balance;
+  text-shadow:4px 4px 0 var(--paper),-2px -2px 0 var(--paper),2px -2px 0 var(--paper),-2px 2px 0 var(--paper)}
+.logo small{display:block;font-family:var(--f-dot);font-size:.95rem;letter-spacing:.2em;text-shadow:none;margin-bottom:6px}
+.lead{margin:0;max-width:30em;font-weight:700}
+.axes-legend{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;width:100%;margin:0;padding:14px;list-style:none;font-size:.85rem;text-align:left}
+.axes-legend li{white-space:nowrap;font-size:.8rem;display:flex;gap:6px;align-items:baseline;min-width:0}
+.axes-legend b{font-family:var(--f-dot);font-weight:400;background:var(--ink);color:var(--sun);border-radius:5px;padding:0 5px;flex:none}
+.linkbtn{background:none;border:0;cursor:pointer;font-weight:700;text-decoration:underline;text-underline-offset:4px}
+
+/* ---------- quiz ---------- */
+.hud{display:flex;justify-content:space-between;align-items:center;gap:10px;font-family:var(--f-dot);margin-bottom:8px}
+.hud .n{font-size:1.25rem}
+.segs{display:grid;grid-template-columns:repeat(12,1fr);gap:4px;margin-bottom:18px}
+.seg{height:12px;border:2px solid var(--ink);border-radius:4px;background:var(--paper);transition:background .2s}
+.seg.on{background:var(--teal)}
+.seg.cur{background:var(--pink)}
+.qcard{padding:22px 20px 24px;display:grid;gap:16px}
+.qtext{font-size:1.3rem;font-weight:900;line-height:1.5;margin:0;text-wrap:balance}
+.choices{display:grid;gap:14px}
+.choice{
+  display:flex;gap:14px;align-items:center;width:100%;text-align:left;background:#fff;border:3px solid var(--ink);
+  border-radius:18px;padding:14px 16px;box-shadow:0 6px 0 var(--ink);font-weight:700;font-size:1.02rem;line-height:1.5;cursor:pointer;
+  transition:transform .08s,box-shadow .08s,background .15s;
+}
+.choice:hover{transform:translateY(-2px);box-shadow:0 8px 0 var(--ink)}
+.choice:active,.choice.picked{transform:translateY(4px);box-shadow:0 2px 0 var(--ink);background:#FFF1A8}
+.choice .key{flex:none;width:46px;height:46px;border-radius:12px;border:3px solid var(--ink);display:grid;place-items:center;font-family:var(--f-display);font-size:1.3rem;color:#fff}
+.choice[data-c="a"] .key{background:var(--teal)}
+.choice[data-c="b"] .key{background:var(--pink)}
+.choice span:last-child{min-width:0}
+.qfoot{display:flex;justify-content:space-between;align-items:center;margin-top:18px;gap:10px;font-size:.85rem;color:var(--mute)}
+.qfoot .btn.sub:disabled{opacity:.4;cursor:default;transform:none}
+
+/* ---------- gacha ---------- */
+.gacha{display:grid;gap:22px;justify-items:center;text-align:center;padding-top:20px}
+.blink{font-family:var(--f-dot);font-size:1.4rem;animation:blink .5s steps(2) infinite}
+@keyframes blink{50%{opacity:.25}}
+
+/* ---------- result ---------- */
+.getline{text-align:center;margin-bottom:14px}
+.getline .big{font-family:var(--f-dot);font-size:1rem;letter-spacing:.15em}
+.rcard{overflow:hidden;animation:pop .55s cubic-bezier(.3,1.5,.5,1)}
+@keyframes pop{0%{transform:scale(.6) rotate(-4deg);opacity:0}100%{transform:none;opacity:1}}
+.rhead{background:var(--mc);border-bottom:3px solid var(--ink);padding:16px 16px 6px;display:grid;justify-items:center;position:relative;
+  background-image:radial-gradient(rgba(255,255,255,.45) 2px,transparent 2.2px);background-size:16px 16px}
+.rhead svg{width:min(230px,70%);height:auto;display:block;animation:bob 3s ease-in-out infinite}
+.codes{display:flex;gap:6px;position:absolute;top:12px;left:12px}
+.codes b{font-family:var(--f-dot);font-weight:400;background:var(--paper);border:2px solid var(--ink);border-radius:6px;width:26px;text-align:center;line-height:1.5}
+.rbody{padding:18px 20px 22px;display:grid;gap:16px}
+.rtitle{text-align:center}
+.rtitle .t{font-weight:900;font-size:.95rem;color:var(--mute)}
+.rtitle h2{font-family:var(--f-display);font-weight:400;font-size:clamp(2rem,9vw,2.6rem);line-height:1.15;margin:2px 0 0}
+.rtitle .sp{font-family:var(--f-dot);font-size:.8rem}
+.desc{margin:0}
+.sect h3{font-family:var(--f-dot);font-weight:400;font-size:.9rem;margin:0 0 6px;letter-spacing:.08em}
+.stats{display:grid;gap:8px}
+.axis{display:grid;grid-template-columns:6.2em minmax(0,1fr) 6.2em;white-space:nowrap;gap:8px;align-items:center;font-size:.82rem}
+.axis .l{text-align:right}
+.axis .win{font-weight:900}
+.meter{height:14px;border:2px solid var(--ink);border-radius:99px;background:#FFD0DE;position:relative;overflow:hidden}
+.meter i{position:absolute;inset:0 auto 0 0;background:var(--teal);border-right:2px solid var(--ink)}
+.meter i[style*="width:0%"]{border-right:0}
+.tags{display:flex;flex-wrap:wrap;gap:6px}
+.tags span{background:#fff;border:2px solid var(--ink);border-radius:99px;padding:1px 12px;font-weight:700;font-size:.88rem}
+.weak{margin:0;font-size:.92rem}
+.partner{display:flex;gap:12px;align-items:center;background:#fff;border:2px solid var(--ink);border-radius:16px;padding:8px 12px;cursor:pointer;width:100%;text-align:left}
+.partner svg{width:62px;height:auto;flex:none}
+.partner div{min-width:0;font-size:.88rem;line-height:1.5}
+.partner strong{font-size:1rem}
+.ractions{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-top:22px}
+.copyfall{width:100%;margin-top:10px;font:inherit;padding:8px;border:2px solid var(--ink);border-radius:10px;background:#fff}
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--sun);font-family:var(--f-dot);padding:8px 16px;border-radius:10px;z-index:20}
+
+/* ---------- dex ---------- */
+.dexhead{display:flex;justify-content:space-between;align-items:flex-end;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.dexhead h2{font-family:var(--f-display);font-weight:400;font-size:1.7rem;margin:0;line-height:1.2}
+.dexcount{font-family:var(--f-dot);font-size:1.1rem}
+.dex{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.dexitem{background:var(--paper);border:3px solid var(--ink);border-radius:14px;padding:6px 4px 8px;display:grid;justify-items:center;gap:2px;cursor:pointer;box-shadow:0 4px 0 var(--ink)}
+.dexitem svg{width:100%;height:auto}
+.dexitem .nm{font-weight:900;font-size:.72rem;line-height:1.3;text-align:center}
+.dexitem .cd{font-family:var(--f-dot);font-size:.68rem;color:var(--mute)}
+.dexitem.locked{cursor:default;background:#F3EAD3}
+.dexitem.locked svg{filter:brightness(0);opacity:.2}
+.spoil{display:flex;gap:8px;align-items:center;font-size:.85rem;font-weight:700;cursor:pointer}
+.spoil input{width:18px;height:18px;accent-color:var(--pink)}
+
+/* confetti */
+.confetti{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:10}
+.confetti i{position:absolute;top:-20px;width:10px;height:14px;border:2px solid var(--ink);border-radius:3px;animation:fall 1.8s ease-in forwards}
+@keyframes fall{to{transform:translateY(105vh) rotate(540deg)}}
+
+@media (max-width:420px){
+  .qtext{font-size:1.18rem}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition:none!important}
+  .spin .cap{animation-delay:0s!important}
+}
+</style>
+<style>*,*::before,*::after{box-sizing:border-box}body{margin:0}</style>
+</head>
+<body>
+
+<main class="wrap">
+
+  <!-- START -->
+  <section id="s-start" class="hero">
+    <h1 class="logo"><small>全16しゅるい</small>ココロモン<br>診断</h1>
+    <div class="machine" id="m-start"></div>
+    <p class="lead">12のしつもんに答えてガチャをまわそう。<br>あなたの心の中にすんでいる相棒モンスター「ココロモン」が出てくるよ。</p>
+    <button class="btn" id="startBtn" type="button">ガチャをまわす ▶ START</button>
+    <ul class="axes-legend panel" aria-label="4つのものさし">
+      <li><b>L</b>ワイワイ<span>／</span><b>Q</b>じっくり</li>
+      <li><b>R</b>コツコツ<span>／</span><b>D</b>ひらめき</li>
+      <li><b>H</b>ロジック<span>／</span><b>T</b>ハート</li>
+      <li><b>P</b>きっちり<span>／</span><b>F</b>きまぐれ</li>
+    </ul>
+    <button class="linkbtn" id="dexBtn" type="button">ココロモン図鑑をひらく（<span id="dexN">0</span>/16）</button>
+  </section>
+
+  <!-- QUIZ -->
+  <section id="s-quiz" hidden>
+    <div class="topbar"><button class="homebtn" type="button" data-home>ココロ<span>モン</span>診断</button><span class="chip" id="scene">STAGE</span></div>
+    <div class="hud"><span class="n" id="qn">Q01 / 12</span><span>直感でえらんでね</span></div>
+    <div class="segs" id="segs"></div>
+    <div class="qcard panel">
+      <p class="qtext" id="qtext"></p>
+      <div class="choices">
+        <button class="choice" type="button" data-c="a"><span class="key">A</span><span id="qa"></span></button>
+        <button class="choice" type="button" data-c="b"><span class="key">B</span><span id="qb"></span></button>
+      </div>
+    </div>
+    <div class="qfoot"><button class="btn sub" type="button" id="backBtn">◀ もどる</button><span>答えはあとから変えられるよ</span></div>
+  </section>
+
+  <!-- GACHA -->
+  <section id="s-gacha" class="gacha" hidden>
+    <div class="machine" id="m-gacha"></div>
+    <div class="blink">ガチャ ガチャ…</div>
+  </section>
+
+  <!-- RESULT -->
+  <section id="s-result" hidden>
+    <div class="topbar"><button class="homebtn" type="button" data-home>ココロ<span>モン</span>診断</button><span class="chip" id="rchip">RESULT</span></div>
+    <div class="getline" id="getline"></div>
+    <article class="rcard panel" id="rcard"></article>
+    <div class="ractions" id="ractions"></div>
+    <div id="copyArea"></div>
+  </section>
+
+  <!-- DEX -->
+  <section id="s-dex" hidden>
+    <div class="topbar"><button class="homebtn" type="button" data-home>ココロ<span>モン</span>診断</button><span class="chip">ZUKAN</span></div>
+    <div class="dexhead">
+      <div><h2>ココロモン図鑑</h2><span class="dexcount" id="dexCount"></span></div>
+      <label class="spoil"><input type="checkbox" id="spoil">ネタバレで全部みる</label>
+    </div>
+    <div class="dex" id="dex"></div>
+    <div class="ractions"><button class="btn" type="button" data-restart>診断する</button></div>
+  </section>
+
+</main>
+<div class="confetti" id="confetti" aria-hidden="true"></div>
+
+<script>
+const INK = '#2A1F3D';
+const S = `stroke="${INK}" stroke-width="5" stroke-linejoin="round" stroke-linecap="round"`;
+
+const AX = [
+  {a:'L', b:'Q', an:'ワイワイ', bn:'じっくり'},
+  {a:'R', b:'D', an:'コツコツ', bn:'ひらめき'},
+  {a:'H', b:'T', an:'ロジック', bn:'ハート'},
+  {a:'P', b:'F', an:'きっちり', bn:'きまぐれ'},
+];
+
+const Q = [
+  {ax:0, sc:'はじまりの酒場', q:'冒険の仲間をさがしに酒場へ。あなたはどうする？', a:'かたっぱしから話しかけて、仲間をどんどん増やす', b:'気になる1人をしばらく観察してから声をかける'},
+  {ax:1, sc:'宝の地図', q:'古びた宝の地図を手に入れた！まず目がいくのは？', a:'道のりの距離と、必要な持ち物', b:'お宝の正体は何だろう？という想像'},
+  {ax:2, sc:'野営地', q:'仲間どうしがケンカをはじめた。あなたは？', a:'どっちの言い分がスジが通っているか考える', b:'まず2人の気持ちをそれぞれ聞いてみる'},
+  {ax:3, sc:'出発前夜', q:'明日はいよいよ出発。旅の準備は？', a:'持ち物リストを作って、前の日に準備完了', b:'当日の朝、気分で詰めこむ'},
+  {ax:0, sc:'ダンジョン帰り', q:'長いダンジョンから帰ってきた。どう回復する？', a:'みんなで打ち上げパーティ！', b:'宿でひとり、ゆっくり休む'},
+  {ax:1, sc:'武器屋', q:'新しい武器を手に入れた。さっそく…', a:'説明書どおり、基本の使い方から練習', b:'まだ誰も知らない使い方をためす'},
+  {ax:2, sc:'作戦会議', q:'仲間の作戦に大きな穴を見つけた。どう伝える？', a:'ハッキリ指摘する。そのほうが仲間のため', b:'傷つけない言い方をじっくり考える'},
+  {ax:3, sc:'分かれ道', q:'地図にない、にぎやかな村を見つけた！', a:'予定どおり、まっすぐ目的地へ進む', b:'せっかくだし寄り道しちゃう'},
+  {ax:0, sc:'作戦タイム', q:'考えごとがまとまるのは、どんなとき？', a:'誰かと話しながら', b:'ひとりで頭の中を整理しているとき'},
+  {ax:1, sc:'長老の家', q:'村の長老の長い話。印象に残るのは？', a:'具体的なできごとや数字', b:'話のウラにある意味や教訓'},
+  {ax:2, sc:'宝箱の前', q:'ついにお宝ゲット！分け前はどうする？', a:'活躍におうじて、公平に分ける', b:'みんなが笑顔になる分け方をさがす'},
+  {ax:3, sc:'最後のクエスト', q:'締め切りつきの大仕事をたのまれた。', a:'早めに片づけて、あとはのんびりしたい', b:'ギリギリのほうが燃えるタイプ'},
+];
+
+const MON = {
+  LRHP:{name:'ガンテツ',title:'岩の総大将',sp:'ゴーレム族',c1:'#8E9CC4',c2:'#D6DDF2',ear:'horn',eye:'H',mouth:'flat',item:'crown',
+    desc:'決めたことは最後までやりぬく、たよれるリーダー。段取りを組んで仲間をぐいぐい引っぱり、ピンチのときほど声が大きくなる。',
+    good:['段取りづくり','決断が早い','責任感'],bad:'計画外のハプニングに、ちょっとイラッとしがち。'},
+  LRHF:{name:'ハヤテ',title:'つむじ風の切り込み隊長',sp:'イタチ族',c1:'#FF8A3D',c2:'#FFD2B0',ear:'pointy',eye:'H',mouth:'open',item:'goggles',
+    desc:'考えるより先に体が動く、現場のエース。トラブルが起きると目がキラッと光り、その場の機転でさっと解決してしまう。',
+    good:['瞬発力','トラブル対応','度胸'],bad:'長い会議になると、そわそわして落ちつかない。'},
+  LRTP:{name:'モチコ',title:'おせっかい宿屋の女将',sp:'ウサギ族',c1:'#FF9EC0',c2:'#FFE0EB',ear:'bunny',eye:'T',mouth:'smile',item:'bow',
+    desc:'みんなのお腹と気分をいつも気にかける世話焼きさん。パーティの空気を読んで、困っている仲間にまっさきに声をかける。',
+    good:['気くばり','場づくり','約束を守る'],bad:'頼まれると断れず、ひとりで抱えこみがち。'},
+  LRTF:{name:'ポップン',title:'お祭りさわぎの花火師',sp:'ポップ族',c1:'#FFD23F',c2:'#FFF1B8',ear:'round',eye:'star',mouth:'open',item:'partyhat',
+    desc:'その場にいるだけでパッと明るくなるムードメーカー。「今この瞬間」をいちばん楽しむ天才で、退屈そうな顔を見のがさない。',
+    good:['ノリのよさ','盛りあげ力','五感のセンス'],bad:'楽しいことに夢中で、宿題を忘れがち。'},
+  LDHP:{name:'ソラマメ',title:'天空の軍師',sp:'ドラゴン族',c1:'#4CC38A',c2:'#C4F0D8',ear:'fin',eye:'H',mouth:'smile',item:'flag',
+    desc:'大きな夢を、ちゃんと実現までの地図に落としこめる司令塔。目標をかかげると、仲間の力を組み合わせて最短ルートを描きだす。',
+    good:['ビジョン','戦略','統率力'],bad:'ペースのゆっくりな仲間を置いていきそうになる。'},
+  LDHF:{name:'ギアゴロ',title:'へりくつ発明家',sp:'メカネコ族',c1:'#3EC6D6',c2:'#C2F1F6',ear:'antenna',eye:'H',mouth:'cat',item:'glasses',
+    desc:'「それ、もっとおもしろくできない？」が口ぐせの発明家。議論が大好きで、反対意見すらアイデアの燃料にしてしまう。',
+    good:['発想力','議論','ピンチの抜け道さがし'],bad:'作りかけの発明品が、山のようにたまっている。'},
+  LDTP:{name:'ヒダマリ',title:'陽だまりの勇者',sp:'シシ族',c1:'#FFB23F',c2:'#FFE3B5',ear:'round',eye:'T',mouth:'smile',item:'sunrays',
+    desc:'仲間ひとりひとりのいいところを見つけて、背中を押してくれる太陽みたいな存在。みんなで目指すゴールがあると本気を出す。',
+    good:['はげまし上手','まとめ役','人を育てる'],bad:'みんなのためにがんばりすぎて、自分の休憩を忘れる。'},
+  LDTF:{name:'キララ',title:'流れ星の旅芸人',sp:'キツネ族',c1:'#C77DFF',c2:'#EBD2FF',ear:'pointy',eye:'star',mouth:'open',item:'stars',
+    desc:'好奇心のままに世界をかけまわる自由な旅人。出会った人の可能性に気づくのが得意で、話すと相手までワクワクしてくる。',
+    good:['好奇心','ひらめき','人をワクワクさせる'],bad:'新しい冒険を見つけると、前の冒険を置いてきがち。'},
+  QRHP:{name:'カッチリ',title:'城門の番人',sp:'カメ族',c1:'#7FA36B',c2:'#D4E6C6',ear:'none',eye:'H',mouth:'flat',item:'cap',
+    desc:'ルールと約束を大切にする、パーティの屋台骨。目立つことは少なくても、いつも同じ場所で確実に仕事をこなしている。',
+    good:['コツコツ継続','正確さ','信頼'],bad:'前例のないやり方には、慎重になりすぎる。'},
+  QRHF:{name:'ネジマキ',title:'路地裏の職人',sp:'リス族',c1:'#C98A5A',c2:'#F0D6BF',ear:'round',eye:'H',mouth:'cat',item:'wrench',
+    desc:'口数は少ないけれど、手を動かせば誰よりも器用な職人。こわれた道具をだまってなおし、しくみを分解して理解するのが好き。',
+    good:['手先の器用さ','冷静さ','実践力'],bad:'気持ちを言葉にするのが、少し苦手。'},
+  QRTP:{name:'フワリ',title:'見守りの羊飼い',sp:'ヒツジ族',c1:'#EFE3C8',c2:'#FFFFFF',ear:'round',eye:'sleepy',mouth:'smile',item:'bell',
+    desc:'仲間の小さな変化にいちばんに気づく、やさしい見守り役。派手さはないけれど、そのていねいさにみんなが支えられている。',
+    good:['思いやり','ていねいさ','記憶力'],bad:'自分の意見を、つい後回しにしがち。'},
+  QRTF:{name:'コケモモ',title:'森の絵かき',sp:'カタツムリ族',c1:'#9BD36A',c2:'#DDF2C8',ear:'antenna',eye:'T',mouth:'smile',item:'beret',
+    desc:'自分のペースで、好きなものを好きなだけ味わうアーティスト。色や音や手ざわりに敏感で、なにげない景色から宝物を見つける。',
+    good:['感性','マイペース','やさしさ'],bad:'計画を立てたとたんに、やる気がしぼむ。'},
+  QDHP:{name:'ヨルフクロウ',title:'星見の塔の賢者',sp:'フクロウ族',c1:'#5B6CE0',c2:'#C9CFFA',ear:'pointy',eye:'H',mouth:'flat',item:'wizard',
+    desc:'何手も先を読んで、静かに準備を進める戦略家。考えぬいた計画には自信があり、ここぞというときに切り札を出す。',
+    good:['先読み','独学力','集中力'],bad:'説明をはぶいて、仲間を置いてけぼりにしがち。'},
+  QDHF:{name:'ハテナ',title:'迷宮の研究者',sp:'スライム族',c1:'#5FD3B0',c2:'#C8F4E6',ear:'none',eye:'H',mouth:'cat',item:'monocle',
+    desc:'「なんで？」を追いかけて、気づけば迷宮の奥まで来ている探究者。理屈の通らない話を見つけると、とことん調べたくなる。',
+    good:['分析力','探究心','ユニークな視点'],bad:'考えごとに夢中で、返事を忘れる。'},
+  QDTP:{name:'ミオ',title:'月夜の予言者',sp:'ネコ族',c1:'#A89BFF',c2:'#E1DBFF',ear:'pointy',eye:'sleepy',mouth:'cat',item:'moon',
+    desc:'物静かだけれど、心の奥に強い理想をいだく予言者。人の本音を見ぬく勘がするどく、そっと未来へのヒントをくれる。',
+    good:['洞察力','信念','聞き上手'],bad:'理想が高すぎて、ひとりで疲れてしまうことも。'},
+  QDTF:{name:'ユメクジラ',title:'空とぶ夢見の語り部',sp:'クジラ族',c1:'#6EC3FF',c2:'#CDEBFF',ear:'tail',eye:'sleepy',mouth:'smile',item:'nightcap',
+    desc:'頭の中にいくつもの物語の世界を持っている夢想家。自分の「好き」を大事にしていて、誰かの「好き」もまるごと受けとめる。',
+    good:['想像力','共感力','自分らしさ'],bad:'現実の締め切りが、ちょっとこわい。'},
+};
+const ORDER = Object.keys(MON);
+const partnerOf = c => (c[0]==='L'?'Q':'L') + c[1] + c[2] + (c[3]==='P'?'F':'P');
+
+/* ---------- character drawing ---------- */
+function star(cx,cy,r,fill,stroke=true){
+  let d='';
+  for(let i=0;i<10;i++){const a=-Math.PI/2+i*Math.PI/5, rr=i%2?r*.45:r; d+=(i?'L':'M')+(cx+rr*Math.cos(a)).toFixed(1)+' '+(cy+rr*Math.sin(a)).toFixed(1);}
+  return `<path d="${d}Z" fill="${fill}" ${stroke?`stroke="${INK}" stroke-width="3" stroke-linejoin="round"`:''}/>`;
+}
+function monSVG(code){
+  const m = MON[code], R = code[0]==='L';
+  const top = R?52:44, ey = R?114:110, ex = R?26:22, earX = R?46:36, earY = R?72:70;
+  const body = R ? 'M100 52 C150 52 172 90 172 128 C172 165 140 182 100 182 C60 182 28 165 28 128 C28 90 50 52 100 52Z'
+                 : 'M100 44 C140 44 156 80 156 125 C156 165 134 182 100 182 C66 182 44 165 44 125 C44 80 60 44 100 44Z';
+  let back = '', face = '', front = '';
+
+  if(m.item==='sunrays'){
+    for(let i=0;i<12;i++){
+      const a=i*Math.PI/6, p=(r,da)=>`${(100+r*Math.cos(a+da)).toFixed(1)} ${(118+r*Math.sin(a+da)).toFixed(1)}`;
+      back+=`<path d="M${p(70,-.16)} L${p(100,0)} L${p(70,.16)}Z" fill="#FF8A3D" stroke="${INK}" stroke-width="3" stroke-linejoin="round"/>`;
+    }
+  }
+  // ears / top features
+  const pair = fn => [-1,1].map(s=>fn(s,100+s*earX,earY)).join('');
+  if(m.ear==='round') back+=pair((s,x,y)=>`<circle cx="${x}" cy="${y-8}" r="18" fill="${m.c1}" ${S}/><circle cx="${x}" cy="${y-8}" r="8" fill="${m.c2}"/>`);
+  if(m.ear==='pointy') back+=pair((s,x,y)=>`<path d="M${x-16} ${y+10} L${x+s*6} ${y-34} L${x+16} ${y+6}Z" fill="${m.c1}" ${S}/><path d="M${x-7} ${y+4} L${x+s*4} ${y-20} L${x+8} ${y+2}Z" fill="${m.c2}"/>`);
+  if(m.ear==='horn') back+=pair((s,x,y)=>`<path d="M${x-9} ${y+8} Q${x+s*2} ${y-24} ${x+s*22} ${y-36} Q${x+s*14} ${y-10} ${x+10} ${y+10}Z" fill="#F4EBD0" ${S}/>`);
+  if(m.ear==='bunny') back+=pair((s,x,y)=>`<g transform="rotate(${s*14} ${x} ${y})"><ellipse cx="${x}" cy="${y-30}" rx="12" ry="32" fill="${m.c1}" ${S}/><ellipse cx="${x}" cy="${y-28}" rx="5" ry="20" fill="${m.c2}"/></g>`);
+  if(m.ear==='antenna') back+=[-1,1].map(s=>`<path d="M${100+s*14} ${top+10} Q${100+s*18} ${top-12} ${100+s*28} ${top-26}" fill="none" ${S}/><circle cx="${100+s*28}" cy="${top-28}" r="8" fill="${code==='LDHF'?'#FF5A8A':m.c2}" ${S}/>`).join('');
+  if(m.ear==='fin') back+=`<path d="M78 ${top+8} L86 ${top-18} L96 ${top+2} L104 ${top-22} L112 ${top+2} L122 ${top-16} L124 ${top+10}Z" fill="${m.c2}" ${S}/>`;
+  if(m.ear==='tail') back+=`<path d="M146 150 Q176 140 184 104 Q172 114 160 108 Q168 128 146 136Z" fill="${m.c1}" ${S}/>`;
+
+  // eyes
+  const L=100-ex, Rx=100+ex;
+  const blush = `<ellipse cx="${100-ex-18}" cy="${ey+16}" rx="10" ry="6" fill="#FF7FA6" opacity=".65"/><ellipse cx="${100+ex+18}" cy="${ey+16}" rx="10" ry="6" fill="#FF7FA6" opacity=".65"/>`;
+  if(m.eye==='H'){
+    face+=[L,Rx].map(x=>`<ellipse cx="${x}" cy="${ey}" rx="6.5" ry="9.5" fill="${INK}"/><circle cx="${x+2}" cy="${ey-4}" r="2.4" fill="#fff"/>`).join('');
+    face+=`<path d="M${L-12} ${ey-21} L${L+8} ${ey-15}" stroke="${INK}" stroke-width="4.5" stroke-linecap="round"/><path d="M${Rx+12} ${ey-21} L${Rx-8} ${ey-15}" stroke="${INK}" stroke-width="4.5" stroke-linecap="round"/>`;
+  } else if(m.eye==='T'){
+    face+=[L,Rx].map(x=>`<circle cx="${x}" cy="${ey}" r="11" fill="${INK}"/><circle cx="${x+4}" cy="${ey-4}" r="4" fill="#fff"/><circle cx="${x-3}" cy="${ey+4}" r="2" fill="#fff"/>`).join('')+blush;
+  } else if(m.eye==='star'){
+    face+=[L,Rx].map(x=>star(x,ey,13,INK,false)+`<circle cx="${x+3}" cy="${ey-3}" r="2.4" fill="#fff"/>`).join('')+blush;
+  } else {
+    face+=[L,Rx].map(x=>`<path d="M${x-10} ${ey-1} Q${x} ${ey+9} ${x+10} ${ey-1}" fill="none" stroke="${INK}" stroke-width="4.5" stroke-linecap="round"/>`).join('')+blush;
+  }
+  // mouth
+  const my = ey+22;
+  const ms = `fill="none" stroke="${INK}" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"`;
+  if(m.mouth==='smile') face+=`<path d="M91 ${my} Q100 ${my+10} 109 ${my}" ${ms}/>`;
+  if(m.mouth==='flat') face+=`<path d="M92 ${my+3} L108 ${my+3}" ${ms}/>`;
+  if(m.mouth==='cat') face+=`<path d="M87 ${my} Q93.5 ${my+8} 100 ${my} Q106.5 ${my+8} 113 ${my}" ${ms}/>`;
+  if(m.mouth==='open') face+=`<path d="M88 ${my-2} Q100 ${my+20} 112 ${my-2}Z" fill="#E0436B" stroke="${INK}" stroke-width="4" stroke-linejoin="round"/>`;
+
+  // items
+  const it = m.item;
+  if(it==='crown') front+=`<path d="M74 ${top+6} L70 ${top-26} L87 ${top-10} L100 ${top-32} L113 ${top-10} L130 ${top-26} L126 ${top+6}Z" fill="#FFC93C" ${S}/><circle cx="100" cy="${top-4}" r="5" fill="#FF5A8A"/>`;
+  if(it==='goggles') front+=`<path d="M36 ${ey-28} Q100 ${ey-46} 164 ${ey-28}" fill="none" stroke="${INK}" stroke-width="8" stroke-linecap="round"/>`+[L,Rx].map(x=>`<circle cx="${x}" cy="${ey-34}" r="14" fill="#9FE8FF" ${S}/><circle cx="${x+4}" cy="${ey-38}" r="4" fill="#fff"/>`).join('');
+  if(it==='bow') front+=`<path d="M128 ${top+12} L106 ${top-2} L108 ${top+28}Z" fill="#FF5A8A" ${S}/><path d="M128 ${top+12} L150 ${top-2} L148 ${top+28}Z" fill="#FF5A8A" ${S}/><circle cx="128" cy="${top+12}" r="7" fill="#FFC93C" ${S}/>`;
+  if(it==='partyhat') front+=`<path d="M80 ${top+10} L122 ${top+10} L106 ${top-40}Z" fill="#FF5A8A" ${S}/><path d="M86 ${top-4} L118 ${top-4} M94 ${top-20} L113 ${top-20}" stroke="#fff" stroke-width="5"/><circle cx="106" cy="${top-44}" r="8" fill="#12A897" ${S}/>`;
+  if(it==='flag') front+=`<path d="M178 58 L178 188" stroke="${INK}" stroke-width="5" stroke-linecap="round"/><path d="M180 60 L208 72 L180 86Z" fill="#FF5A8A" ${S}/><circle cx="168" cy="146" r="12" fill="${m.c1}" ${S}/>`;
+  if(it==='glasses') front+=[L,Rx].map(x=>`<circle cx="${x}" cy="${ey}" r="16" fill="rgba(255,255,255,.3)" stroke="${INK}" stroke-width="4"/>`).join('')+`<path d="M${L+16} ${ey} L${Rx-16} ${ey}" stroke="${INK}" stroke-width="4"/>`;
+  if(it==='stars') front+=star(30,60,12,'#FFE45C')+star(172,42,9,'#FFE45C')+star(182,100,6,'#FFE45C');
+  if(it==='cap') front+=`<path d="M58 ${top+26} Q60 ${top-12} 100 ${top-12} Q140 ${top-12} 142 ${top+26}Z" fill="#3E63DD" ${S}/><rect x="48" y="${top+22}" width="104" height="12" rx="6" fill="#2C49B8" ${S}/>`+star(100,top+6,9,'#FFC93C');
+  if(it==='wrench') front+=`<g transform="rotate(30 162 140)"><rect x="155" y="112" width="14" height="60" rx="6" fill="#C9D2E0" ${S}/><path d="M146 98 A17 17 0 1 0 178 98 L170 98 L170 108 L154 108 L154 98Z" fill="#C9D2E0" ${S}/></g><circle cx="150" cy="150" r="11" fill="${m.c1}" ${S}/>`;
+  if(it==='bell') front+=`<path d="M54 ${ey+38} Q100 ${ey+58} 146 ${ey+38}" fill="none" stroke="#FF5A8A" stroke-width="9" stroke-linecap="round"/><circle cx="100" cy="${ey+54}" r="11" fill="#FFC93C" stroke="${INK}" stroke-width="4"/><path d="M100 ${ey+56} L100 ${ey+64}" stroke="${INK}" stroke-width="3"/>`;
+  if(it==='beret') front+=`<ellipse cx="94" cy="${top+6}" rx="42" ry="14" fill="#E0436B" ${S} transform="rotate(-10 94 ${top+6})"/><circle cx="98" cy="${top-9}" r="5" fill="${INK}"/>`;
+  if(it==='wizard') front+=`<path d="M68 ${top+16} L132 ${top+16} L118 ${top-44}Z" fill="#7A3CFF" ${S}/><ellipse cx="100" cy="${top+16}" rx="54" ry="10" fill="#7A3CFF" ${S}/>`+star(112,top-8,8,'#FFE45C');
+  if(it==='monocle') front+=`<circle cx="${Rx}" cy="${ey}" r="16" fill="rgba(255,255,255,.3)" stroke="#E0A500" stroke-width="4.5"/><path d="M${Rx+14} ${ey+8} Q${Rx+30} ${ey+30} ${Rx+10} ${ey+48}" fill="none" stroke="#E0A500" stroke-width="2.5"/>`;
+  if(it==='moon') front+=`<path d="M166 18 A22 22 0 1 0 188 50 A17 17 0 1 1 166 18Z" fill="#FFE45C" stroke="${INK}" stroke-width="4" stroke-linejoin="round"/>`+star(32,52,7,'#FFE45C');
+  if(it==='nightcap') front+=`<path d="M60 ${top+22} Q62 ${top-22} 110 ${top-20} Q156 ${top-16} 172 ${top+30} Q150 ${top+10} 140 ${top+20}Z" fill="#7B6CF6" ${S}/><rect x="54" y="${top+14}" width="92" height="14" rx="7" fill="#fff" ${S}/><circle cx="172" cy="${top+36}" r="10" fill="#fff" ${S}/>`;
+
+  return `<svg viewBox="-10 -18 222 218" role="img" aria-label="${m.name}">
+    <ellipse cx="100" cy="190" rx="62" ry="8" fill="rgba(42,31,61,.18)"/>
+    ${back}<path d="${body}" fill="${m.c1}" ${S}/>
+    <ellipse cx="100" cy="${R?152:150}" rx="${R?46:34}" ry="${R?22:24}" fill="${m.c2}"/>
+    ${face}${front}</svg>`;
+}
+
+/* ---------- machine ---------- */
+const MINIS = [['LRTF',4,10],['QDTF',38,4],['LDHF',66,16],['QRTP',8,44],['LDTP',36,38],['QDHP',64,50],['LRHF',24,66]];
+function machineHTML(){
+  return `<div class="globe">${MINIS.map(([c,x,y],i)=>`<div class="mini" style="left:${x}%;top:${y}%;animation-delay:${-i*.4}s">${monSVG(c)}</div>`).join('')}</div>
+  <div class="mbody"><div class="plate">1回 0コイン<br>ココロ ひとつ</div><div class="knob"></div><div class="chute"><div class="cap"></div></div></div>`;
+}
+document.getElementById('m-start').innerHTML = machineHTML();
+document.getElementById('m-gacha').innerHTML = machineHTML();
+
+/* ---------- state ---------- */
+let st = {screen:'start', idx:0, ans:Array(Q.length).fill(null), result:null, pcts:null};
+let dex = [];
+try{ dex = JSON.parse(localStorage.getItem('kokoromon-dex')||'[]').filter(c=>MON[c]); }catch(e){ dex = []; }
+const saveDex = () => { try{ localStorage.setItem('kokoromon-dex', JSON.stringify(dex)); }catch(e){} };
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const $ = id => document.getElementById(id);
+
+function show(name){
+  st.screen = name;
+  ['start','quiz','gacha','result','dex'].forEach(n=>$('s-'+n).hidden = n!==name);
+  window.scrollTo({top:0});
+  if(name==='start') $('dexN').textContent = dex.length;
+}
+
+/* ---------- quiz ---------- */
+$('segs').innerHTML = Q.map(()=>'<i class="seg"></i>').join('');
+function renderQuiz(){
+  const q = Q[st.idx];
+  $('qn').textContent = `Q${String(st.idx+1).padStart(2,'0')} / ${Q.length}`;
+  $('scene').textContent = 'STAGE: ' + q.sc;
+  $('qtext').textContent = q.q;
+  $('qa').textContent = q.a; $('qb').textContent = q.b;
+  [...$('segs').children].forEach((s,i)=>{ s.className = 'seg' + (i===st.idx?' cur':(st.ans[i]?' on':'')); });
+  document.querySelectorAll('.choice').forEach(b=>b.classList.toggle('picked', st.ans[st.idx]===b.dataset.c));
+  $('backBtn').disabled = st.idx===0;
+}
+let locking = false;
+document.querySelectorAll('.choice').forEach(b=>b.addEventListener('click',()=>{
+  if(locking) return; locking = true;
+  st.ans[st.idx] = b.dataset.c;
+  document.querySelectorAll('.choice').forEach(x=>x.classList.toggle('picked', x===b));
+  setTimeout(()=>{
+    locking = false;
+    if(st.idx < Q.length-1){ st.idx++; renderQuiz(); } else runGacha();
+  }, reduce?60:230);
+}));
+$('backBtn').addEventListener('click',()=>{ if(st.idx>0){ st.idx--; renderQuiz(); } });
+
+function startQuiz(){ st.idx=0; st.ans=Array(Q.length).fill(null); renderQuiz(); show('quiz'); }
+$('startBtn').addEventListener('click', startQuiz);
+document.addEventListener('click', e=>{
+  if(e.target.closest('[data-home]')) show('start');
+  if(e.target.closest('[data-restart]')) startQuiz();
+});
+
+/* ---------- scoring ---------- */
+function score(){
+  const cnt=[0,0,0,0], tot=[0,0,0,0];
+  Q.forEach((q,i)=>{ tot[q.ax]++; if(st.ans[i]==='a') cnt[q.ax]++; });
+  const code = AX.map((a,i)=> cnt[i]*2>tot[i] ? a.a : a.b).join('');
+  return {code, pcts: cnt.map((c,i)=>Math.round(c/tot[i]*100))};
+}
+
+function runGacha(){
+  const r = score(); st.result = r.code; st.pcts = r.pcts;
+  show('gacha');
+  const m = $('m-gacha'); m.classList.remove('spin'); void m.offsetWidth; m.classList.add('spin');
+  setTimeout(()=>showResult(r.code, r.pcts, true), reduce?300:2500);
+}
+
+/* ---------- result ---------- */
+function cardHTML(code, pcts){
+  const m = MON[code], p = partnerOf(code), pm = MON[p];
+  const stats = pcts ? `<div class="sect"><h3>▼ ステータス</h3><div class="stats">${AX.map((a,i)=>{
+      const v=pcts[i], aw=v>50;
+      return `<div class="axis"><span class="l ${aw?'win':''}">${a.a} ${a.an}</span><span class="meter" role="img" aria-label="${a.an} ${v}% / ${a.bn} ${100-v}%"><i style="width:${v}%"></i></span><span class="${aw?'':'win'}">${a.bn} ${a.b}</span></div>`;
+    }).join('')}</div></div>` : '';
+  return `<div class="rhead" style="--mc:${m.c1}">
+      <div class="codes" aria-label="タイプコード ${code}">${[...code].map(c=>`<b>${c}</b>`).join('')}</div>
+      ${monSVG(code)}
+    </div>
+    <div class="rbody">
+      <div class="rtitle"><div class="t">${m.title}</div><h2>${m.name}</h2><div class="sp">${m.sp} ／ ${AX.map((a,i)=>code[i]===a.a?a.an:a.bn).join('・')}</div></div>
+      <p class="desc">${m.desc}</p>
+      ${stats}
+      <div class="sect"><h3>▼ とくいわざ</h3><div class="tags">${m.good.map(g=>`<span>${g}</span>`).join('')}</div></div>
+      <div class="sect"><h3>▼ ちょっと苦手</h3><p class="weak">${m.bad}</p></div>
+      <div class="sect"><h3>▼ 相性バツグンの相棒</h3>
+        <button class="partner" type="button" data-view="${p}">${monSVG(p)}<div><strong>${pm.name}</strong>（${pm.title}）<br>足りないところをおぎない合える、最高のコンビ。</div></button>
+      </div>
+    </div>`;
+}
+
+function showResult(code, pcts, fresh){
+  const m = MON[code];
+  $('rcard').innerHTML = cardHTML(code, pcts);
+  $('copyArea').innerHTML = '';
+  if(fresh){
+    const isNew = !dex.includes(code);
+    if(isNew){ dex.push(code); saveDex(); }
+    $('rchip').textContent = 'RESULT';
+    $('getline').innerHTML = `<div class="big">★ ココロモン ゲット！ ★</div><div>${isNew?'図鑑に新しく登録されたよ':'図鑑に登録ずみのココロモン'}（${dex.length}/16）</div>`;
+    $('ractions').innerHTML = `<button class="btn" type="button" data-restart>もう一回まわす</button><button class="btn sub" type="button" id="copyBtn">結果をコピー</button><button class="btn sub" type="button" data-dex>図鑑をみる</button>`;
+    confetti(m.c1);
+  } else {
+    $('rchip').textContent = 'ZUKAN';
+    $('getline').innerHTML = `<div class="big">No.${String(ORDER.indexOf(code)+1).padStart(2,'0')}</div>`;
+    $('ractions').innerHTML = `<button class="btn sub" type="button" data-dex>◀ 図鑑にもどる</button>${st.result?`<button class="btn sub" type="button" data-mine>自分の結果にもどる</button>`:''}<button class="btn" type="button" data-restart>診断する</button>`;
+  }
+  $('rcard').dataset.code = code;
+  // restart card animation
+  const c=$('rcard'); c.style.animation='none'; void c.offsetWidth; c.style.animation='';
+  show('result');
+}
+
+document.addEventListener('click', e=>{
+  const v = e.target.closest('[data-view]');
+  if(v){
+    const c = v.dataset.view;
+    if(c===st.result && st.pcts) showResult(c, st.pcts, false);
+    else if(dex.includes(c) || $('spoil').checked) showResult(c, null, false);
+    else teaser(c);
+  }
+  if(e.target.closest('[data-dex]')) openDex();
+  if(e.target.closest('[data-mine]') && st.result) showResult(st.result, st.pcts, false);
+  if(e.target.closest('#copyBtn')) copyResult();
+});
+function teaser(c){ toast(`${MON[c].name}はまだ図鑑に未登録！ ガチャで出会おう`); }
+
+function copyResult(){
+  const m = MON[st.result];
+  const text = `ココロモン診断の結果、わたしの相棒は「${m.title} ${m.name}」（${st.result}タイプ）でした！ とくいわざ：${m.good.join('・')}`;
+  const fallback = () => { $('copyArea').innerHTML = `<input class="copyfall" id="copyText" readonly aria-label="結果テキスト">`; const i=$('copyText'); i.value=text; i.focus(); i.select(); toast('テキストを選択したよ。コピーしてね'); };
+  try{ navigator.clipboard.writeText(text).then(()=>toast('コピーしました'), fallback); }catch(e){ fallback(); }
+}
+
+/* ---------- dex ---------- */
+function openDex(){
+  const sp = $('spoil').checked;
+  $('dexCount').textContent = `あつめた数 ${dex.length} / 16`;
+  $('dex').innerHTML = ORDER.map((c,i)=>{
+    const open = dex.includes(c) || sp;
+    return `<button class="dexitem ${open?'':'locked'}" type="button" data-view="${c}" aria-label="${open?MON[c].name:'未発見'}">
+      ${monSVG(c)}<span class="nm">${open?MON[c].name:'？？？'}</span><span class="cd">No.${String(i+1).padStart(2,'0')} ${open?c:'????'}</span></button>`;
+  }).join('');
+  show('dex');
+}
+$('dexBtn').addEventListener('click', openDex);
+$('spoil').addEventListener('change', openDex);
+
+/* ---------- fx ---------- */
+function confetti(main){
+  if(reduce) return;
+  const box = $('confetti'), cols=[main,'#FF5A8A','#12A897','#FFE45C','#fff'];
+  box.innerHTML = Array.from({length:36},(_,i)=>`<i style="left:${Math.random()*100}%;background:${cols[i%5]};animation-delay:${Math.random()*.5}s;animation-duration:${1.4+Math.random()}s"></i>`).join('');
+  setTimeout(()=>box.innerHTML='', 2600);
+}
+let toastT;
+function toast(msg){
+  document.querySelector('.toast')?.remove();
+  const t = document.createElement('div'); t.className='toast'; t.setAttribute('role','status'); t.textContent=msg;
+  document.body.appendChild(t); clearTimeout(toastT); toastT=setTimeout(()=>t.remove(), 2200);
+}
+
+/* ---------- keyboard: A/B keys ---------- */
+document.addEventListener('keydown', e=>{
+  if(st.screen!=='quiz' || e.metaKey || e.ctrlKey) return;
+  const k = e.key.toLowerCase();
+  if(k==='a'||k==='1') document.querySelector('.choice[data-c="a"]').click();
+  if(k==='b'||k==='2') document.querySelector('.choice[data-c="b"]').click();
+});
+
+/* ---------- keep progress across live updates ---------- */
+function boot(data){
+  if(data && data.st){
+    st = data.st;
+    if(st.screen==='quiz') { renderQuiz(); show('quiz'); }
+    else if(st.screen==='result' && st.result) showResult(st.result, st.pcts, false);
+    else if(st.screen==='dex') openDex();
+    else show('start');
+  } else show('start');
+}
+window.claude?.hot?.snapshot?.(()=>({st}));
+window.claude?.hot?.ready ? window.claude.hot.ready(boot) : boot(window.claude?.hot?.data ?? {});
+</script>
+</body>
+</html>
