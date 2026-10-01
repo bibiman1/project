@@ -701,7 +701,13 @@
 
     function drawSnow() {
       ctx.fillStyle = "rgba(255, 255, 255, 0.85)";
-      for (const f of flakes) ctx.fillRect(Math.round(f.x), Math.round(f.y), f.s, f.s);
+      // map.snow が数なら、その回数ずらして重ねる(ドカ雪)
+      const n = map.snow === true ? 1 : map.snow;
+      for (let k = 0; k < n; k++) {
+        const dx = k * 53;
+        const dy = k * 97;
+        for (const f of flakes) ctx.fillRect(Math.round((f.x + dx) % vw), Math.round((f.y + dy) % vh), f.s, f.s);
+      }
     }
 
     function drawToast() {
