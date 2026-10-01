@@ -2221,21 +2221,35 @@
     if (c) c._reset = true;
   };
 
-  // A 浜(入口。湾に突き出た桟橋から上がる。北の道の先が農園)
+  // A 浜(入口。湾に突き出た桟橋から上がる。北の密林の切れ目の道の先が農園)
+  // 「熱帯雨林に一日だけドカ雪が積もった」南極。マップの絵と当たり判定は docs/assets/banana/blockout2.py から
   const B_SHORE_OBJS = [chirinFollower(null)];
   const B_SHORE = {
     tile: T,
-    bg: "#dfe8f2",
-    map: kGrid(28, 8, (c, r) => (r >= 5 && !(c === 13 || c === 14)) || (c >= 23 && r <= 4) || (c === 22 && r >= 3 && r <= 4) || (c >= 17 && c <= 20 && r >= 2 && r <= 3)),
+    bg: "#e8eef6",
+    map: [
+      "#############..#############",
+      "#############..#############",
+      "#############..#############",
+      "......................######",
+      "......................######",
+      "..........#.........#.######",
+      "...#...#.........#....######",
+      "......................######",
+      "#############..#############",
+      "#############..#############",
+      "#############..#############",
+    ],
     legend: K_LEGEND,
-    drawGround: kImage("bg_shore", 28 * T, 8 * T),
+    drawGround: kImage("bg_shore", 28 * T, 11 * T),
+    snow: 2,
     spawns: {
-      start: { x: 14 * T, y: 7 * T, facing: "north" },
+      start: { x: 14 * T, y: 10.2 * T, facing: "north" },
       north: { x: 14 * T, y: 1.2 * T, facing: "south" },
     },
     triggers: [
       { id: "toFarm", x: 13 * T, y: -T, w: 2 * T, h: 1.3 * T, warp: { map: "farm", spawn: "south" } },
-      { id: "leave", x: 13 * T, y: 7.6 * T, w: 2 * T, h: T, run: (api) => api.exit() },
+      { id: "leave", x: 13 * T, y: 10.75 * T, w: 2 * T, h: T, run: (api) => api.exit() },
     ],
     onEnter: chirinEnter(B_SHORE_OBJS),
     objects: B_SHORE_OBJS,
@@ -2243,20 +2257,20 @@
 
   // B 第三バナナ農園(当たり判定は、下絵で描いたバナナの株の根もと・小屋・撮影の道具・看板)
   const B_FARM_GRID = [
-    "###...######################",
+    "##.....#####################",
+    ".......#.........#.#.#...#..",
+    ".#.....................#....",
     "............................",
-    ".#...#.#.#.#.....#.##..##..#",
-    "............................",
+    "#..........................#",
+    ".#.#.#...#......#########...",
     ".....................####...",
-    "...#.....#.#.........####...",
-    ".#..#...........####.####..#",
     "............................",
     "............................",
-    ".#...#..#..#....#..#.......#",
+    "##.#.#...#.............#.#.#",
     "............................",
     "............................",
-    "#..#...##........##....#...#",
-    "...............##...........",
+    ".....#.#.#.#.....#...#.#.#..",
+    "#..............##..........#",
   ];
   const B_FARM_OBJS = [
     drawKikori(kikoriRunner([[8, 8], [12.5, 8], [12.5, 3.2], [7, 3.2], [4.5, 1.2], [4.5, -1.5]], "fledFarm", () => true, 170)),
@@ -2266,10 +2280,11 @@
   ];
   const B_FARM = {
     tile: T,
-    bg: "#8a6a48",
+    bg: "#e8eef6",
     map: B_FARM_GRID,
     legend: K_LEGEND,
     drawGround: kImage("bg_farm", 28 * T, 14 * T),
+    snow: 2,
     spawns: {
       south: { x: 14 * T, y: 12.6 * T, facing: "north" },
       north: { x: 4.5 * T, y: 1.4 * T, facing: "south" },
@@ -2282,37 +2297,65 @@
     objects: B_FARM_OBJS,
   };
 
-  // C 凍った用水路(一面の氷。つるつる滑る)
+  // C 雪に埋もれかけた用水路(丸木橋で渡る)
   const B_CANAL_OBJS = [
-    drawKikori(kikoriRunner([[9, 2.6], [15, 2.4], [21, 2.2], [25.5, 1.2], [25.5, -1.5]], "fledCanal", (api) => api.flag("fledFarm"), 230)),
+    drawKikori(kikoriRunner([[7, 7.3], [12.9, 7.3], [12.9, 2.6], [19, 2.6], [25.5, 2.6], [25.5, -1.5]], "fledCanal", (api) => api.flag("fledFarm"), 230)),
     chirinFollower(null),
   ];
   const B_CANAL = {
     tile: T,
-    bg: "#cfe2ef",
-    map: kGrid(28, 5, (c, r) => (r === 0 && !(c >= 24 && c <= 26)) || (r === 4 && !(c >= 3 && c <= 5))),
+    bg: "#e8eef6",
+    map: [
+      "########################...#",
+      "........#..................#",
+      "............................",
+      "..#..............#...#......",
+      "############..##############",
+      "############..##############",
+      ".......................#....",
+      "..................#.........",
+      "............................",
+      "###....#####################",
+    ],
     legend: K_LEGEND,
-    drawGround: kImage("bg_canal", 28 * T, 5 * T),
-    slippery: () => 1.1,
+    drawGround: kImage("bg_canal", 28 * T, 10 * T),
+    snow: 2,
     spawns: {
-      south: { x: 4.5 * T, y: 3.4 * T, facing: "north" },
+      south: { x: 4.5 * T, y: 8.6 * T, facing: "north" },
       north: { x: 25.5 * T, y: 1.2 * T, facing: "south" },
     },
     triggers: [
-      { id: "toFarm", x: 3 * T, y: 4.6 * T, w: 3 * T, h: T, warp: { map: "farm", spawn: "north" } },
+      { id: "toFarm", x: 3 * T, y: 9.6 * T, w: 3 * T, h: T, warp: { map: "farm", spawn: "north" } },
       { id: "toSteps", x: 24 * T, y: -T, w: 3 * T, h: 1.3 * T, warp: { map: "steps", spawn: "south" } },
     ],
     onEnter: chirinEnter(B_CANAL_OBJS),
     objects: B_CANAL_OBJS,
   };
 
-  // D 氷の段々とマンゴーの丘。段の崖は、手前で北を向いて跳ぶと上がれる(南を向いて跳ぶと下りる)
+  // D 雪の棚田とマンゴーの丘。段の石垣は、手前で北を向いて跳ぶと上がれる(南を向いて跳ぶと下りる)
   // 歩ける所: 下の雪原(15〜19 行)、段 1 の上(11〜13 行)、段 2 の上(7〜9 行)。段 3 はマンゴーの木の下で上がれない
-  const STEPS_SOLID = (c, r) =>
-    r <= 6 ||
-    (r >= 7 && r <= 10 && (c < 2 || c > 11 || r === 10)) ||
-    (r >= 11 && r <= 14 && (c < 1 || c > 12 || r === 14)) ||
-    (r === 7 && (c === 5 || c === 6)); // マンゴーの木の幹
+  const STEPS_GRID = [
+    "################",
+    "################",
+    "################",
+    "################",
+    "################",
+    "################",
+    "################",
+    "###...##.....###",
+    "###..........###",
+    "###..........###",
+    "################",
+    "##............##",
+    "##............##",
+    "##............##",
+    "################",
+    "#..............#",
+    "#...........#..#",
+    "#..#...........#",
+    "#..............#",
+    "#..............#",
+  ];
   const B_STEPS_OBJS = [
     Object.assign(
       drawKikori({
@@ -2320,7 +2363,7 @@
         img: "kikori",
         w: 32,
         h: 34,
-        x: 8.2 * T,
+        x: 9.2 * T,
         y: 8.2 * T,
         sortDy: 15,
         headY: 30,
@@ -2348,21 +2391,22 @@
   })();
   const B_STEPS = {
     tile: T,
-    bg: "#d6deea",
-    map: kGrid(14, 20, STEPS_SOLID),
+    bg: "#e8eef6",
+    map: STEPS_GRID,
     legend: K_LEGEND,
-    drawGround: kImage("bg_steps", 14 * T, 20 * T),
+    drawGround: kImage("bg_steps", 16 * T, 20 * T),
+    snow: 2,
     spawns: {
-      south: { x: 7 * T, y: 18.6 * T, facing: "north" },
+      south: { x: 8 * T, y: 18.6 * T, facing: "north" },
     },
-    triggers: [{ id: "toCanal", x: 6 * T, y: 19.6 * T, w: 2 * T, h: T, warp: { map: "canal", spawn: "north" } }],
+    triggers: [{ id: "toCanal", x: 7 * T, y: 19.6 * T, w: 2 * T, h: T, warp: { map: "canal", spawn: "north" } }],
     onEnter: chirinEnter(B_STEPS_OBJS),
     onJump(api, p) {
       const up = (y) => api.later(240, () => api.place(p.x, y));
       if (p.facing === "north") {
-        if (p.y >= 15 * T && p.y < 16 * T && p.x > 1 * T && p.x < 13 * T) up(13.4 * T);
-        else if (p.y >= 11 * T && p.y < 12 * T && p.x > 2 * T && p.x < 12 * T) up(9.4 * T);
-        else if (p.y < 8.8 * T && p.x > 3.6 * T && p.x < 9 * T && !api.flag("gotMango") && api.flag("fledCanal")) {
+        if (p.y >= 15 * T && p.y < 16 * T && p.x > 2 * T && p.x < 14 * T) up(13.4 * T);
+        else if (p.y >= 11 * T && p.y < 12 * T && p.x > 3 * T && p.x < 13 * T) up(9.4 * T);
+        else if (p.y < 8.8 * T && p.x > 4.6 * T && p.x < 10 * T && !api.flag("gotMango") && api.flag("fledCanal")) {
           // マンゴーに届く → きこりが追いつき、かぶりつく(一枚絵)
           api.setFlag("gotMango");
           api.later(300, () => {
