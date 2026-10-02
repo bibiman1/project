@@ -2868,6 +2868,10 @@
       start: "stop",
       startSpawn: "start",
       maps: { stop: S_STOP, alley: S_ALLEY, shop: S_SHOP, river: S_RIVER, rise: S_RISE, orbit: S_ORBIT, crater: S_CRATER },
+      // 単結晶に入ってから流れ星になるまでの途中でやめていたら、入るところからやり直せるようにする
+      onEnterWorld(api) {
+        if (api.flag("launched") && !api.flag("fallen")) api.setFlag("launched", false);
+      },
     },
   };
 })();
