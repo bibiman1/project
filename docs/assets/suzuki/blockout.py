@@ -267,8 +267,7 @@ GRIDS['shop'] = rows([(0, 0, 15, 1, '#'), (0, 2, 0, 10, '#'), (15, 2, 15, 10, '#
 c.save(O + 'shop.png')
 
 import sys; sys.path.insert(0, '/home/user/project/docs/assets/suzuki/crystal')
-import crystal as CR
-# ================= D 土手と河川敷 28×14(単結晶あり / 出荷のあと) =================
+# ================= D 土手と河川敷 28×14(単結晶あり / 夜のクレーター) =================
 def riverbank(with_crystal):
     W, H = 28 * T, 14 * T
     e = Image.new('RGBA', (W, H)); d = ImageDraw.Draw(e)
@@ -293,85 +292,132 @@ def riverbank(with_crystal):
     d.rectangle((0, 13 * T, W, H), fill=(178, 170, 150)); noise(d, (0, 13 * T, W, H), (178, 170, 150), 0.08, 800)
     d.rectangle((12 * T, 12 * T, 15 * T, 13 * T), fill=(170, 164, 150))
     for y in range(12 * T + 3, 13 * T, 6): d.line((12 * T, y, 15 * T, y), fill=(130, 124, 112), width=2)
+    import sys; sys.path.insert(0, '/home/user/project/docs/assets/suzuki/crystal')
+    import cigar as CG
     if with_crystal:
-        # 単結晶: 上から見ると木の葉、厚みのある葉巻型(作者)。南の面は 3 段(docs/assets/suzuki/crystal/crystal.py)。星(きらめき)は描かない
-        import sys; sys.path.insert(0, '/home/user/project/docs/assets/suzuki/crystal')
-        import crystal as CR
+        # 単結晶: 両端が狭まった円柱(作者)。先と後ろに穴が空いている(docs/assets/suzuki/crystal/cigar.py)。星(きらめき)は描かない
         sh_ = Image.new('RGBA', e.size, (0, 0, 0, 0))
-        ImageDraw.Draw(sh_).polygon([((x + 0.8) * T, (y + 0.5) * T) for x, y in CR.leaf_pts(*CR.TIERS[0])], fill=(30, 20, 50, 80))
+        ImageDraw.Draw(sh_).polygon([((x / 4 + 0.6) * T, (CG.YC + CG.radius(x / 4) * 0.55 + 1.9) * T) for x in range(int(CG.L0 * 4), int(CG.L1 * 4) + 1)]
+                                    + [(CG.L1 * T + 20, (CG.YC + 1.9) * T), (CG.L0 * T + 20, (CG.YC + 1.9) * T)], fill=(30, 20, 50, 80))
         e.alpha_composite(sh_)
-        CR.draw(e)
+        CG.draw(e)
         d = ImageDraw.Draw(e)
-        # てっぺんの杭(出荷の金具)
-        d.rectangle((14 * T - 3, int(3.0 * T), 14 * T + 3, int(3.7 * T)), fill=(150, 140, 120), outline=INK)
-        d.ellipse((14 * T - 6, int(2.9 * T), 14 * T + 6, int(3.1 * T) + 4), outline=(110, 100, 90), width=2)
-        for x in range(int(5 * T), int(23 * T), 9): d.line((x, 10 * T + 2, x + 6, 10 * T + 8), fill=GRASS2, width=2)
+        for x in range(int(5 * T), int(23 * T), 9): d.line((x, 8.3 * T + 2, x + 6, 8.3 * T + 8), fill=GRASS2, width=2)
+        ov = Image.new('RGBA', e.size, (0, 0, 0, 0)); od = ImageDraw.Draw(ov)
+        for x in range(W): od.line((x, 0, x, H), fill=(255, 150, 70, int(46 * (1 - x / W))))
+        e.alpha_composite(ov)
     else:
-        # 単結晶が浮かび上がったあとのくぼみ
-        import sys; sys.path.insert(0, '/home/user/project/docs/assets/suzuki/crystal')
-        import crystal as CR
-        d.polygon([(x * T, y * T) for x, y in CR.leaf_pts(3.0, 25.0, 1.9, 10.2)], fill=(110, 96, 74))
-        d.polygon([(x * T, y * T) for x, y in CR.leaf_pts(4.5, 23.5, 2.6, 9.6)], fill=(126, 110, 84))
-        for x in range(int(5 * T), int(23 * T), 9): d.line((x, 10 * T - 4, x + 6, 10 * T + 4), fill=GRASS2, width=2)
-        puddle(d, int(14 * T), int(6.5 * T), 60, 14)
-    ov = Image.new('RGBA', e.size, (0, 0, 0, 0)); od = ImageDraw.Draw(ov)
-    for x in range(W): od.line((x, 0, x, H), fill=(255, 150, 70, int(46 * (1 - x / W))))
-    e.alpha_composite(ov)
+        # 夜。単結晶が寝ていた所が、流れ星の落ちたクレーターになっている
+        d.polygon([((x / 4) * T, (CG.YC - CG.radius(x / 4) * 1.05) * T) for x in range(int(CG.L0 * 4), int(CG.L1 * 4) + 1)]
+                  + [((x / 4) * T, (CG.YC + CG.radius(x / 4) * 1.05) * T) for x in range(int(CG.L1 * 4), int(CG.L0 * 4) - 1, -1)], fill=(92, 74, 56))
+        d.ellipse((6 * T, 3.6 * T, 22 * T, 7.6 * T), fill=(70, 56, 44))
+        d.ellipse((9 * T, 4.4 * T, 19 * T, 7.0 * T), fill=(56, 44, 36))
+        for _ in range(140):   # 掘り返された土のかたまり(ふち)
+            a_ = R.random() * 6.283; rr = 1.0 + R.random() * 0.25
+            x_ = 14 * T + math.cos(a_) * 11.5 * T * rr; y_ = 5.5 * T + math.sin(a_) * 3.2 * T * rr
+            d.ellipse((x_ - 3, y_ - 2, x_ + 3, y_ + 2), fill=R.choice([(120, 96, 70), (90, 72, 54), (140, 116, 84)]))
+        px_ = e.load()
+        for y_ in range(H):          # 夜の色(月あかり)
+            for x_ in range(W):
+                r_, g_, b_, a_ = px_[x_, y_]
+                px_[x_, y_] = (int(r_ * 0.32 + 14), int(g_ * 0.36 + 18), int(b_ * 0.5 + 52), 255)
+        d = ImageDraw.Draw(e)
+        for _ in range(26):          # 川に映る月の光
+            x_ = R.randrange(int(18 * T), int(24 * T)); y_ = R.randrange(14, 2 * T - 6)
+            d.line((x_, y_, x_ + R.randrange(6, 16), y_), fill=(200, 210, 230))
+        ov = Image.new('RGBA', e.size, (0, 0, 0, 0)); od = ImageDraw.Draw(ov)
+        od.ellipse((11 * T, 4.6 * T, 17 * T, 6.6 * T), fill=(255, 170, 90, 50))   # クレーターの底が、まだほんのり熱い
+        e.alpha_composite(ov)
     return e
 
 e = riverbank(True); e.save(O + 'river.png')
-# 当たり判定と段: 単結晶の形から計算する(# 通れない、. 歩ける)。river_tier は各マスの段(0 草地、1〜3 段の上)
-gr, gt = [], []
-for r_ in range(14):
-    row, trow = '', ''
-    for c_ in range(28):
-        if r_ <= 1 or (r_ == 12 and not 12 <= c_ <= 14): row += '#'; trow += '0'; continue
-        if r_ >= 12: row += '.'; trow += '0'; continue
-        t_ = CR.tier_of(c_ + .5, r_ + .5)
-        ok = t_ == 0 or (t_ > 0 and r_ in CR.BANDS[t_])
-        row += '.' if ok else '#'; trow += str(max(t_, 0)) if ok else '0'
-    gr.append(row); gt.append(trow)
-GRIDS['river'] = gr; GRIDS['river_tier'] = gt
-e2 = riverbank(False); e2.save(O + 'river2.png')
-GRIDS['river2'] = rows([(0, 0, 27, 1, '#'), (0, 12, 11, 12, '#'), (15, 12, 27, 12, '#')], 28, 14)
-
+# 当たり判定: 単結晶(円柱)の形から計算する(# 通れない、. 歩ける)
 import sys; sys.path.insert(0, '/home/user/project/docs/assets/suzuki/crystal')
-import crystal as CR
-# ================= E 一枚絵: 単結晶が浮かび上がり、夕焼けの空へ出荷されていく 320×192 =================
+import cigar as CG
+gr = []
+for r_ in range(14):
+    row = ''
+    for c_ in range(28):
+        if r_ <= 1 or (r_ == 12 and not 12 <= c_ <= 14): row += '#'; continue
+        if r_ >= 12: row += '.'; continue
+        x_, y_ = c_ + .5, r_ + .5
+        row += '#' if CG.radius(x_) > 0 and abs(y_ - CG.YC) < CG.radius(x_) + 0.2 else '.'
+    gr.append(row)
+GRIDS['river'] = gr
+e2 = riverbank(False); e2.save(O + 'crater.png')
+GRIDS['crater'] = rows([(0, 0, 27, 1, '#'), (0, 12, 11, 12, '#'), (15, 12, 27, 12, '#')], 28, 14)
+
+# ================= 衛星軌道: 単結晶の中 28×10(星空、下に地球、輪のある月) =================
+W, H = 28 * T, 10 * T
+o = Image.new('RGBA', (W, H), (6, 8, 20, 255)); d = ImageDraw.Draw(o)
+for _ in range(260):
+    x_, y_ = R.randrange(W), R.randrange(H); c_ = R.choice([(200, 200, 220), (150, 150, 180), (255, 240, 220)])
+    d.point((x_, y_), fill=c_)
+# 地球のふち(下)と大気の青い光
+d.ellipse((-6 * W, 8.0 * T, 7 * W, 8.0 * T + 40 * W), fill=(40, 90, 170))
+d.arc((-6 * W, 8.0 * T - 3, 7 * W, 8.0 * T + 40 * W), 250, 290, fill=(140, 200, 255), width=5)
+for _ in range(60):
+    x_ = R.randrange(W); y_ = R.randrange(int(8.4 * T), H)
+    d.ellipse((x_ - R.randrange(6, 20), y_ - 3, x_ + R.randrange(6, 20), y_ + 3), fill=(230, 236, 246))
+# 欠けて輪をまとった月(右上)
+d.ellipse((23 * T, 0.4 * T, 25 * T, 2.4 * T), fill=(236, 232, 224)); d.chord((23 * T, 0.4 * T, 25 * T, 2.4 * T), 300, 60, fill=(60, 56, 70))
+d.arc((22 * T, 1.1 * T, 26 * T, 1.7 * T), 0, 360, fill=(190, 180, 200), width=2)
+# 単結晶(透明な筒)を横から。床は歩ける
+glass = Image.new('RGBA', (W, H), (0, 0, 0, 0)); gp = glass.load()
+YC2, R2 = 5.0, 2.6
+def rad2(x):
+    k = min(x - 1.0, 27.0 - x) / 5.0
+    if x <= 1.0 or x >= 27.0: return 0
+    return R2 * (0.42 + 0.58 * (1 if k >= 1 else 1 - (1 - k) ** 2))
+for X in range(W):
+    r2 = rad2(X / T)
+    if r2 <= 0: continue
+    for Y in range(H):
+        v = (Y / T - YC2) / r2
+        if -1 <= v <= 1:
+            a_ = 70 + int(80 * abs(v) ** 3)
+            c_ = (190, 230, 246) if v < 0.25 else (210, 238, 250)
+            if 0.25 <= v <= 0.85: a_ = 120          # 床(内側の下の面)
+            gp[X, Y] = c_ + (a_,)
+o.alpha_composite(glass); d = ImageDraw.Draw(o)
+pts_t = [(x / 4 * T, (YC2 - rad2(x / 4)) * T) for x in range(4, 108 + 1)]
+pts_b = [(x / 4 * T, (YC2 + rad2(x / 4)) * T) for x in range(108, 3, -1)]
+d.line(pts_t + pts_b + pts_t[:1], fill=(236, 248, 255), width=2)
+d.line([(x / 4 * T, (YC2 + rad2(x / 4) * 0.25) * T) for x in range(8, 105)], fill=(236, 248, 255), width=1)   # 床のへり
+for xe in (1.0, 27.0):     # 両端の穴
+    r0 = R2 * 0.42
+    d.ellipse(((xe - 0.3) * T, (YC2 - r0) * T, (xe + 0.3) * T, (YC2 + r0) * T), fill=(6, 8, 20), outline=(236, 248, 255), width=2)
+o.save(O + 'orbit.png')
+GRIDS['orbit'] = rows([(0, 0, 27, 9, '#'), (0, 5, 27, 6, '.')], 28, 10)
+
+# ================= 流れ星: 夜の下町の屋根の上を、流れ星が横切る 320×192 =================
 W, H = 320, 192
 v = Image.new('RGBA', (W, H)); d = ImageDraw.Draw(v)
-for y in range(130):
-    k = y / 130
-    d.line((0, y, W, y), fill=(int(70 + 180 * k), int(60 + 100 * k), int(110 - 10 * k)))
-d.ellipse((30, 112, 70, 152), fill=(252, 200, 110))
-d.ellipse((246, 18, 268, 40), fill=(244, 240, 230)); d.chord((246, 18, 268, 40), 300, 60, fill=(120, 96, 130))
-d.arc((232, 25, 282, 33), 0, 360, fill=(200, 190, 200))
-# 遠くの町並み、煙突の湯気、堤防
-for x in range(0, W, 14):
-    h = R.randrange(6, 18); d.rectangle((x, 132 - h, x + 12, 132), fill=(70, 60, 80))
-d.rectangle((200, 96, 204, 132), fill=(70, 60, 80))
-for k in range(3): d.ellipse((198 + k * 4, 86 - k * 9, 210 + k * 4, 94 - k * 9), fill=(220, 210, 220))
-d.rectangle((0, 132, W, 150), fill=(200, 120, 110))
-for j in range(134, 150, 4): d.line((0, j, W, j), fill=(240, 170, 120))
-d.polygon([(0, 150), (W, 150), (W, H), (0, H)], fill=(70, 96, 60))
-d.rectangle((0, 176, W, H), fill=(150, 140, 120))
-# くぼみと、見上げるきー(小さく)
-d.polygon([(90 + x, 154 + y) for x, y in CR.leaf_pts(0, 140, 0, 18)], fill=(96, 84, 64))
-d.rectangle((140, 162, 146, 172), fill=(240, 240, 240)); d.ellipse((139, 156, 147, 164), fill=(240, 240, 240))
-# 浮かび上がる単結晶(荷札つき)。葉巻型、きらめきは描かない
-cx0, cy0 = 92, 34; L, Hh = 136, 30
-top = CR.leaf_pts(0, L, 0, Hh)
-d.polygon([(cx0 + x, cy0 + y + 10) for x, y in top], fill=(150, 192, 222), outline=(96, 136, 176))   # 下の厚み
-d.polygon([(cx0 + x, cy0 + y) for x, y in top], fill=(212, 236, 248), outline=(96, 136, 176))
-mid = CR.leaf_pts(10, L - 10, 7, Hh - 7)
-d.line([(cx0 + x, cy0 + y) for x, y in mid[:len(mid) // 2]], fill=(240, 250, 255), width=1)
-d.polygon([(cx0, cy0 + Hh / 2), (cx0 + 26, cy0 + 6), (cx0 + 22, cy0 + Hh / 2 + 10)], fill=(252, 196, 140))
-d.line((cx0 + 70, cy0 + 2, cx0 + 74, cy0 - 12), fill=(120, 100, 80)); d.rectangle((cx0 + 70, cy0 - 22, cx0 + 84, cy0 - 12), fill=(240, 230, 200), outline=(120, 100, 80))
-for k in range(5): d.line((150 + k * 10, 86 + k * 3, 150 + k * 10, 94 + k * 6), fill=(214, 236, 246))
-v.save(O + 'ship.png')
+for y in range(H):
+    k = y / H
+    d.line((0, y, W, y), fill=(int(14 + 30 * k), int(18 + 34 * k), int(48 + 50 * k)))
+for _ in range(90):
+    d.point((R.randrange(W), R.randrange(120)), fill=R.choice([(200, 200, 220), (150, 150, 180)]))
+d.ellipse((40, 22, 60, 42), fill=(236, 232, 224)); d.chord((40, 22, 60, 42), 300, 60, fill=(24, 28, 60))
+d.arc((28, 29, 72, 35), 0, 360, fill=(170, 164, 190))
+for k in range(26):       # 流れ星(右上から左下へ、尾は長く)
+    t_ = k / 25
+    x_, y_ = 300 - 190 * t_, 20 + 70 * t_
+    w_ = int(1 + 3 * t_)
+    d.ellipse((x_ - w_, y_ - w_, x_ + w_, y_ + w_), fill=(int(160 + 95 * t_), int(180 + 70 * t_), 255))
+d.ellipse((104, 84, 116, 96), fill=(255, 250, 230))
+# 屋根の影(長屋、トタン、銭湯の煙突)と、灯りのともる窓
+x_ = 0
+while x_ < W:
+    w_ = R.randrange(30, 60); h_ = R.randrange(26, 48)
+    d.polygon([(x_, H - h_ + 10), (x_ + w_ // 2, H - h_), (x_ + w_, H - h_ + 10), (x_ + w_, H), (x_, H)], fill=(18, 18, 30))
+    if R.random() < 0.6: d.rectangle((x_ + 8, H - h_ + 18, x_ + 14, H - h_ + 24), fill=(240, 196, 120))
+    x_ += w_
+d.rectangle((228, 96, 236, H), fill=(18, 18, 30))
+v.save(O + 'fall.png')
 
 json.dump(GRIDS, open(O + 'grids.json', 'w'), indent=1)
-for name, im in [('stop', a), ('alley', b), ('shop', c), ('river', e), ('river2', e2)]:
+for name, im in [('stop', a), ('alley', b), ('shop', c), ('river', e), ('crater', e2), ('orbit', o)]:
     g = GRIDS[name]; o = im.copy(); m = Image.new('RGBA', im.size, (0, 0, 0, 0)); md = ImageDraw.Draw(m)
     for r_, row in enumerate(g):
         for c_, ch in enumerate(row):

@@ -4,14 +4,16 @@ import math
 from PIL import Image, ImageDraw
 T = 32
 L0, L1 = 3.0, 25.0        # 西の先、東の先(マス)
-TAPER = 6.0               # 先細りの長さ(マス)
+TAPER = 6.0
+TIP = 0.48                # 先の太さ(胴に対する割合)。ここに穴が空いている
+#              # 先細りの長さ(マス)
 YC, R = 5.5, 2.6          # 軸の高さ(画面の y)、半径(マス)
 
 def radius(x):
     # 胴は一定、両端の TAPER で先がとがる(弾頭のような丸みのある先細り)
     if x <= L0 or x >= L1: return 0.0
     k = min(x - L0, L1 - x) / TAPER
-    return R * (1 if k >= 1 else 1 - (1 - k) ** 2)     # 先がとがる弾頭形
+    return R * (TIP + (1 - TIP) * (1 if k >= 1 else 1 - (1 - k) ** 2))   # 先細り。先は切れて穴が空いている
 
 def draw(img, ox=0, oy=0, s=T):
     px = img.load(); W, H = img.size
@@ -32,12 +34,23 @@ def draw(img, ox=0, oy=0, s=T):
             # 西の先ほど夕日
             t = max(0.0, 1 - (x - L0) / 6.0)
             c = tuple(int(c[i] * (1 - 0.55 * t) + (250, 196, 150)[i] * 0.55 * t) for i in range(3))
-            px[X, Y] = c + (255,)
+            al = 0.38 + 0.55 * abs(v) ** 2          # 透明: 縁ほど濃く、まんなかは向こうが透ける
+            b0 = px[X, Y]
+            px[X, Y] = tuple(int(b0[i] * (1 - al) + c[i] * al) for i in range(3)) + (255,)
     # 輪郭
     d = ImageDraw.Draw(img)
     pts_t = [(ox + x / 4 * s, oy + (YC - radius(x / 4)) * s) for x in range(int(L0 * 4), int(L1 * 4) + 1)]
     pts_b = [(ox + x / 4 * s, oy + (YC + radius(x / 4)) * s) for x in range(int(L1 * 4), int(L0 * 4) - 1, -1)]
     d.line(pts_t + pts_b + pts_t[:1], fill=(92, 132, 172), width=max(1, s // 16))
+    # 両端の穴: 厚いガラスの縁の内側から、透明な筒の中が見通せる(中は明るい空色、奥にもう一方の穴の光)
+    for xe in (L0, L1):
+        r0 = R * TIP
+        d.ellipse((ox + (xe - 0.42) * s, oy + (YC - r0) * s, ox + (xe + 0.42) * s, oy + (YC + r0) * s), fill=(236, 248, 255), outline=(92, 132, 172), width=max(1, s // 16))
+        d.ellipse((ox + (xe - 0.28) * s, oy + (YC - r0 * 0.78) * s, ox + (xe + 0.28) * s, oy + (YC + r0 * 0.78) * s), fill=(150, 196, 220))
+        d.ellipse((ox + (xe - 0.12) * s, oy + (YC - r0 * 0.3) * s, ox + (xe + 0.12) * s, oy + (YC + r0 * 0.3) * s), fill=(255, 226, 170))
+    # 中が空洞だとわかるよう、ガラスごしに内側の壁の線(長さの向き)
+    d.line([(ox + x / 4 * s, oy + (YC - radius(x / 4) * 0.6) * s) for x in range(int(L0 * 4) + 2, int(L1 * 4) - 1)], fill=(150, 196, 224), width=max(1, s // 16))
+    d.line([(ox + x / 4 * s, oy + (YC + radius(x / 4) * 0.45) * s) for x in range(int(L0 * 4) + 2, int(L1 * 4) - 1)], fill=(120, 168, 206), width=max(1, s // 16))
     return d
 
 if __name__ == '__main__':
