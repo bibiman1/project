@@ -2645,7 +2645,7 @@
   // 荷札を持って穴を調べると、荷札を結んで中へ入る → 一枚絵 → 上昇(成層圏、熱圏)→ 衛星軌道
   const sEnter = (api) => {
     api.setFlag("launched");
-    api.show("v_inside", () => api.showSeq(["v_inside", "v_rise1", "v_rise2", "v_rise3"], 2.8, () => api.warp("orbit", "west")), { full: true });
+    api.show("v_inside", () => api.warp("rise", "view"), { full: true });
   };
   const sHole = (id, x) =>
     sSpot(id, x, 5.6 * T, sEnter, { range: 50, canInteract: (api) => api.hasItem("荷札") && !api.flag("launched") });
@@ -2654,6 +2654,54 @@
     triggers: [{ id: "toAlley", x: 12 * T, y: 13.75 * T, w: 3 * T, h: T, warp: { map: "alley", spawn: "north" } }],
     objects: [sHole("holeW", 2.4 * T), sHole("holeE", 25.6 * T)],
   });
+  // 上昇: 外から見る。単結晶は画面のまんなかに止まり、背景(荒川の町 → 夕焼けの雲 → 成層圏 → 熱圏 → 宇宙)が下へ流れる。
+  // 手前の雲は空より速く流れる。はじめゆっくり、だんだん速く。軌道に出たら、筒の中の絵をもう一度見せる(作者)
+  const RISE_DUR = 9;
+  let riseT0 = 0;
+  const S_RISE = {
+    tile: T,
+    bg: "#04060f",
+    hidePlayer: true,
+    map: Array(10).fill(".".repeat(15)),
+    legend: K_LEGEND,
+    drawGround(ctx, ox, oy, img) {
+      const get = (k) => (typeof img === "function" ? img(k) : null);
+      const t = Math.min(RISE_DUR, performance.now() / 1000 - riseT0);
+      const p = Math.pow(t / RISE_DUR, 1.7);
+      const sky = get("rise_sky");
+      const VWm = 15 * T;
+      const VHm = 10 * T;
+      if (!sky) return;
+      const pos = (sky.height - VHm) * (1 - p);
+      ctx.drawImage(sky, 0, Math.round(pos), VWm, VHm, ox, oy, VWm, VHm);
+      // 手前の雲(空の雲の帯の高さを、1.5 倍の速さで通り過ぎる)
+      const cl = get("rise_cloud");
+      if (cl) {
+        for (const [band, dx] of [[1360, 0], [1720, -170], [1900, 120]]) {
+          const y = (band - pos) * 1.5 - VHm * 0.25;
+          if (y > -cl.height && y < VHm) for (let x = dx - cl.width; x < VWm; x += cl.width) ctx.drawImage(cl, Math.round(x + ox), Math.round(y + oy));
+        }
+      }
+      // 宇宙に出ると、下に地球のふちがせり上がる
+      const ea = get("rise_earth");
+      if (ea && p > 0.82) ctx.drawImage(ea, ox, Math.round(oy + VHm - ea.height * Math.min(1, (p - 0.82) / 0.18)));
+      // 単結晶(透明な筒)と、中のきー。小さくゆれる
+      const tube = get("rise_tube");
+      const shake = Math.round(Math.sin(t * 23) * (1 + 1.5 * p));
+      const cx = VWm / 2 + ox + shake;
+      const cy = VHm / 2 + oy;
+      const ki = get("ki");
+      if (ki) ctx.drawImage(ki, 0, 2 * 64, 64, 64, Math.round(cx - 32), Math.round(cy - 26), 64, 64);
+      if (tube) ctx.drawImage(tube, Math.round(cx - tube.width / 2), Math.round(cy - tube.height / 2));
+    },
+    spawns: { view: { x: 7 * T, y: 5 * T, facing: "east" } },
+    onEnter(api) {
+      riseT0 = performance.now() / 1000;
+      api.later(RISE_DUR * 1000 + 400, () => api.show("v_rise3", () => api.warp("orbit", "west"), { full: true }));
+    },
+    triggers: [],
+    objects: [],
+  };
   // 衛星軌道: 単結晶の中。透明な床を歩いて、どちらかの端の穴から外へ出ると、落ちて流れ星になる
   const sFall = (api) => {
     if (api.flag("fallen")) return;
@@ -2812,14 +2860,14 @@
       name: "荒川の鈴木商店",
       assetBase: "./assets/worlds/suzuki/",
       images: Object.fromEntries(
-        ["bg_stop", "bg_alley", "bg_shop", "bg_river", "bg_crater", "bg_orbit", "tetsubin", "v_inside", "v_rise1", "v_rise2", "v_rise3", "v_fall"]
+        ["bg_stop", "bg_alley", "bg_shop", "bg_river", "bg_crater", "bg_orbit", "tetsubin", "v_inside", "v_rise3", "v_fall", "rise_sky", "rise_tube", "rise_earth", "rise_cloud"]
           .map((k) => [k, `${k}.png`])
           .concat([["ki", "./assets/worlds/lake/ki_walk.png"]])
       ),
       playerSprite: { img: "ki", cell: 64, frames: 7, footY: 17 },
       start: "stop",
       startSpawn: "start",
-      maps: { stop: S_STOP, alley: S_ALLEY, shop: S_SHOP, river: S_RIVER, orbit: S_ORBIT, crater: S_CRATER },
+      maps: { stop: S_STOP, alley: S_ALLEY, shop: S_SHOP, river: S_RIVER, rise: S_RISE, orbit: S_ORBIT, crater: S_CRATER },
     },
   };
 })();
