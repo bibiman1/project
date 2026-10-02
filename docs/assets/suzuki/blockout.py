@@ -400,7 +400,7 @@ for _ in range(90):
     d.point((R.randrange(W), R.randrange(120)), fill=R.choice([(200, 200, 220), (150, 150, 180)]))
 d.ellipse((40, 22, 60, 42), fill=(236, 232, 224)); d.chord((40, 22, 60, 42), 300, 60, fill=(24, 28, 60))
 d.arc((28, 29, 72, 35), 0, 360, fill=(170, 164, 190))
-for k in range(26):       # 流れ星(右上から左下へ、尾は長く)
+for k in range(26):       # 流れ星(左右反転して、左上から右下へ。尾は長く)
     t_ = k / 25
     x_, y_ = 300 - 190 * t_, 20 + 70 * t_
     w_ = int(1 + 3 * t_)
@@ -414,6 +414,7 @@ while x_ < W:
     if R.random() < 0.6: d.rectangle((x_ + 8, H - h_ + 18, x_ + 14, H - h_ + 24), fill=(240, 196, 120))
     x_ += w_
 d.rectangle((228, 96, 236, H), fill=(18, 18, 30))
+v = v.transpose(Image.FLIP_LEFT_RIGHT)   # 流れ星は右下がり(作者)。軌道で右の穴から出た流れがつながる
 v.save(O + 'fall.png')
 
 json.dump(GRIDS, open(O + 'grids.json', 'w'), indent=1)
