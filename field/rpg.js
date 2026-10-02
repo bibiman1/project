@@ -172,6 +172,10 @@ const ASSET_V = (() => {
         warp(mapId, spawn) {
           host.fade(() => loadMap(mapId, spawn));
         },
+        // 暗転せずに、すぐ別のマップへ(前のマップを見せたくないとき)
+        cut(mapId, spawn) {
+          loadMap(mapId, spawn);
+        },
         // 断片の条件を満たした(記録だけ。退出は出口から)
         clear() {
           if (!host.state.cleared.includes(w.id)) host.state.cleared.push(w.id);
@@ -650,8 +654,26 @@ const ASSET_V = (() => {
       const row = DIR_ROW[player.facing];
       const frame = player.moving ? 1 + (Math.floor(t * 10) % (p.frames - 1)) : 0;
       const jz = Math.round(jumpHeight()); // ジャンプ中は体だけ浮く(影は地面に残る)
-      ctx.drawImage(im, frame * p.cell, row * p.cell, p.cell, p.cell, sx - p.cell / 2, sy - p.cell + p.footY - jz, p.cell, p.cell);
+      const tint = world.playerTint && world.playerTint(world.api);
+      if (!tint) {
+        ctx.drawImage(im, frame * p.cell, row * p.cell, p.cell, p.cell, sx - p.cell / 2, sy - p.cell + p.footY - jz, p.cell, p.cell);
+        return;
+      }
+      // 色を変えて描く(真っ黒にこげた、など): 形はそのまま、色だけを塗る
+      if (!tintBuf) {
+        tintBuf = document.createElement("canvas");
+        tintBuf.width = tintBuf.height = p.cell;
+      }
+      const g = tintBuf.getContext("2d");
+      g.globalCompositeOperation = "source-over";
+      g.clearRect(0, 0, p.cell, p.cell);
+      g.drawImage(im, frame * p.cell, row * p.cell, p.cell, p.cell, 0, 0, p.cell, p.cell);
+      g.globalCompositeOperation = "source-atop";
+      g.fillStyle = tint;
+      g.fillRect(0, 0, p.cell, p.cell);
+      ctx.drawImage(tintBuf, sx - p.cell / 2, sy - p.cell + p.footY - jz);
     }
+    let tintBuf = null;
 
     function headOf(who, ox, oy) {
       if (who === "player") return { x: player.x + ox, y: player.y + oy - 26 };
