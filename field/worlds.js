@@ -772,6 +772,7 @@
     fragment("kasumi", "霞ヶ浦のエクラノプラン", "ミイラさまの遊覧飛行。", "frag_kasumi", 12, 22, "haihei"),
     fragment("banana", "南極のバナナ農園", "けさの気温 28℃。", "frag_banana", 31, 30, "kasumi"), // 説明の文面は仮
     fragment("suzuki", "荒川の鈴木商店", "宛先がにじんで読めない。", "frag_suzuki", 9, 30, "banana"), // 説明の文面は仮
+    fragment("takarabune", "宝舟と首振りエンジン", "何も描かれていない。", "frag_takarabune", 22, 33, "suzuki"), // 説明の文面は仮
   ];
 
   const VOID = {
@@ -2586,7 +2587,10 @@
       sSpot("printer", 8.5 * T, 7.15 * T, (api) => {
         if (api.hasItem("荷札") || !api.hasItem("伝票")) return api.mutter("……", 1200); // 仮
         api.bubble("printer", "ガシャン ガシャン", 1400); // 仮
-        api.later(1500, () => api.giveItem("荷札"));
+        api.later(1500, () => {
+          api.giveItem("荷札");
+          api.show("v_nifuda");
+        });
       }),
     ],
   });
@@ -2662,7 +2666,11 @@
             if (api.hasItem("納品書")) return;
             api.giveItem("納品書");
             api.clear();
-          } else if (!api.hasItem("伝票")) api.giveItem("伝票");
+            api.show("v_nouhin");
+          } else if (!api.hasItem("伝票")) {
+            api.giveItem("伝票");
+            api.show("v_denpyo");
+          }
         },
         { canInteract: (api) => (api.flag("fallen") ? !api.hasItem("納品書") : !api.hasItem("伝票")), range: 50 }
       ),
@@ -2906,13 +2914,406 @@
     objects: [],
   });
 
+
+  // ======== 宝舟と首振りエンジン ========
+  // 今の夜、欠けて輪のある月。名前のない小さな漁港と、岬の上の止まった発電所(D84〜D87)。絵と当たり判定は docs/assets/takarabune/
+  // 条件: 鋳物小屋でシリンダーを鋳る手伝い(一枚絵)→ 発電所の奥(正門 → 管理棟 → タービン建屋 → 原子炉建屋 → 炉心)で燃料を拾う
+  // → 暗転して港の宝舟の前へ → ボイラーに燃料をくべる → 甲板で沖へ → 燃料をまくと海が青く光る(一枚絵)→ 港で「白紙の海図」→ 西の坂道から帰る
+  // きーは警告に反応しない。ダメージのしくみはない(D84)
+  const TK_GRIDS = {
+    port: [
+      "############################",
+      "############################",
+      "########################....",
+      "########################....",
+      "########################....",
+      "..#######..#####..#####.....",
+      "..#######...................",
+      "...##.......................",
+      "............................",
+      "............................",
+      "############################",
+      "############################",
+      "############################",
+      "############################",
+    ],
+    gate: [
+      "###########....#############",
+      "###########....#############",
+      "............................",
+      "###########....#############",
+      ".................###........",
+      ".................###........",
+      ".................###........",
+      "............................",
+      "............................",
+      "############################",
+    ],
+    admin: [
+      "########################",
+      "########################",
+      "#.############.........#",
+      "#.############..######.#",
+      "#...########....######.#",
+      "#......................#",
+      "#......................#",
+      "#......................#",
+      "#.......................",
+      "#.......................",
+      "#......................#",
+      "####..##################",
+    ],
+    turbine: [
+      "############################",
+      "############################",
+      "............................",
+      "............................",
+      "...######################...",
+      "...######################...",
+      "...######################...",
+      "...######################...",
+      "............................",
+      "............................",
+      "############################",
+      "############################",
+    ],
+    reactor: [
+      "#########..#########",
+      "#########..#########",
+      "#..................#",
+      "#..................#",
+      "#.......####.......#",
+      "#.....########.....#",
+      "#.....########.....#",
+      "#....##########....#",
+      "#....##########....#",
+      "#....##########....#",
+      "#.....########.....#",
+      "#.....########.....#",
+      "........####.......#",
+      "...................#",
+      "...................#",
+      "####################",
+    ],
+    core: [
+      "################",
+      "################",
+      "#.....####.....#",
+      "#...########...#",
+      "#..##########..#",
+      "#..##########..#",
+      "#..##########..#",
+      "#..##########..#",
+      "#...########...#",
+      "#....######....#",
+      "#..............#",
+      "#..............#",
+      "#..............#",
+      "#######..#######",
+    ],
+    deck: [
+      "####################",
+      "####################",
+      "####################",
+      "##...............###",
+      "####..###.#.......##",
+      "####..###.#.......##",
+      "##...............###",
+      "####################",
+      "####################",
+      "####################",
+    ],
+  };
+  const tkMap = (key, cols, rows, extra) =>
+    Object.assign({ tile: T, bg: "#0c1220", map: TK_GRIDS[key], legend: K_LEGEND, drawGround: kImage(`bg_${key}`, cols * T, rows * T) }, extra);
+  const tkSpot = (id, x, y, interact, extra) => Object.assign({ id, x, y, w: 1, h: 1, range: 48, headY: 40, interact }, extra);
+  // 灯りのゆらぎ(非常灯、回転灯)を、絵の上に光の輪として重ねる
+  const tkLight = (ctx, x, y, r, rgb, a) => {
+    const g = ctx.createRadialGradient(x, y, 2, x, y, r);
+    g.addColorStop(0, `rgba(${rgb}, ${a})`);
+    g.addColorStop(1, `rgba(${rgb}, 0)`);
+    ctx.fillStyle = g;
+    ctx.fillRect(x - r, y - r, 2 * r, 2 * r);
+  };
+  // 首振りエンジン: シリンダーが軸を中心に、左右へゆっくり首を振る
+  const tkEngine = (id, x, y, scale, running) => ({
+    id,
+    x,
+    y,
+    w: 1,
+    h: 1,
+    sortDy: 10,
+    headY: 26,
+    hidden: (api) => !api.flag("cast"),
+    draw(ctx, sx, sy, t, api) {
+      const im = api.image("engine");
+      if (!im) return;
+      const on = running(api);
+      const a = on ? Math.sin(t * 5) * 0.32 : 0;
+      ctx.save();
+      ctx.translate(sx, sy);
+      ctx.rotate(a);
+      ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(im, (-im.width * scale) / 2, (-im.height * scale) / 2, im.width * scale, im.height * scale);
+      ctx.restore();
+    },
+  });
+
+  // A 漁港と岸壁(入口で出口。西の坂道。東の坂道の先が岬の発電所)
+  const TK_PORT = tkMap("port", 28, 14, {
+    spawns: {
+      start: { x: 1.2 * T, y: 6.6 * T, facing: "east" },
+      east: { x: 26.4 * T, y: 4 * T, facing: "west" },
+      boat: { x: 11.2 * T, y: 9.2 * T, facing: "south" },
+    },
+    triggers: [
+      { id: "toGate", x: 27.6 * T, y: 2 * T, w: 1.4 * T, h: 4.6 * T, warp: { map: "gate", spawn: "west" } },
+      // 西の坂道から帰る。白紙の海図を手に入れるまでは帰れない(設計図)
+      {
+        id: "leave",
+        x: -T,
+        y: 5 * T,
+        w: 1.45 * T,
+        h: 3 * T,
+        run(api) {
+          if (api.hasItem("白紙の海図")) return api.exit();
+          api.mutter("まだ帰れない。", 1600); // 仮
+          api.place(1.4 * T, api.player().y);
+        },
+      },
+    ],
+    objects: [
+      // 鋳物小屋のぼぎ(仮の絵。作者が差し替える、D70)。炉の前で青銅を溶かしている。調べると鋳造を手伝う(一枚絵)
+      {
+        id: "bogi",
+        img: "bogi",
+        w: 48,
+        h: 48,
+        x: 6.2 * T,
+        y: 7.3 * T,
+        sortDy: 18,
+        headY: 30,
+        range: 56,
+        interact(api) {
+          if (api.flag("cast")) return api.bubble("bogi", "……", 1200); // 仮
+          api.show("v_cast", () => api.setFlag("cast"));
+        },
+      },
+      tkEngine("engineP", 12.4 * T, 11.2 * T, 1, (api) => api.flag("fueled") && !api.flag("glowed")),
+      // 宝舟: 燃料をくべると首振りエンジンが動き、沖へ。帰ってきたら、舵のそばに白紙の海図
+      tkSpot(
+        "boat",
+        11.2 * T,
+        9.8 * T,
+        (api) => {
+          if (api.flag("glowed")) {
+            if (api.hasItem("白紙の海図")) return;
+            api.giveItem("白紙の海図");
+            api.clear();
+            api.show("v_kaizu");
+            return;
+          }
+          if (!api.flag("cast") || !api.hasItem("燃料")) return api.mutter("……", 1200); // 仮
+          api.setFlag("fueled"); // 首振りエンジンが首を振りはじめる
+          api.bubble("engineP", "シュッ　シュッ", 1600); // 仮
+          api.later(1700, () => api.warp("deck", "stern"));
+        },
+        { range: 56, canInteract: (api) => !api.hasItem("白紙の海図") }
+      ),
+    ],
+  });
+
+  // B 正門(西から坂道で上がってくる。鎖の切れた門を抜けて北へ)
+  const TK_GATE = tkMap("gate", 28, 10, {
+    spawns: {
+      west: { x: 1.2 * T, y: 7.4 * T, facing: "east" },
+      north: { x: 12.9 * T, y: 1.3 * T, facing: "south" },
+    },
+    triggers: [
+      { id: "toPort", x: -T, y: 6 * T, w: 1.45 * T, h: 3 * T, warp: { map: "port", spawn: "east" } },
+      { id: "toAdmin", x: 11 * T, y: -T, w: 4 * T, h: 1.45 * T, warp: { map: "admin", spawn: "south" } },
+    ],
+    objects: [],
+  });
+
+  // C 管理棟(南の玄関から入り、東の扉から出る)。非常灯の緑だけが、ゆっくり明滅する
+  const TK_ADMIN = tkMap("admin", 24, 12, {
+    spawns: {
+      south: { x: 5 * T, y: 10.3 * T, facing: "north" },
+      east: { x: 22 * T, y: 9 * T, facing: "west" },
+    },
+    drawOverlay(ctx, ox, oy, t) {
+      const a = 0.16 + 0.08 * Math.sin(t * 1.7);
+      for (const [x, y] of [[23 * T, 7.2 * T], [5 * T, 10.7 * T], [9 * T, 1.2 * T]]) tkLight(ctx, ox + x, oy + y, 90, "90, 255, 140", a);
+    },
+    triggers: [
+      { id: "toGate", x: 4 * T, y: 11.5 * T, w: 2 * T, h: T, warp: { map: "gate", spawn: "north" } },
+      { id: "toTurbine", x: 23.55 * T, y: 8 * T, w: 1.45 * T, h: 2 * T, warp: { map: "turbine", spawn: "west" } },
+    ],
+    objects: [],
+  });
+
+  // D タービン建屋(西から入り、東の扉から出る)。止まったタービンの南北に 2 マスの通路
+  const TK_TURBINE = tkMap("turbine", 28, 12, {
+    spawns: {
+      west: { x: 1.2 * T, y: 9 * T, facing: "east" },
+      east: { x: 26.6 * T, y: 3 * T, facing: "west" },
+    },
+    drawOverlay(ctx, ox, oy, t) {
+      // 切れかけた灯り(ときどき、ちらつく)
+      const flick = Math.sin(t * 13) > 0.92 ? 0.05 : 0.22;
+      for (const x of [6 * T, 16 * T]) tkLight(ctx, ox + x, oy + 2 * T, 100, "255, 140, 60", flick);
+    },
+    triggers: [
+      { id: "toAdmin", x: -T, y: 8 * T, w: 1.45 * T, h: 2 * T, warp: { map: "admin", spawn: "east" } },
+      { id: "toReactor", x: 27.55 * T, y: 2 * T, w: 1.45 * T, h: 2 * T, warp: { map: "reactor", spawn: "west" } },
+    ],
+    objects: [],
+  });
+
+  // E 原子炉建屋(西から入る。北の二重扉の先が炉心)。赤い回転灯が回り、警報が鳴りっぱなし
+  let tkAlarmT = -99;
+  const TK_REACTOR = tkMap("reactor", 20, 16, {
+    spawns: {
+      west: { x: 1.2 * T, y: 13.5 * T, facing: "east" },
+      north: { x: 10 * T, y: 2.4 * T, facing: "south" },
+    },
+    drawOverlay(ctx, ox, oy, t, api) {
+      // 回転灯: 光の筋がぐるぐる回る
+      for (const [c, r, ph] of [[2, 3, 0], [17, 3, 1.6], [2, 10, 3.1], [17, 10, 4.7]]) {
+        const x = ox + c * T + 16;
+        const y = oy + r * T + 16;
+        const ang = t * 3.2 + ph;
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.rotate(ang);
+        const g = ctx.createLinearGradient(0, 0, 150, 0);
+        g.addColorStop(0, "rgba(255, 50, 30, 0.5)");
+        g.addColorStop(1, "rgba(255, 50, 30, 0)");
+        ctx.fillStyle = g;
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.arc(0, 0, 150, -0.22, 0.22);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+      }
+      ctx.fillStyle = `rgba(255, 30, 20, ${0.06 + 0.06 * Math.max(0, Math.sin(t * 6.4))})`;
+      ctx.fillRect(ox, oy, 20 * T, 16 * T);
+      if (t - tkAlarmT > 3.2) {
+        tkAlarmT = t;
+        api.bubble("alarm", "ウーー　ウーー", 2400); // 仮
+      }
+    },
+    triggers: [
+      { id: "toTurbine", x: -T, y: 12 * T, w: 1.45 * T, h: 3 * T, warp: { map: "turbine", spawn: "east" } },
+      { id: "toCore", x: 9 * T, y: -T, w: 2 * T, h: 1.45 * T, warp: { map: "core", spawn: "south" } },
+    ],
+    objects: [{ id: "alarm", x: 10 * T, y: 1.4 * T, w: 1, h: 1, headY: 4 }],
+  });
+
+  // F 格納容器の中(炉心)。行き止まり。炉のふちで燃料ペレットを拾うと、暗転して港の宝舟の前へ(D86)
+  const TK_CORE = tkMap("core", 16, 14, {
+    spawns: { south: { x: 8 * T, y: 12.3 * T, facing: "north" } },
+    drawOverlay(ctx, ox, oy, t) {
+      tkLight(ctx, ox + 8 * T, oy + 6 * T, 7 * T, "120, 210, 255", 0.14 + 0.06 * Math.sin(t * 2.1));
+    },
+    triggers: [{ id: "toReactor", x: 7 * T, y: 13.5 * T, w: 2 * T, h: T, warp: { map: "reactor", spawn: "north" } }],
+    objects: [
+      {
+        id: "fuel",
+        img: "fuel",
+        w: 32,
+        h: 32,
+        x: 8 * T,
+        y: 10.6 * T,
+        sortDy: 8,
+        headY: 20,
+        range: 50,
+        hidden: (api) => api.hasItem("燃料"),
+        draw(ctx, sx, sy, t) {
+          tkLight(ctx, sx, sy, 34, "140, 230, 255", 0.35 + 0.15 * Math.sin(t * 4));
+        },
+        interact(api) {
+          api.giveItem("燃料");
+          api.later(1200, () => api.warp("port", "boat"));
+        },
+      },
+    ],
+  });
+
+  // G 宝舟の甲板。海が西へ流れる(舳先は東)。首振りエンジンが首を振り、ボイラーの煙突から湯気。舳先で燃料をまく → 海が青く光る
+  let tkSowT0 = -1;
+  const TK_DECK = {
+    tile: T,
+    bg: "#0a1430",
+    map: TK_GRIDS.deck,
+    legend: K_LEGEND,
+    drawGround(ctx, ox, oy, img, api) {
+      const get = (k) => (typeof img === "function" ? img(k) : null);
+      const t = performance.now() / 1000;
+      const sea = get("sea");
+      if (sea) {
+        const off = (t * 36) % sea.width;
+        for (let x = -off - sea.width; x < 20 * T + sea.width; x += sea.width) ctx.drawImage(sea, Math.round(ox + x), oy, sea.width, 10 * T);
+      }
+      // 燃料をまくと、舳先の先の海から青い光が広がる
+      if (tkSowT0 > 0) {
+        const e = t - tkSowT0;
+        const r = 30 + 260 * Math.min(1, e / 3);
+        tkLight(ctx, ox + 18.5 * T, oy + 5 * T, r, "80, 220, 255", Math.min(0.8, e / 1.5));
+        tkLight(ctx, ox + 18.5 * T, oy + 5 * T, r * 0.5, "200, 250, 255", Math.min(0.6, e / 2));
+      }
+      const deck = get("bg_deck");
+      if (deck) ctx.drawImage(deck, ox, oy + Math.round(Math.sin(t * 1.3) * 1), 20 * T, 10 * T);
+      // 外輪がかく水しぶき(両舷)
+      ctx.fillStyle = "rgba(220, 235, 255, 0.7)";
+      for (let k = 0; k < 6; k++) {
+        const u = (t * 1.6 + k / 6) % 1;
+        for (const y of [1.5 * T, 8.4 * T]) ctx.fillRect(Math.round(ox + 6 * T - u * 40), Math.round(oy + y + (k % 3) * 6), 3, 2);
+      }
+      // ボイラーの煙突から湯気
+      ctx.fillStyle = "rgba(230, 235, 245, 0.55)";
+      for (let k = 0; k < 5; k++) {
+        const u = (t * 0.6 + k / 5) % 1;
+        const s = 4 + Math.floor(u * 8);
+        ctx.fillRect(Math.round(ox + 3 * T + 6 - u * 60), Math.round(oy + 5 * T - 6 - u * 26), s, s);
+      }
+    },
+    spawns: { stern: { x: 4.8 * T, y: 6.5 * T, facing: "east" } },
+    onEnter() {
+      tkSowT0 = -1;
+    },
+    triggers: [],
+    objects: [
+      tkEngine("engineD", 7.5 * T, 5 * T, 1.3, (api) => !api.flag("glowed")),
+      tkSpot(
+        "bow",
+        17.4 * T,
+        5 * T,
+        (api) => {
+          api.setFlag("sowing");
+          tkSowT0 = performance.now() / 1000;
+          api.later(3600, () =>
+            api.show("v_glow", () => {
+              api.setFlag("sowing", false);
+              api.setFlag("glowed");
+              api.warp("port", "boat");
+            }, { full: true })
+          );
+        },
+        { range: 56, canInteract: (api) => !api.flag("sowing") && !api.flag("glowed") }
+      ),
+    ],
+  };
+
   window.BOGI_WORLDS = {
     // 懲罰空間(ハブ)。ここから断片の世界に入り、戻ってくる
     void: {
       id: "void",
       name: "懲罰空間",
       hub: true,
-      fragments: ["lake", "haihei", "kasumi", "banana", "suzuki"],
+      fragments: ["lake", "haihei", "kasumi", "banana", "suzuki", "takarabune"],
       fragmentTexts: Object.fromEntries(VOID_FRAGMENTS.map((f) => [f.id, f.text])),
       assetBase: "./assets/worlds/void/",
       images: {
@@ -2923,6 +3324,7 @@
         frag_kasumi: "frag_kasumi.png",
         frag_banana: "frag_banana.png",
         frag_suzuki: "frag_suzuki.png",
+        frag_takarabune: "frag_takarabune.png",
         ki: "./assets/worlds/lake/ki_walk.png",
       },
       playerSprite: { img: "ki", cell: 64, frames: 7, footY: 17 },
@@ -3036,7 +3438,7 @@
       name: "荒川の鈴木商店",
       assetBase: "./assets/worlds/suzuki/",
       images: Object.fromEntries(
-        ["bg_stop", "bg_alley", "bg_shop", "bg_river", "bg_crater", "bg_orbit", "tetsubin", "v_inside", "v_rise3", "v_fall", "rise_sky", "rise_tube", "rise_earth", "rise_cloud"]
+        ["bg_stop", "bg_alley", "bg_shop", "bg_river", "bg_crater", "bg_orbit", "tetsubin", "v_inside", "v_rise3", "v_fall", "rise_sky", "rise_tube", "rise_earth", "rise_cloud", "v_denpyo", "v_nifuda", "v_nouhin"]
           .map((k) => [k, `${k}.png`])
           .concat([["ki", "./assets/worlds/lake/ki_walk.png"]])
       ),
@@ -3049,6 +3451,25 @@
       // 単結晶に入ってから流れ星になるまでの途中でやめていたら、入るところからやり直せるようにする
       onEnterWorld(api) {
         if (api.flag("launched") && !api.flag("fallen")) api.setFlag("launched", false);
+      },
+    },
+    // 断片: 宝舟と首振りエンジン。荒川の鈴木商店を終えると懲罰空間に現れる
+    takarabune: {
+      id: "takarabune",
+      name: "宝舟と首振りエンジン",
+      assetBase: "./assets/worlds/takarabune/",
+      images: Object.fromEntries(
+        ["bg_port", "bg_gate", "bg_admin", "bg_turbine", "bg_reactor", "bg_core", "bg_deck", "sea", "engine", "bogi", "fuel", "v_cast", "v_glow", "v_kaizu"]
+          .map((k) => [k, `${k}.png`])
+          .concat([["ki", "./assets/worlds/lake/ki_walk.png"]])
+      ),
+      playerSprite: { img: "ki", cell: 64, frames: 7, footY: 17 },
+      start: "port",
+      startSpawn: "start",
+      maps: { port: TK_PORT, gate: TK_GATE, admin: TK_ADMIN, turbine: TK_TURBINE, reactor: TK_REACTOR, core: TK_CORE, deck: TK_DECK },
+      // 沖で燃料をまいている途中でやめていたら、まくところからやり直せるようにする
+      onEnterWorld(api) {
+        api.setFlag("sowing", false);
       },
     },
   };
