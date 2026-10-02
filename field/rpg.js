@@ -129,6 +129,11 @@ const ASSET_V = (() => {
           host.save();
           api.toast(`${name}`);
         },
+        // 使った道具を手放す(ペレットを海に投げ込む、など)
+        takeItem(name) {
+          host.state.items = host.state.items.filter((it) => it !== name);
+          host.save();
+        },
         // きーの能力(ジャンプなど)。断片で習得し、覚えたあとはどのフィールドでも使える(フラグ「ability.<id>」)
         hasAbility(id) {
           return hasAbility(id);

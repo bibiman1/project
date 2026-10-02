@@ -9,8 +9,9 @@ def glyph(ch, scale=1):
     return m.resize((16 * scale, 16 * scale), Image.NEAREST)
 def stamp(im, ch, x, y, col, scale=1):
     g = glyph(ch, scale); im.paste(Image.new('RGBA', g.size, col + (255,)), (x, y), g)
-gl = Image.open(S + 'glow_s3.png').convert('RGBA'); stamp(gl, '宝', 184, 86, (70, 40, 30)); gl.save(OUT + 'v_glow.png')
-Image.open(S + 'cast_s3.png').convert('RGBA').save(OUT + 'v_cast.png')
+# (最初の版の最後の絵。D88 で finish_scenes2.py に置きかえ)
+# gl = Image.open(S + 'glow_s3.png').convert('RGBA'); stamp(gl, '宝', 184, 86, (70, 40, 30)); gl.save(OUT + 'v_glow.png')
+# Image.open(S + 'cast_s3.png').convert('RGBA').save(OUT + 'v_cast.png')
 Image.open(S + 'kaizu_s3.png').convert('RGBA').save(OUT + 'v_kaizu.png')
 po = Image.open(OUT + 'bg_port.png').convert('RGBA'); stamp(po, '宝', 466, 284, (34, 28, 38), 2); po.save(OUT + 'bg_port.png')
 e = Image.open(S + 'sp_engine_5.png').convert('RGBA'); e.crop(e.getbbox()).save(OUT + 'engine.png')
