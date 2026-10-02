@@ -74,7 +74,7 @@ def nouhin(im):
     ink(im, '宛先', 20, 126)
     # 宛先: 字がにじんで読めない(書いてから、にじませる)
     sm = Image.new('RGBA', (W, H), (0, 0, 0, 0))
-    paste_mask(sm, text_row('月面裏側　出雲寺　様方'), 84, 126, (60, 50, 70, 255))
+    paste_mask(sm, text_row('靉靆鬮鬯　瓱竃畺　鷽鸞'), 84, 126, (60, 50, 70, 255))
     sm = sm.filter(ImageFilter.GaussianBlur(2.2)); im.alpha_composite(sm)
     d.line((84, 145, W - 22, 145), fill=RULE)
     im.alpha_composite(mark(INK), (20, 178)); ink(im, '鈴木商店', 66, 180)
