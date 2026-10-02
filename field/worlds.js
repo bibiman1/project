@@ -771,6 +771,7 @@
     fragment("haihei", "アンバリッド・ホテル", "Hi Hey Win！", "frag_haihei", 33, 21, "lake"),
     fragment("kasumi", "霞ヶ浦のエクラノプラン", "ミイラさまの遊覧飛行。", "frag_kasumi", 12, 22, "haihei"),
     fragment("banana", "南極のバナナ農園", "けさの気温 28℃。", "frag_banana", 31, 30, "kasumi"), // 説明の文面は仮
+    fragment("suzuki", "荒川の鈴木商店", "宛先がにじんで読めない。", "frag_suzuki", 9, 30, "banana"), // 説明の文面は仮
   ];
 
   const VOID = {
@@ -2444,13 +2445,228 @@
     objects: B_STEPS_OBJS,
   };
 
+
+  // ======== 荒川の鈴木商店 ========
+  // 今の雨上がりの夕方、荒川区の下町(D73〜D76)。マップの絵と当たり判定は docs/assets/suzuki/blockout.py から
+  // 条件: 店で伝票 → 印刷屋で荷札 → 単結晶をジャンプで登り、てっぺんに荷札を結ぶ(一枚絵)→ 店で納品書 → 都電で帰る
+  const S_GRIDS = {
+    stop: [
+    "############...#############",
+    "############...#############",
+    "............................",
+    "............................",
+    "##########........##########",
+    "###################.########",
+    "############################",
+    "############################",
+    "############################",
+    "############################",
+  ],
+    alley: [
+    "############...#############",
+    "############...#############",
+    "############...#############",
+    "############...#############",
+    "############...#############",
+    "############...#############",
+    "############...#############",
+    "....##......................",
+    "............................",
+    "############...#############",
+    "############...#############",
+    "############...#############",
+    "############...#############",
+    "############...#############",
+    "............................",
+    "............................",
+  ],
+    shop: [
+    "################",
+    "################",
+    "#..............#",
+    "#####......#####",
+    "#####......#####",
+    "#####......#####",
+    "#....######....#",
+    "#..............#",
+    "####........####",
+    "####........####",
+    "####........####",
+    "#######..#######",
+  ],
+    river: [
+    "############################",
+    "############################",
+    "....####################....",
+    "....#######......#######....",
+    "....#######......#######....",
+    "....####..########..####....",
+    "....####............####....",
+    "....#..##############..#....",
+    "....#..................#....",
+    "....####################....",
+    "............................",
+    "............................",
+    "############...#############",
+    "............................",
+  ],
+    river2: [
+    "############################",
+    "############################",
+    "............................",
+    "............................",
+    "............................",
+    "............................",
+    "............................",
+    "............................",
+    "............................",
+    "............................",
+    "............................",
+    "............................",
+    "############...#############",
+    "............................",
+  ],
+  };
+  const sMap = (key, cols, rows, extra) =>
+    Object.assign({ tile: T, bg: "#2e2838", map: S_GRIDS[key], legend: K_LEGEND, drawGround: kImage(`bg_${key}`, cols * T, rows * T) }, extra);
+  const sSpot = (id, x, y, interact, extra) => Object.assign({ id, x, y, w: 1, h: 1, range: 44, headY: 40, interact }, extra);
+
+  // A 都電の停留場(入口で出口。北の路地の先が町工場の路地)
+  const S_STOP = sMap("stop", 28, 10, {
+    spawns: {
+      start: { x: 11 * T, y: 4.7 * T, facing: "north" },
+      north: { x: 13.5 * T, y: 1.2 * T, facing: "south" },
+    },
+    triggers: [{ id: "toAlley", x: 12 * T, y: -T, w: 3 * T, h: 1.3 * T, warp: { map: "alley", spawn: "south" } }],
+    objects: [
+      // 都電は、納品書を持つまで乗れない(D75)
+      sSpot("tram", 11 * T, 5.4 * T, (api) => {
+        if (api.hasItem("納品書")) api.exit();
+        else api.mutter("まだ帰れない。", 1600); // 仮
+      }),
+    ],
+  });
+
+  // B 町工場と長屋の路地(北の階段の先が土手。入口はどれも南の小道に向く)
+  const S_ALLEY = sMap("alley", 28, 16, {
+    spawns: {
+      south: { x: 13.5 * T, y: 15.2 * T, facing: "north" },
+      north: { x: 13.5 * T, y: 1.2 * T, facing: "south" },
+      shop: { x: 19.25 * T, y: 7.6 * T, facing: "south" },
+    },
+    triggers: [
+      { id: "toStop", x: 12 * T, y: 15.75 * T, w: 3 * T, h: T, warp: { map: "stop", spawn: "north" } },
+      // 出荷のあとは、単結晶のない河川敷へ
+      { id: "toRiver", x: 12 * T, y: -T, w: 3 * T, h: 1.3 * T, run: (api) => api.warp(api.flag("shipped") ? "river2" : "river", "south") },
+    ],
+    objects: [
+      sSpot("shopDoor", 19.25 * T, 7.15 * T, (api) => api.warp("shop", "door")),
+      // 印刷屋は無人。伝票を差しこむと、印刷機がひとりでに荷札を刷る(D75)
+      sSpot("printer", 8.5 * T, 7.15 * T, (api) => {
+        if (api.hasItem("荷札") || !api.hasItem("伝票")) return api.mutter("……", 1200); // 仮
+        api.bubble("printer", "ガシャン ガシャン", 1400); // 仮
+        api.later(1500, () => api.giveItem("荷札"));
+      }),
+    ],
+  });
+
+  // C 鈴木商店の中(外より広い)。店番は鉄瓶(絵は仮、D70)。しゃべらず、怒ると湯気がふき出す
+  const S_SHOP = sMap("shop", 16, 12, {
+    bg: "#3a3230",
+    spawns: { door: { x: 8 * T, y: 10.5 * T, facing: "north" } },
+    triggers: [{ id: "out", x: 7 * T, y: 11.7 * T, w: 2 * T, h: T, warp: { map: "alley", spawn: "shop" } }],
+    objects: [
+      {
+        id: "tetsubin",
+        img: "tetsubin",
+        w: 32,
+        h: 32,
+        x: 8 * T,
+        y: 5.9 * T,
+        sortDy: 12,
+        headY: 22,
+        range: 56,
+        interact(api) {
+          api.bubble("tetsubin", api.flag("shipped") ? "……" : "シューッ！", 1400); // 仮
+          this._puff = 2;
+        },
+        // 怒っているあいだ、口から湯気(出荷のあとは止む)
+        draw(ctx, sx, sy, t, api) {
+          if (api.flag("shipped")) return;
+          ctx.fillStyle = "rgba(255, 255, 255, 0.8)";
+          const n = this._puff ? 6 : 3;
+          for (let k = 0; k < n; k++) {
+            const u = (t * 0.7 + k / n) % 1;
+            const s = 2 + Math.floor(u * 3);
+            ctx.fillRect(Math.round(sx + 10 + u * 8), Math.round(sy - 8 - u * 22), s, s);
+          }
+        },
+      },
+      // カウンターの紙: 出荷の前は伝票、あとは納品書(宛先がにじんで読めない)
+      sSpot(
+        "counter",
+        6.1 * T,
+        6.4 * T,
+        (api) => {
+          if (api.flag("shipped")) {
+            if (api.hasItem("納品書")) return;
+            api.giveItem("納品書");
+            api.clear();
+          } else if (!api.hasItem("伝票")) api.giveItem("伝票");
+        },
+        { canInteract: (api) => (api.flag("shipped") ? !api.hasItem("納品書") : !api.hasItem("伝票")), range: 50 }
+      ),
+    ],
+  });
+
+  // D 土手と河川敷。単結晶の南の面は 3 段。段の手前で北を向いて跳ぶと上がり、南を向いて跳ぶと下りる
+  // 歩ける所: 草地(10〜11 行と東西の端)、段 1 の上(8 行)、段 2 の上(6 行)、段 3 の上(3〜4 行。杭がある)
+  const S_RIVER = sMap("river", 28, 14, {
+    spawns: { south: { x: 13.5 * T, y: 13.3 * T, facing: "north" } },
+    triggers: [{ id: "toAlley", x: 12 * T, y: 13.75 * T, w: 3 * T, h: T, warp: { map: "alley", spawn: "north" } }],
+    onJump(api, p) {
+      const to = (y) => api.later(240, () => api.place(p.x, y));
+      if (p.facing === "north") {
+        if (p.y >= 10 * T && p.y < 11 * T && p.x > 5 * T && p.x < 23 * T) to(8.5 * T);
+        else if (p.y >= 8 * T && p.y < 9 * T && p.x > 8 * T && p.x < 20 * T) to(6.5 * T);
+        else if (p.y >= 6 * T && p.y < 7 * T && p.x > 11 * T && p.x < 17 * T) to(4.4 * T);
+      } else if (p.facing === "south") {
+        if (p.y >= 8 * T && p.y < 9 * T) to(10.4 * T);
+        else if (p.y >= 5 * T && p.y < 7 * T) to(8.5 * T);
+        else if (p.y >= 3 * T && p.y < 5 * T) to(6.5 * T);
+      }
+    },
+    objects: [
+      // てっぺんの杭。荷札があるときだけ結べる → 一枚絵(単結晶が浮かび上がり、夕焼けの空へ出荷されていく)
+      sSpot(
+        "post",
+        14 * T,
+        3.7 * T,
+        (api) => {
+          api.setFlag("shipped");
+          api.show("v_ship", () => api.warp("river2", "hollow"), { full: true });
+        },
+        { canInteract: (api) => api.hasItem("荷札") && !api.flag("shipped"), range: 40 }
+      ),
+    ],
+  });
+  // 出荷のあとの河川敷(単結晶のくぼみ)
+  const S_RIVER2 = sMap("river2", 28, 14, {
+    spawns: {
+      south: { x: 13.5 * T, y: 13.3 * T, facing: "north" },
+      hollow: { x: 14 * T, y: 10.4 * T, facing: "north" },
+    },
+    triggers: [{ id: "toAlley", x: 12 * T, y: 13.75 * T, w: 3 * T, h: T, warp: { map: "alley", spawn: "north" } }],
+    objects: [],
+  });
+
   window.BOGI_WORLDS = {
     // 懲罰空間(ハブ)。ここから断片の世界に入り、戻ってくる
     void: {
       id: "void",
       name: "懲罰空間",
       hub: true,
-      fragments: ["lake", "haihei", "kasumi", "banana"],
+      fragments: ["lake", "haihei", "kasumi", "banana", "suzuki"],
       fragmentTexts: Object.fromEntries(VOID_FRAGMENTS.map((f) => [f.id, f.text])),
       assetBase: "./assets/worlds/void/",
       images: {
@@ -2460,6 +2676,7 @@
         frag_haihei: "frag_haihei.png",
         frag_kasumi: "frag_kasumi.png",
         frag_banana: "frag_banana.png",
+        frag_suzuki: "frag_suzuki.png",
         ki: "./assets/worlds/lake/ki_walk.png",
       },
       playerSprite: { img: "ki", cell: 64, frames: 7, footY: 17 },
@@ -2566,6 +2783,21 @@
       start: "shore",
       startSpawn: "start",
       maps: { shore: B_SHORE, farm: B_FARM, canal: B_CANAL, steps: B_STEPS },
+    },
+    // 断片: 荒川の鈴木商店。南極のバナナ農園を終えると懲罰空間に現れる
+    suzuki: {
+      id: "suzuki",
+      name: "荒川の鈴木商店",
+      assetBase: "./assets/worlds/suzuki/",
+      images: Object.fromEntries(
+        ["bg_stop", "bg_alley", "bg_shop", "bg_river", "bg_river2", "tetsubin", "v_ship"]
+          .map((k) => [k, `${k}.png`])
+          .concat([["ki", "./assets/worlds/lake/ki_walk.png"]])
+      ),
+      playerSprite: { img: "ki", cell: 64, frames: 7, footY: 17 },
+      start: "stop",
+      startSpawn: "start",
+      maps: { stop: S_STOP, alley: S_ALLEY, shop: S_SHOP, river: S_RIVER, river2: S_RIVER2 },
     },
   };
 })();

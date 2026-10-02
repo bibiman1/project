@@ -34,16 +34,18 @@
       flakes.push({ x: Math.random() * vw, y: Math.random() * vh, s: 1 + Math.random() * 2, v: 18 + Math.random() * 30, p: Math.random() * 6 });
     }
 
+    // 名前が同じでも、断片がちがえば別の絵(霞ヶ浦と南極の bg_shore など)。出どころが変わったら読み直す
     function loadImage(key, src) {
-      if (images[key]) return;
+      if (images[key] && images[key].src === src) return;
       const img = new Image();
-      images[key] = { img, loaded: false, done: false };
+      const e = { img, src, loaded: false, done: false };
+      images[key] = e;
       img.onload = () => {
-        images[key].loaded = true;
-        images[key].done = true;
+        e.loaded = true;
+        e.done = true;
       };
       img.onerror = () => {
-        images[key].done = true; // 読めなくても待ち続けない
+        e.done = true; // 読めなくても待ち続けない
       };
       img.src = src;
     }
