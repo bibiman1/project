@@ -2586,7 +2586,10 @@
       sSpot("printer", 8.5 * T, 7.15 * T, (api) => {
         if (api.hasItem("荷札") || !api.hasItem("伝票")) return api.mutter("……", 1200); // 仮
         api.bubble("printer", "ガシャン ガシャン", 1400); // 仮
-        api.later(1500, () => api.giveItem("荷札"));
+        api.later(1500, () => {
+          api.giveItem("荷札");
+          api.show("v_nifuda");
+        });
       }),
     ],
   });
@@ -2662,7 +2665,11 @@
             if (api.hasItem("納品書")) return;
             api.giveItem("納品書");
             api.clear();
-          } else if (!api.hasItem("伝票")) api.giveItem("伝票");
+            api.show("v_nouhin");
+          } else if (!api.hasItem("伝票")) {
+            api.giveItem("伝票");
+            api.show("v_denpyo");
+          }
         },
         { canInteract: (api) => (api.flag("fallen") ? !api.hasItem("納品書") : !api.hasItem("伝票")), range: 50 }
       ),
@@ -3036,7 +3043,7 @@
       name: "荒川の鈴木商店",
       assetBase: "./assets/worlds/suzuki/",
       images: Object.fromEntries(
-        ["bg_stop", "bg_alley", "bg_shop", "bg_river", "bg_crater", "bg_orbit", "tetsubin", "v_inside", "v_rise3", "v_fall", "rise_sky", "rise_tube", "rise_earth", "rise_cloud"]
+        ["bg_stop", "bg_alley", "bg_shop", "bg_river", "bg_crater", "bg_orbit", "tetsubin", "v_inside", "v_rise3", "v_fall", "rise_sky", "rise_tube", "rise_earth", "rise_cloud", "v_denpyo", "v_nifuda", "v_nouhin"]
           .map((k) => [k, `${k}.png`])
           .concat([["ki", "./assets/worlds/lake/ki_walk.png"]])
       ),
