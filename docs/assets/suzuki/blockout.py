@@ -266,6 +266,8 @@ GRIDS['shop'] = rows([(0, 0, 15, 1, '#'), (0, 2, 0, 10, '#'), (15, 2, 15, 10, '#
                       (5, 6, 10, 6, '#'), (1, 8, 3, 10, '#'), (12, 8, 14, 10, '#'), (0, 11, 6, 11, '#'), (9, 11, 15, 11, '#')], 16, 12)
 c.save(O + 'shop.png')
 
+import sys; sys.path.insert(0, '/home/user/project/docs/assets/suzuki/crystal')
+import crystal as CR
 # ================= D 土手と河川敷 28×14(単結晶あり / 出荷のあと) =================
 def riverbank(with_crystal):
     W, H = 28 * T, 14 * T
@@ -292,30 +294,24 @@ def riverbank(with_crystal):
     d.rectangle((12 * T, 12 * T, 15 * T, 13 * T), fill=(170, 164, 150))
     for y in range(12 * T + 3, 13 * T, 6): d.line((12 * T, y, 15 * T, y), fill=(130, 124, 112), width=2)
     if with_crystal:
-        # 単結晶: ダイヤの八面体を寝かせた形。南の面が 3 段(段 1・2・3)。西の面に夕日
-        ICE = (206, 232, 244); ICE2 = (178, 214, 236); ICE3 = (150, 192, 222); EDGE = (96, 140, 180); SUN = (250, 206, 160)
-        d.polygon([(4 * T, 9 * T), (6 * T, 3 * T), (11 * T, 2 * T), (17 * T, 2 * T), (22 * T, 3 * T), (24 * T, 9 * T)], fill=ICE2, outline=EDGE)
-        shadow(e, (6 * T, 10 * T, 25 * T, 10 * T + 14), 70)
+        # 単結晶: 上から見ると木の葉、厚みのある葉巻型(作者)。南の面は 3 段(docs/assets/suzuki/crystal/crystal.py)。星(きらめき)は描かない
+        import sys; sys.path.insert(0, '/home/user/project/docs/assets/suzuki/crystal')
+        import crystal as CR
+        sh_ = Image.new('RGBA', e.size, (0, 0, 0, 0))
+        ImageDraw.Draw(sh_).polygon([((x + 0.8) * T, (y + 0.5) * T) for x, y in CR.leaf_pts(*CR.TIERS[0])], fill=(30, 20, 50, 80))
+        e.alpha_composite(sh_)
+        CR.draw(e)
         d = ImageDraw.Draw(e)
-        # 段の上の面(明るい)と、段の切り立った面(濃い)
-        def tier(c0, c1, top, face, col_top, col_face):
-            d.rectangle((c0 * T, top * T, c1 * T, face * T), fill=col_top, outline=EDGE)
-            d.rectangle((c0 * T, face * T, c1 * T, (face + 1) * T), fill=col_face, outline=EDGE)
-            d.line((c0 * T + 2, face * T + 3, c1 * T - 2, face * T + 3), fill=(236, 248, 255), width=2)
-        tier(4.2, 23.8, 7, 9, ICE, ICE3)
-        tier(7.2, 20.8, 5, 7, ICE, ICE3)
-        tier(10.2, 17.8, 2.6, 5, (226, 242, 250), ICE3)
-        d.polygon([(4 * T, 9 * T), (6 * T, 3 * T), (7.2 * T, 3 * T), (4.2 * T, 9 * T)], fill=SUN)
-        d.polygon([(10.2 * T, 2.6 * T), (11 * T, 2 * T), (17 * T, 2 * T), (17.8 * T, 2.6 * T)], fill=(240, 250, 255), outline=EDGE)
         # てっぺんの杭(出荷の金具)
         d.rectangle((14 * T - 3, int(3.0 * T), 14 * T + 3, int(3.7 * T)), fill=(150, 140, 120), outline=INK)
         d.ellipse((14 * T - 6, int(2.9 * T), 14 * T + 6, int(3.1 * T) + 4), outline=(110, 100, 90), width=2)
-        # 倒れた草
-        for x in range(int(4 * T), int(24 * T), 9): d.line((x, 10 * T + 2, x + 6, 10 * T + 8), fill=GRASS2, width=2)
+        for x in range(int(5 * T), int(23 * T), 9): d.line((x, 10 * T + 2, x + 6, 10 * T + 8), fill=GRASS2, width=2)
     else:
         # 単結晶が浮かび上がったあとのくぼみ
-        d.ellipse((5 * T, 3 * T, 23 * T, 10 * T), fill=(110, 96, 74))
-        d.ellipse((6 * T, 3.6 * T, 22 * T, 9.4 * T), fill=(126, 110, 84))
+        import sys; sys.path.insert(0, '/home/user/project/docs/assets/suzuki/crystal')
+        import crystal as CR
+        d.polygon([(x * T, y * T) for x, y in CR.leaf_pts(3.0, 25.0, 1.9, 10.2)], fill=(110, 96, 74))
+        d.polygon([(x * T, y * T) for x, y in CR.leaf_pts(4.5, 23.5, 2.6, 9.6)], fill=(126, 110, 84))
         for x in range(int(5 * T), int(23 * T), 9): d.line((x, 10 * T - 4, x + 6, 10 * T + 4), fill=GRASS2, width=2)
         puddle(d, int(14 * T), int(6.5 * T), 60, 14)
     ov = Image.new('RGBA', e.size, (0, 0, 0, 0)); od = ImageDraw.Draw(ov)
@@ -324,12 +320,23 @@ def riverbank(with_crystal):
     return e
 
 e = riverbank(True); e.save(O + 'river.png')
-GRIDS['river'] = rows([(0, 0, 27, 1, '#'), (4, 2, 23, 9, '#'), (5, 8, 22, 8, '.'), (5, 7, 6, 7, '.'), (21, 7, 22, 7, '.'),
-                       (8, 6, 19, 6, '.'), (8, 5, 9, 5, '.'), (18, 5, 19, 5, '.'), (11, 3, 16, 4, '.'),
-                       (0, 12, 11, 12, '#'), (15, 12, 27, 12, '#')], 28, 14)
+# 当たり判定と段: 単結晶の形から計算する(# 通れない、. 歩ける)。river_tier は各マスの段(0 草地、1〜3 段の上)
+gr, gt = [], []
+for r_ in range(14):
+    row, trow = '', ''
+    for c_ in range(28):
+        if r_ <= 1 or (r_ == 12 and not 12 <= c_ <= 14): row += '#'; trow += '0'; continue
+        if r_ >= 12: row += '.'; trow += '0'; continue
+        t_ = CR.tier_of(c_ + .5, r_ + .5)
+        ok = t_ == 0 or (t_ > 0 and r_ in CR.BANDS[t_])
+        row += '.' if ok else '#'; trow += str(max(t_, 0)) if ok else '0'
+    gr.append(row); gt.append(trow)
+GRIDS['river'] = gr; GRIDS['river_tier'] = gt
 e2 = riverbank(False); e2.save(O + 'river2.png')
 GRIDS['river2'] = rows([(0, 0, 27, 1, '#'), (0, 12, 11, 12, '#'), (15, 12, 27, 12, '#')], 28, 14)
 
+import sys; sys.path.insert(0, '/home/user/project/docs/assets/suzuki/crystal')
+import crystal as CR
 # ================= E 一枚絵: 単結晶が浮かび上がり、夕焼けの空へ出荷されていく 320×192 =================
 W, H = 320, 192
 v = Image.new('RGBA', (W, H)); d = ImageDraw.Draw(v)
@@ -349,16 +356,18 @@ for j in range(134, 150, 4): d.line((0, j, W, j), fill=(240, 170, 120))
 d.polygon([(0, 150), (W, 150), (W, H), (0, H)], fill=(70, 96, 60))
 d.rectangle((0, 176, W, H), fill=(150, 140, 120))
 # くぼみと、見上げるきー(小さく)
-d.ellipse((90, 154, 230, 172), fill=(96, 84, 64))
+d.polygon([(90 + x, 154 + y) for x, y in CR.leaf_pts(0, 140, 0, 18)], fill=(96, 84, 64))
 d.rectangle((140, 162, 146, 172), fill=(240, 240, 240)); d.ellipse((139, 156, 147, 164), fill=(240, 240, 240))
-# 浮かび上がる単結晶(荷札つき)
-d.polygon([(110, 64), (130, 30), (190, 26), (214, 40), (220, 70), (160, 86)], fill=(214, 236, 246), outline=(110, 150, 190))
-d.line((130, 30, 160, 86), fill=(170, 206, 230), width=2); d.line((190, 26, 160, 86), fill=(170, 206, 230), width=2)
-d.polygon([(110, 64), (130, 30), (140, 44), (122, 70)], fill=(252, 196, 140))
-d.line((172, 26, 176, 14), fill=(120, 100, 80)); d.rectangle((172, 4, 186, 14), fill=(240, 230, 200), outline=(120, 100, 80))
-for (x, y) in [(150, 40), (200, 56), (126, 58)]:
-    d.line((x - 4, y, x + 4, y), fill=(255, 255, 255)); d.line((x, y - 4, x, y + 4), fill=(255, 255, 255))
-for k in range(5): d.line((150 + k * 10, 92 + k * 3, 150 + k * 10, 100 + k * 6), fill=(214, 236, 246))
+# 浮かび上がる単結晶(荷札つき)。葉巻型、きらめきは描かない
+cx0, cy0 = 92, 34; L, Hh = 136, 30
+top = CR.leaf_pts(0, L, 0, Hh)
+d.polygon([(cx0 + x, cy0 + y + 10) for x, y in top], fill=(150, 192, 222), outline=(96, 136, 176))   # 下の厚み
+d.polygon([(cx0 + x, cy0 + y) for x, y in top], fill=(212, 236, 248), outline=(96, 136, 176))
+mid = CR.leaf_pts(10, L - 10, 7, Hh - 7)
+d.line([(cx0 + x, cy0 + y) for x, y in mid[:len(mid) // 2]], fill=(240, 250, 255), width=1)
+d.polygon([(cx0, cy0 + Hh / 2), (cx0 + 26, cy0 + 6), (cx0 + 22, cy0 + Hh / 2 + 10)], fill=(252, 196, 140))
+d.line((cx0 + 70, cy0 + 2, cx0 + 74, cy0 - 12), fill=(120, 100, 80)); d.rectangle((cx0 + 70, cy0 - 22, cx0 + 84, cy0 - 12), fill=(240, 230, 200), outline=(120, 100, 80))
+for k in range(5): d.line((150 + k * 10, 86 + k * 3, 150 + k * 10, 94 + k * 6), fill=(214, 236, 246))
 v.save(O + 'ship.png')
 
 json.dump(GRIDS, open(O + 'grids.json', 'w'), indent=1)
