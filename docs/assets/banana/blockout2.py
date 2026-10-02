@@ -215,7 +215,38 @@ def trodden_path(img, pts, w, rnd):
             o = sgn * w * T / 2
             d.line((x0 + nx * o, y0 + ny * o, x1 + nx * o, y1 + ny * o), fill=SNOW_SH, width=2)
 
+# ---- 前後の重なり用: 背の高い物を描いたときに変わった画素を、根もとの高さと一緒に覚えておく ----
+# (きーが根もとより奥にいるときは、この部分をきーの上に重ねて描く。影は含めない)
+import numpy as np
+FG = {}            # マップ名 -> [(mask, base_y)]
+CUR = [None]       # いま描いているマップ
+_after_shadow = [None]
+_shadow0 = shadow
+def shadow(img, box, a=70):
+    _shadow0(img, box, a)
+    _after_shadow[0] = np.asarray(img).copy()
+def _take(img, ref, base):
+    m = np.any(np.asarray(img) != ref, axis=2)
+    m[int(base):, :] = False
+    if m.any(): FG.setdefault(CUR[0], []).append((m, int(base)))
+def _rec(fn, base_of):
+    def w(img, *a, **k):
+        base = base_of(*a, **k)
+        if CUR[0] is None or base is None: return fn(img, *a, **k)
+        before = np.asarray(img).copy(); _after_shadow[0] = None
+        r = fn(img, *a, **k)
+        _take(img, _after_shadow[0] if _after_shadow[0] is not None else before, base)
+        return r
+    return w
+banana = _rec(banana, lambda x, y, *r, **k: y)
+palm = _rec(palm, lambda x, y, *r, **k: y)
+jungle_tree = _rec(jungle_tree, lambda x, y, r, rnd, trunk=True: y if trunk else None)
+def _block_start(img): _after_shadow[0] = None; return np.asarray(img).copy()
+def _block_end(img, before, base):
+    _take(img, _after_shadow[0] if _after_shadow[0] is not None else before, base)
+
 # ===================== A 浜 28x11 =====================
+CUR[0] = 'shore'
 R = random.Random(21)
 W, H = 28 * T, 11 * T
 a = Image.new('RGBA', (W, H)); snow_ground(a, R)
@@ -270,6 +301,7 @@ ga.clear(13, 8, 14, 10); ga.clear(13, 0, 14, 2)
 a.save(O + 'shore.png')
 
 # ===================== B 第三バナナ農園 28x14 =====================
+CUR[0] = 'farm'
 R = random.Random(22)
 W, H = 28 * T, 14 * T
 b = Image.new('RGBA', (W, H)); snow_ground(b, R)
@@ -303,6 +335,7 @@ peek_plants(b, R, (0, T, W, H), 80)
 # 農具小屋(東)
 d = ImageDraw.Draw(b)
 x0, y0 = 21 * T, 4 * T
+_bk = _block_start(b)
 shadow(b, (x0 + 10, y0 + 90, x0 + 150, y0 + 110), 80)
 d = ImageDraw.Draw(b)
 d.polygon([(x0, y0 + 30), (x0 + 64, y0), (x0 + 128, y0 + 30)], fill=SNOW, outline=SNOW_DK)
@@ -311,9 +344,11 @@ d.rectangle((x0 + 4, y0 + 32, x0 + 124, y0 + 96), fill=(170, 130, 86), outline=(
 for i in range(x0 + 10, x0 + 124, 12): d.line((i, y0 + 34, i, y0 + 96), fill=(146, 108, 70))
 d.rectangle((x0 + 50, y0 + 58, x0 + 76, y0 + 96), fill=(96, 66, 40)); d.rectangle((x0 + 90, y0 + 48, x0 + 112, y0 + 66), fill=(70, 86, 106), outline=(90, 60, 30))
 for i in range(x0 + 6, x0 + 124, 9): d.polygon([(i, y0 + 32), (i + 4, y0 + 32), (i + 2, y0 + 40)], fill=(200, 230, 246))
+_block_end(b, _bk, y0 + 96)
 gb.solid(21, 5, 24, 6)
 # 撮影の道具(小屋の西、きこりの道に掛からない所)
 cx, cy = int(18.2 * T), int(4.2 * T)
+_bk = _block_start(b)
 d.line((cx, cy + 30, cx - 10, cy + 60), fill=(40, 40, 40), width=3); d.line((cx, cy + 30, cx + 10, cy + 60), fill=(40, 40, 40), width=3); d.line((cx, cy + 30, cx, cy + 62), fill=(40, 40, 40), width=3)
 d.rectangle((cx - 18, cy + 8, cx + 22, cy + 32), fill=(70, 72, 78), outline=(30, 30, 34)); d.rectangle((cx - 30, cy + 14, cx - 18, cy + 26), fill=(40, 42, 48)); d.ellipse((cx - 34, cy + 14, cx - 26, cy + 26), fill=(90, 120, 160))
 d.rectangle((cx - 18, cy + 6, cx + 22, cy + 10), fill=SNOW)
@@ -321,18 +356,22 @@ d.ellipse((cx + 12, cy + 10, cx + 18, cy + 16), fill=(230, 40, 40))
 d.ellipse((cx + 34, cy - 6, cx + 74, cy + 34), fill=(226, 228, 232), outline=(150, 150, 156)); d.line((cx + 54, cy + 34, cx + 54, cy + 64), fill=(60, 60, 60), width=2)
 d.polygon([(cx - 60, cy + 4), (cx - 40, cy - 2), (cx - 40, cy + 22), (cx - 60, cy + 16)], fill=(250, 240, 200), outline=(120, 110, 80)); d.line((cx - 50, cy + 20, cx - 50, cy + 62), fill=(60, 60, 60), width=2)
 d.line([(cx, cy + 60), (cx + 30, cy + 80), (cx + 90, cy + 74), (x0 + 10, y0 + 90)], fill=(30, 30, 30), width=2)
+_block_end(b, _bk, cy + 62)
 gb.solid(16, 5, 20, 5)
 # 看板(南の道のわき)
 sx, sy = 15 * T + 8, 11 * T + 8
+_bk = _block_start(b)
 d.rectangle((sx + 6, sy + 20, sx + 10, sy + 54), fill=(100, 70, 40)); d.rectangle((sx + 54, sy + 20, sx + 58, sy + 54), fill=(100, 70, 40))
 d.rectangle((sx, sy, sx + 64, sy + 28), fill=(226, 206, 160), outline=(110, 80, 50), width=2)
 d.rectangle((sx, sy - 4, sx + 64, sy + 2), fill=SNOW)
 for k in range(5): d.rectangle((sx + 6 + k * 11, sy + 8, sx + 14 + k * 11, sy + 18), fill=(60, 40, 30))
+_block_end(b, _bk, sy + 54)
 gb.solid(15, 13, 16, 13)
 gb.clear(13, 7, 14, 13); gb.clear(4, 0, 5, 3); gb.clear(5, 3, 13, 3); gb.clear(12, 3, 13, 8)
 b.save(O + 'farm.png')
 
 # ===================== C 雪に埋もれかけた用水路 28x10 =====================
+CUR[0] = 'canal'
 R = random.Random(23)
 W, H = 28 * T, 10 * T
 c = Image.new('RGBA', (W, H)); snow_ground(c, R)
@@ -382,6 +421,7 @@ gc.clear(3, 6, 5, 9); gc.clear(24, 0, 26, 2); gc.clear(5, 7, 12, 7); gc.clear(13
 c.save(O + 'canal.png')
 
 # ===================== D 雪の棚田とマンゴーの丘 16x20 =====================
+CUR[0] = 'steps'
 R = random.Random(24)
 W, H = 16 * T, 20 * T
 e = Image.new('RGBA', (W, H)); snow_ground(e, R)
@@ -422,6 +462,7 @@ for (px, py) in [(3.2, 17.4), (12.6, 17.0), (2.6, 13.2), (13.4, 13.0)]:
     palm(e, px * T, py * T, R.randrange(60, 74), R)
 # マンゴーの大木(段 3 の上)
 mx, my = 7 * T, 7 * T + 4
+_bk = _block_start(e)
 shadow(e, (mx - 80, my - 12, mx + 80, my + 14), 80)
 d = ImageDraw.Draw(e)
 d.polygon([(mx - 12, my), (mx - 8, my - 70), (mx + 10, my - 70), (mx + 14, my)], fill=(112, 82, 58), outline=(80, 58, 40))
@@ -433,6 +474,7 @@ for px, py in [(-58, -96), (-30, -84), (30, -88), (58, -104), (-70, -116), (12, 
     d.ellipse((mx + px - 6, my + py, mx + px + 6, my + py + 14), fill=(236, 150, 40), outline=(170, 80, 30))
     d.ellipse((mx + px - 5, my + py + 2, mx + px - 1, my + py + 7), fill=(220, 70, 50))
     d.rectangle((mx + px - 4, my + py - 1, mx + px + 4, my + py + 2), fill=SNOW)
+_block_end(e, _bk, my)
 peek_plants(e, R, (1 * T, 15.4 * T, 15 * T, 19.4 * T), 30)
 # 南の入口の道
 trodden_path(e, [(8, 20.5), (8, 16.2)], 1.4, R)
@@ -464,3 +506,33 @@ for im in (c, b, a):
 sheet.paste(e, (28 * T + 30, 0))
 sheet.save(O + 'blockout_all.png')
 print('ok')
+
+# ---- 前後の重なり用の絵(fg_*.png)と、物ごとの位置と根もと(fg.json) ----
+# 仕上げ済みの背景(PixelLab)から、下絵で覚えた形のところだけを一つずつ切り出し、横に並べた一枚の絵にする。
+# 形は 1 画素ふくらませる。fg.json の一件は [絵の中の x, y, 幅, 高さ, マップの x, y, 根もとの y]
+from PIL import ImageFilter as _IF
+FA = '/home/user/project/field/assets/worlds/banana/'
+fgj = {}
+for name, items in FG.items():
+    bg = Image.open(FA + 'bg_' + name + '.png').convert('RGBA')
+    crops = []
+    for m, base in sorted(items, key=lambda v: v[1]):
+        mi = Image.fromarray((m * 255).astype('uint8')).filter(_IF.MaxFilter(3))
+        ma = np.asarray(mi) > 0; ma[base:, :] = False
+        ys, xs = np.where(ma)
+        if len(xs) == 0: continue
+        x0, y0, x1, y1 = int(xs.min()), int(ys.min()), int(xs.max()) + 1, int(ys.max()) + 1
+        c = Image.new('RGBA', (x1 - x0, y1 - y0), (0, 0, 0, 0))
+        c.paste(bg.crop((x0, y0, x1, y1)), (0, 0), Image.fromarray((ma[y0:y1, x0:x1] * 255).astype('uint8')))
+        crops.append((c, x0, y0, base))
+    # 棚に詰める(幅 1024)
+    AW = 1024; ax = ay = rowh = 0; lst = []
+    for c, x0, y0, base in crops:
+        if ax + c.width > AW: ax = 0; ay += rowh + 1; rowh = 0
+        lst.append([ax, ay, c.width, c.height, x0, y0, base]); ax += c.width + 1; rowh = max(rowh, c.height)
+    atlas = Image.new('RGBA', (AW, ay + rowh), (0, 0, 0, 0))
+    for (c, *_), e_ in zip(crops, lst): atlas.paste(c, (e_[0], e_[1]))
+    atlas.save(FA + 'fg_' + name + '.png', optimize=True)
+    fgj[name] = lst
+json.dump(fgj, open(O + 'fg.json', 'w'))
+print('fg', {k: len(v) for k, v in fgj.items()})
