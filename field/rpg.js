@@ -4,6 +4,14 @@
 //
 // 1つの世界は複数のマップを持ち、出入口(warp)でつながる。
 // 言葉にたよらず見せるための道具: 吹き出し(bubble)、一枚絵(show)、カメラ(pan)。
+// 絵の版の番号: index.html が rpg.js に付けた ?v= を、そのまま絵にも付ける
+const ASSET_V = (() => {
+  try {
+    return new URL(document.currentScript.src).searchParams.get("v") || "";
+  } catch (e) {
+    return "";
+  }
+})();
 (function () {
   "use strict";
 
@@ -36,6 +44,8 @@
 
     // 名前が同じでも、断片がちがえば別の絵(霞ヶ浦と南極の bg_shore など)。出どころが変わったら読み直す
     function loadImage(key, src) {
+      // 絵にも、このスクリプトと同じ版の番号を付ける(同じ名前の絵を描き直したとき、古い絵がキャッシュに残らないように)
+      if (ASSET_V && !src.includes("?")) src += `?v=${ASSET_V}`;
       if (images[key] && images[key].src === src) return;
       const img = new Image();
       const e = { img, src, loaded: false, done: false };
@@ -161,6 +171,10 @@
         },
         warp(mapId, spawn) {
           host.fade(() => loadMap(mapId, spawn));
+        },
+        // 暗転せずに、すぐ別のマップへ(前のマップを見せたくないとき)
+        cut(mapId, spawn) {
+          loadMap(mapId, spawn);
         },
         // 断片の条件を満たした(記録だけ。退出は出口から)
         clear() {
@@ -640,8 +654,26 @@
       const row = DIR_ROW[player.facing];
       const frame = player.moving ? 1 + (Math.floor(t * 10) % (p.frames - 1)) : 0;
       const jz = Math.round(jumpHeight()); // ジャンプ中は体だけ浮く(影は地面に残る)
-      ctx.drawImage(im, frame * p.cell, row * p.cell, p.cell, p.cell, sx - p.cell / 2, sy - p.cell + p.footY - jz, p.cell, p.cell);
+      const tint = world.playerTint && world.playerTint(world.api);
+      if (!tint) {
+        ctx.drawImage(im, frame * p.cell, row * p.cell, p.cell, p.cell, sx - p.cell / 2, sy - p.cell + p.footY - jz, p.cell, p.cell);
+        return;
+      }
+      // 色を変えて描く(真っ黒にこげた、など): 形はそのまま、色だけを塗る
+      if (!tintBuf) {
+        tintBuf = document.createElement("canvas");
+        tintBuf.width = tintBuf.height = p.cell;
+      }
+      const g = tintBuf.getContext("2d");
+      g.globalCompositeOperation = "source-over";
+      g.clearRect(0, 0, p.cell, p.cell);
+      g.drawImage(im, frame * p.cell, row * p.cell, p.cell, p.cell, 0, 0, p.cell, p.cell);
+      g.globalCompositeOperation = "source-atop";
+      g.fillStyle = tint;
+      g.fillRect(0, 0, p.cell, p.cell);
+      ctx.drawImage(tintBuf, sx - p.cell / 2, sy - p.cell + p.footY - jz);
     }
+    let tintBuf = null;
 
     function headOf(who, ox, oy) {
       if (who === "player") return { x: player.x + ox, y: player.y + oy - 26 };

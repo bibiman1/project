@@ -2533,8 +2533,8 @@
       "############################",
       "############################",
       "############################",
-      "............................",
-      "............................",
+      "##..........................",
+      "##..........................",
       "############################",
       "############################",
       "############################",
@@ -2609,11 +2609,39 @@
         headY: 22,
         range: 56,
         interact(api) {
+          if (api.flag("charred")) {
+            // 真っ黒にこげたきーに、お湯を注ぐ → クリーム色にもどる
+            api.bubble("tetsubin", "シューッ！", 1400); // 仮
+            this._pourT0 = performance.now() / 1000;
+            api.later(1500, () => api.setFlag("charred", false));
+            return;
+          }
           api.bubble("tetsubin", api.flag("fallen") ? "……" : "シューッ！", 1400); // 仮
           this._puff = 2;
         },
         // 怒っているあいだ、口から湯気(流れ星のあとは止む)
         draw(ctx, sx, sy, t, api) {
+          // お湯を注ぐ(注ぎ口から、きーの頭へ弧を描いて落ちる)
+          const pe = this._pourT0 ? performance.now() / 1000 - this._pourT0 : 99;
+          if (pe < 1.5) {
+            const pl = api.player();
+            const tx = sx + (pl.x - this.x);
+            const ty = sy + (pl.y - this.y) - 30;
+            const x0 = sx + 12;
+            const y0 = sy - 4;
+            ctx.fillStyle = "rgba(220, 240, 255, 1)";
+            for (let k = 0; k < 18; k++) {
+              const u = ((pe * 1.6 + k / 14) % 1);
+              const x = x0 + (tx - x0) * u;
+              const y = y0 + (ty - y0) * u - Math.sin(u * Math.PI) * 18;
+              ctx.fillRect(Math.round(x), Math.round(y), 3, 4);
+            }
+            ctx.fillStyle = "rgba(255, 255, 255, 0.7)";
+            for (let k = 0; k < 6; k++) {
+              const u = (pe * 0.8 + k / 6) % 1;
+              ctx.fillRect(Math.round(tx - 10 + k * 4), Math.round(ty - 4 - u * 24), 4, 4);
+            }
+          }
           if (api.flag("fallen")) return;
           ctx.fillStyle = "rgba(255, 255, 255, 0.8)";
           const n = this._puff ? 6 : 3;
@@ -2702,26 +2730,174 @@
     triggers: [],
     objects: [],
   };
-  // 衛星軌道: 単結晶の中。透明な床を歩いて、どちらかの端の穴から外へ出ると、落ちて流れ星になる
-  const sFall = (api) => {
-    if (api.flag("fallen")) return;
-    api.show("v_fall", () => {
-      api.setFlag("fallen");
-      api.warp("crater", "center");
-    }, { full: true });
+  // 衛星軌道: 単結晶の中。透明な床を歩いて、右の端の穴から外へ出ると、宇宙をただよって落ち、流れ星になる
+  // 右の穴から出ると、暗転せずに宇宙へ(船殻を見せ直さない。テンポを切らない)。左の穴からは出られない(流れ星の右下がりに合わせる)
+  const sOut = (api) => {
+    if (api.flag("fallen") || !api.flag("launched")) return;
+    api.cut("space", "view");
+  };
+  // 宇宙を遊泳するきー。右の穴から出たときの画面(衛星軌道のマップの右端)とまったく同じ絵から始め、
+  // 船殻は左上へ遠ざかって小さくなり、きーは右へただよいながら、引力に引かれてじわじわ右下へ落ちていく。最後は赤く光って流れ星の絵へ
+  const SPACE_DUR = 9;
+  let spaceT0 = 0;
+  const ease = (x) => (x <= 0 ? 0 : x >= 1 ? 1 : x * x * (3 - 2 * x));
+  const S_SPACE = {
+    tile: T,
+    bg: "#04060f",
+    hidePlayer: true,
+    map: Array(10).fill(".".repeat(15)),
+    legend: K_LEGEND,
+    drawGround(ctx, ox, oy, img) {
+      const get = (k) => (typeof img === "function" ? img(k) : null);
+      const t = Math.min(SPACE_DUR, performance.now() / 1000 - spaceT0);
+      const VWm = 15 * T;
+      const VHm = 300; // 画面の高さ(ドット)
+      const CX = 28 * T - VWm; // 衛星軌道のマップの右端で、カメラが見ていた範囲
+      const CY = 10 * T - VHm;
+      const orb = get("bg_orbit");
+      const sky = get("rise_sky");
+      // 星空(ゆっくり上へ流れる = きーが落ちていく)
+      const fall = ease((t - 2) / (SPACE_DUR - 2));
+      if (sky) ctx.drawImage(sky, 0, Math.round(40 * fall), VWm, VHm, ox, oy, VWm, VHm);
+      // カメラはきーを追って右へ動く(船殻と地球は左へ流れる)。きーは右下へ落ちていく
+      const pan = 240 * ease((t - 0.8) / 5);
+      // 地球: はじめは衛星軌道のマップの地球と同じ場所。落ちるにつれて大きく、上へ(遠いので、流れはゆっくり)
+      if (orb) {
+        const sx0 = CX, sy0 = 252, sw = VWm, sh = 10 * T - 252;
+        const k = 1 + 1.4 * fall;
+        const w = sw * k, h = sh * k;
+        const ex = ox + (VWm - w) / 2 - pan * 0.35;
+        const ey = oy + (sy0 - CY) - 120 * fall;
+        ctx.fillStyle = "#2a5a9e"; // 地球の下の海(大きくなっても下が抜けないように)
+        ctx.fillRect(Math.round(ex), Math.round(ey + h - 2), Math.round(w), VHm);
+        ctx.drawImage(orb, sx0, sy0, sw, sh, Math.round(ex), Math.round(ey), Math.round(w), Math.round(h));
+      }
+      // 船殻: はじめは衛星軌道のマップと同じ大きさ・位置。左上へ遠ざかって小さくなり、消える
+      const tube = get("rise_tube");
+      const lv = ease(t / 3.2);
+      if (tube && lv < 1) {
+        const sc = 2 * (1 - 0.8 * lv); // rise_tube は半分の大きさなので 2 倍から
+        const hx = ox + (27 * T - CX) - pan, hy = oy + (5 * T - CY); // 右の穴の位置
+        const px = hx - 120 * lv, py = hy - 90 * lv;
+        ctx.globalAlpha = 1 - ease((t - 2) / 1.4);
+        ctx.imageSmoothingEnabled = false;
+        ctx.drawImage(tube, Math.round(px - tube.width * sc + 6 * sc), Math.round(py - (tube.height * sc) / 2), Math.round(tube.width * sc), Math.round(tube.height * sc));
+        ctx.globalAlpha = 1;
+      }
+      // 最初の一瞬は、衛星軌道のマップの絵そのものを重ねて、つなぎ目をなくす
+      if (orb && t < 0.7) {
+        ctx.globalAlpha = 1 - t / 0.7;
+        ctx.drawImage(orb, CX, CY, VWm, VHm, ox, oy, VWm, VHm);
+        ctx.globalAlpha = 1;
+      }
+      // きー: 穴を出たところから、右へただよい、だんだん右下へ落ちる
+      const ki = get("ki");
+      const x0 = ox + (26.8 * T - CX), y0 = oy + (6 * T - CY);
+      const drift = ease(t / 3);
+      const kx = x0 + 50 * drift + 110 * fall - pan + Math.sin(t * 1.1) * 4 * drift; // 右下がり(カメラが追う)
+      const ky = y0 + 6 * drift + 90 * fall + Math.sin(t * 0.8) * 3 * drift;
+      const glow = ease((t - (SPACE_DUR - 2.6)) / 2.2);
+      if (glow > 0) {
+        const gr = ctx.createRadialGradient(kx, ky - 8, 2, kx, ky - 8, 26 + 30 * glow);
+        gr.addColorStop(0, `rgba(255, 240, 200, ${0.9 * glow})`);
+        gr.addColorStop(0.4, `rgba(255, 140, 60, ${0.6 * glow})`);
+        gr.addColorStop(1, "rgba(255, 80, 30, 0)");
+        ctx.fillStyle = gr;
+        ctx.fillRect(kx - 70, ky - 78, 140, 140);
+      }
+      if (ki) {
+        ctx.save();
+        ctx.translate(Math.round(kx), Math.round(ky - 8));
+        ctx.rotate(0.9 * Math.max(0, t - 1.5) * (0.4 + 0.6 * fall)); // 穴を出てしばらくしてから、ゆっくり回りはじめる
+        const walk = t < 0.6 ? 1 + (Math.floor(t * 10) % 6) : 0; // 出た瞬間は歩いている
+        ctx.drawImage(ki, walk * 64, 2 * 64, 64, 64, -32, -64 + 17 + 8, 64, 64);
+        ctx.restore();
+      }
+    },
+    spawns: { view: { x: 7 * T, y: 4 * T, facing: "south" } }, // カメラが画面のいちばん上(oy = 0)に来る位置
+    onEnter(api) {
+      spaceT0 = performance.now() / 1000;
+      api.later(SPACE_DUR * 1000, () =>
+        api.show("v_fall", () => {
+          api.setFlag("fallen");
+          api.setFlag("charred"); // 着地のあと、きーは真っ黒
+          api.setFlag("landing");
+          api.warp("crater", "center");
+        }, { full: true })
+      );
+    },
+    triggers: [],
+    objects: [],
   };
   const S_ORBIT = sMap("orbit", 28, 10, {
     bg: "#060814",
     spawns: { west: { x: 3 * T, y: 6 * T, facing: "east" } },
     triggers: [
-      { id: "outW", x: -T, y: 5 * T, w: 2.2 * T, h: 2 * T, run: sFall },
-      { id: "outE", x: 26.8 * T, y: 5 * T, w: 2.2 * T, h: 2 * T, run: sFall },
+      { id: "outE", x: 26.8 * T, y: 5 * T, w: 2.2 * T, h: 2 * T, run: sOut },
     ],
     objects: [],
   });
   // 夜の河川敷。単結晶が寝ていた所が、クレーターになっている。きーは、その真ん中にいる
+  // 着地の爆発: 白い光、飛び散る土、広がる煙の輪(1.6 秒)
+  let boomT0 = -1;
   const S_CRATER = sMap("crater", 28, 14, {
     bg: "#101830",
+    onEnter(api) {
+      if (api.flag("landing")) {
+        api.setFlag("landing", false);
+        boomT0 = performance.now() / 1000 + 1.3; // 暗転が明けてから
+      }
+    },
+    drawOverlay(ctx, ox, oy) {
+      if (boomT0 < 0) return;
+      const e = performance.now() / 1000 - boomT0;
+      if (e < 0 || e > 2.2) return;
+      const cx = ox + 14 * T;
+      const cy = oy + 5.8 * T;
+      // 白い光(一瞬)
+      if (e < 0.35) {
+        ctx.fillStyle = `rgba(255, 250, 230, ${1 - e / 0.35})`;
+        ctx.fillRect(ox - 20 * T, oy - 20 * T, 70 * T, 60 * T);
+      }
+      // 火の玉
+      const a = Math.max(0, 1 - e / 1.6);
+      const r = 30 + 120 * Math.min(1, e / 0.5);
+      const gr = ctx.createRadialGradient(cx, cy, 2, cx, cy, r);
+      gr.addColorStop(0, `rgba(255, 250, 210, ${a})`);
+      gr.addColorStop(0.3, `rgba(255, 170, 60, ${0.9 * a})`);
+      gr.addColorStop(0.7, `rgba(200, 70, 30, ${0.6 * a})`);
+      gr.addColorStop(1, "rgba(120, 40, 20, 0)");
+      ctx.fillStyle = gr;
+      ctx.beginPath();
+      ctx.ellipse(cx, cy, r, r * 0.6, 0, 0, Math.PI * 2);
+      ctx.fill();
+      // 衝撃の輪(地面を走る)
+      const rr = 40 + 420 * e;
+      ctx.strokeStyle = `rgba(255, 230, 190, ${Math.max(0, 0.8 - e / 1.2)})`;
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.ellipse(cx, cy + 6, rr, rr * 0.45, 0, 0, Math.PI * 2);
+      ctx.stroke();
+      // 立ちのぼる煙
+      for (let k = 0; k < 7; k++) {
+        const sx = cx + (k - 3) * 22;
+        const sy = cy - 20 - 70 * e - (k % 2) * 10;
+        const sr = 14 + 30 * e;
+        ctx.fillStyle = `rgba(70, 60, 64, ${Math.max(0, 0.55 - e / 4)})`;
+        ctx.beginPath();
+        ctx.arc(sx, sy, sr, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      // 飛び散る土くれ
+      ctx.fillStyle = `rgba(80, 56, 38, ${Math.min(1, 2 - e)})`;
+      for (let k = 0; k < 40; k++) {
+        const ang = (k / 40) * Math.PI * 2 + k * 0.7;
+        const sp = 120 + ((k * 37) % 110);
+        const x = cx + Math.cos(ang) * sp * e;
+        const y = cy + Math.sin(ang) * sp * 0.5 * e - 180 * e + 220 * e * e;
+        ctx.fillRect(Math.round(x), Math.round(y), 4, 4);
+      }
+    },
     spawns: {
       center: { x: 14 * T, y: 5.8 * T, facing: "south" },
       south: { x: 13.5 * T, y: 13.3 * T, facing: "north" },
@@ -2867,7 +3043,13 @@
       playerSprite: { img: "ki", cell: 64, frames: 7, footY: 17 },
       start: "stop",
       startSpawn: "start",
-      maps: { stop: S_STOP, alley: S_ALLEY, shop: S_SHOP, river: S_RIVER, rise: S_RISE, orbit: S_ORBIT, crater: S_CRATER },
+      maps: { stop: S_STOP, alley: S_ALLEY, shop: S_SHOP, river: S_RIVER, rise: S_RISE, orbit: S_ORBIT, space: S_SPACE, crater: S_CRATER },
+      // 着地のあと、鉄瓶にお湯を注いでもらうまで、きーは真っ黒
+      playerTint: (api) => (api.flag("charred") ? "rgba(22, 18, 18, 0.97)" : null),
+      // 単結晶に入ってから流れ星になるまでの途中でやめていたら、入るところからやり直せるようにする
+      onEnterWorld(api) {
+        if (api.flag("launched") && !api.flag("fallen")) api.setFlag("launched", false);
+      },
     },
   };
 })();
