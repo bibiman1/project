@@ -6,8 +6,8 @@ V = '/home/user/project/docs/assets/takarabune/v1/'
 PATCH = {
     'port': [(250, 300, 345, 448), (340, 60, 520, 240), (690, 150, 840, 430), (590, 180, 770, 240)],
     'gate': [(120, 60, 200, 175)],
-    'admin': [(0, 215, 300, 384)],
-    'turbine': [(90, 110, 330, 250)],
+    'admin': [(0, 215, 300, 384), (590, 190, 768, 384)],
+    'turbine': [(90, 90, 640, 300)],
 }
 for n, boxes in PATCH.items():
     full = Image.open(V + f'full_{n}.png').convert('RGBA')

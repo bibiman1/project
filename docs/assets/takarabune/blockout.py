@@ -148,8 +148,7 @@ for y in (3 * T, 3 * T + 12): d.line((16 * T, y, W - 16, y), fill=(170, 170, 160
 d.line((W - 30, 5 * T, W - 30, 14 * T), fill=(200, 120, 60), width=8)
 # 警告の札(字は後でゲームの字体)
 for (c, rr2) in [(4, 1), (14, 1), (3, 14), (16, 14)]:
-    d.rectangle((c * T, rr2 * T + 4, c * T + 40, rr2 * T + 26), fill=(240, 210, 40), outline=(40, 30, 10), width=2)
-    d.rectangle((c * T + 2, rr2 * T + 6, c * T + 38, rr2 * T + 12), fill=(200, 40, 30))
+    pass
 # 床の縞
 for (x0, y0, x1, y1) in [(2 * T, 15 * T, 18 * T, 15 * T + 12), (2 * T, 2 * T + 20, 7 * T, 2 * T + 30), (13 * T, 2 * T + 20, 18 * T, 2 * T + 30)]:
     d.rectangle((x0, y0, x1, y1), fill=(240, 200, 30))
@@ -163,6 +162,22 @@ for (c, rr2) in [(2, 3), (17, 3), (2, 10), (17, 10)]:
 glow(e, 10 * T, int(1.6 * T), 70, (120, 255, 150), 120)
 e.save(O + 'reactor.png')
 
+
+def trefoil(d, x, y, s=22):
+    # 黄色の四角に黒い放射能マーク(字はない。D88)
+    d.rectangle((x, y, x + s, y + s), fill=(236, 200, 40), outline=(30, 24, 10), width=2)
+    cx, cy, r = x + s / 2, y + s / 2, s * 0.4
+    for ang in (90, 210, 330): d.pieslice((cx - r, cy - r, cx + r, cy + r), ang - 30, ang + 30, fill=(30, 26, 20))
+    d.ellipse((cx - s * 0.09, cy - s * 0.09, cx + s * 0.09, cy + s * 0.09), fill=(30, 26, 20))
+
+def floor_line(d, box):
+    # 管理区域の境目: 床の黄と黒の線
+    x0, y0, x1, y1 = box
+    d.rectangle(box, fill=(236, 196, 30))
+    if x1 - x0 >= y1 - y0:
+        for k in range(x0 - (y1 - y0), x1, 12): d.line((k, y1, k + (y1 - y0), y0), fill=(30, 26, 20), width=4)
+    else:
+        for k in range(y0 - (x1 - x0), y1, 12): d.line((x0, k + (x1 - x0), x1, k), fill=(30, 26, 20), width=4)
 # 警告の札(黄色の板)。字は PixelLab のあとでゲームの字体で入れる(signs.json)
 SIGNS = []
 def plate(d, mp, x, y, text):
@@ -251,7 +266,7 @@ d.rectangle((14, 8 * T, W - 14, 10 * T), fill=(132, 134, 124))
 for x in range(3 * T, 22 * T, 3 * T): d.polygon([(x, 9 * T - 6), (x + 14, 9 * T), (x, 9 * T + 6)], fill=(230, 200, 40))
 d.rectangle((4 * T, 11 * T, 6 * T, H), fill=(80, 90, 96), outline=(40, 40, 40))     # 南の玄関
 d.rectangle((W - 14, 8 * T, W, 10 * T), fill=(80, 90, 96), outline=(40, 40, 40))     # 東の扉
-plate(d, 'admin', 16 * T, 7 * T + 2, 'この先 管理区域')
+floor_line(d, (19 * T, 8 * T, 19 * T + 12, 10 * T)); trefoil(d, 21 * T, 7 * T)
 shadow(c, (0, 0, W, H), 120)
 for x, y in [(W - 30, 7 * T + 6), (5 * T, 11 * T - 10), (9 * T, T + 6)]:
     glow(c, x, y, 70, (90, 255, 140), 160); ImageDraw.Draw(c).rectangle((x - 10, y - 4, x + 10, y + 4), fill=(140, 255, 170))
@@ -282,7 +297,8 @@ for x in (2 * T, 26 * T):
     d.ellipse((x - 14, 6 * T - 14, x + 14, 6 * T + 14), fill=(236, 196, 30), outline=(30, 26, 20), width=2)
     for ang in (90, 210, 330): d.pieslice((x - 12, 6 * T - 12, x + 12, 6 * T + 12), ang - 30, ang + 30, fill=(30, 26, 20))
 d.rectangle((0, 8 * T, 10, 10 * T), fill=(70, 70, 76)); d.rectangle((W - 10, 2 * T, W, 4 * T), fill=(70, 70, 76))
-for (x, y) in [(4 * T, 8 * T + 4), (13 * T, 8 * T + 4), (22 * T, 2 * T + 4)]: plate(d, 'turbine', x, y, '放射線管理区域')
+floor_line(d, (T, 2 * T, T + 12, 4 * T)); floor_line(d, (T, 8 * T, T + 12, 10 * T))
+for (x, y) in [(5 * T, 8 * T + 2), (14 * T, 8 * T + 2), (23 * T, 2 * T + 2)]: trefoil(d, x, y)
 shadow(t2, (0, 0, W, H), 120)
 for x in (6 * T, 16 * T):
     glow(t2, x, 2 * T + 6, 60, (255, 120, 40), 160); ImageDraw.Draw(t2).ellipse((x - 6, 2 * T, x + 6, 2 * T + 10), fill=(255, 150, 60))
@@ -362,7 +378,8 @@ s_.save(O + 'sea.png')
 
 # 原子炉建屋の札を、字の入る幅で入れ直す
 d = ImageDraw.Draw(e)
-for x, y in SIGNS_E: plate(d, 'reactor', x, y, '高線量区域 立入禁止')
+for x, y in [(4 * T, T + 4), (14 * T, T + 4), (3 * T, 14 * T + 2), (16 * T, 14 * T + 2), (6 * T, 14 * T + 2), (13 * T, 14 * T + 2)]: trefoil(d, x, y)
+floor_line(d, (2 * T, 11 * T + 16, 2 * T + 12, 15 * T))
 e.save(O + 'reactor.png')
 
 import json

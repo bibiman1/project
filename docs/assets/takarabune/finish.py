@@ -34,6 +34,13 @@ for s in json.load(open(V + 'signs.json')):
     t = text_row(s['text'])
     tx = x + (w - t.width) // 2; ty = y + 7
     ink = Image.new('RGBA', t.size, dark + (255,)); im.paste(ink, (tx, ty), t)
+# 原子炉建屋の下の札は、PixelLab で無地の板になったので、放射能マークを描き入れる(字はない、D88)
+def trefoil_mark(im, cx, cy, r, col):
+    m = Image.new('L', im.size, 0); md = ImageDraw.Draw(m)
+    for ang in (90, 210, 330): md.pieslice((cx - r, cy - r, cx + r, cy + r), ang - 30, ang + 30, fill=255)
+    md.ellipse((cx - r * 0.22, cy - r * 0.22, cx + r * 0.22, cy + r * 0.22), fill=255)
+    im.paste(Image.new('RGBA', im.size, col + (255,)), (0, 0), m)
+for cx in (107, 203, 426, 521): trefoil_mark(ims['reactor'], cx, 462, 8, (34, 26, 16))
 # 甲板: 下絵の船の形(少し太らせる)で切り抜く
 deck = ims['deck']
 a = Image.open(V + 'deck.png').getchannel('A').filter(ImageFilter.MaxFilter(5))
