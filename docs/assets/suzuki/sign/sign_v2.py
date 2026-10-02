@@ -14,6 +14,23 @@ def text_mask(t, scale=1):
     m = m.point(lambda v: 255 if v > 110 else 0); m = m.crop(m.getbbox())
     return m.resize((m.width * scale, m.height * scale), Image.NEAREST) if scale > 1 else m
 
+def text_row(t, adv=15, dot_adv=8, space=6, scale=1):
+    # 1 字ずつ 16 ドットの升目で描き、送り幅を詰めて並べる(・は 8、空白は 6)
+    cells = []
+    for ch in t:
+        if ch in '　 ': cells.append((None, space)); continue
+        m = Image.new('L', (16, 20), 0); ImageDraw.Draw(m).text((0, -3), ch, fill=255, font=fnt)
+        m = m.point(lambda v: 255 if v > 110 else 0).crop((0, 0, 16, 16))
+        if ch == '・': m = m.crop((4, 0, 12, 16)); cells.append((m, dot_adv))
+        else: cells.append((m, adv))
+    W = sum(a for _, a in cells) + 1
+    out = Image.new('L', (W, 16), 0); x = 0
+    for m, a in cells:
+        if m is not None: out.paste(m, (x, 0))
+        x += a
+    out = out.crop(out.getbbox())
+    return out.resize((out.width * scale, out.height * scale), Image.NEAREST) if scale > 1 else out
+
 def mark(col, a=21, b=6):
     # アーモンド型の宇宙船(二つの円の重なり)と、その下の湾曲に沿った五つ星
     R = (a * a + b * b) / (2 * b); dd = R - b
@@ -35,6 +52,7 @@ def mark(col, a=21, b=6):
     return m.crop(bb)
 
 SHIP_CY = 6
+BOARD = (244, 76)   # 建物(256 ドット)より少し狭く
 def paste_mask(im, m, x, y, col):
     im.paste(Image.new('RGBA', m.size, col), (x, y), m)
 
@@ -67,9 +85,9 @@ def rust(im, seed=5, amount=1.0):
             dot(x, y, R_.choice(RUST[:3]) if R_.random() < 0.6 else (92, 80, 72))
 
 def board(rusty=True, seed=5):
-    W, H = 312, 80
+    W, H = BOARD
     im = Image.new('RGBA', (W, H), GROUND)
-    l1 = text_mask('宇宙船殻用単結晶　製造・販売・卸'); l3 = text_mask('東京・群馬・水星・北京')
+    l1 = text_row('宇宙船殻用単結晶　製造・販売・卸'); l3 = text_row('東京・群馬・水星・北京', adv=16)
     if rusty:
         px = im.load(); R_ = random.Random(seed + 7)
         for y in range(H):
@@ -84,13 +102,13 @@ def board(rusty=True, seed=5):
             for _ in range(w0 * h0):
                 X = x0 + int(R_.gauss(0, w0 / 3)); Y = H - 3 - int(abs(R_.gauss(0, h0)))
                 if 0 <= X < W and 0 <= Y < H: px[X, Y] = R_.choice(RUST) + (255,)
-    paste_mask(im, l1, (W - l1.width) // 2, 6, INK)
+    paste_mask(im, l1, (W - l1.width) // 2, 5, INK)
     a, b = text_mask('鈴木', 2), text_mask('商店', 2); mk = mark(INK)
-    gap = 14; tot = a.width + gap + mk.width + gap + b.width; x = (W - tot) // 2
-    ty = 25; tc = ty + a.height / 2                       # 字の上下のまんなか
+    gap = 12; tot = a.width + gap + mk.width + gap + b.width; x = (W - tot) // 2
+    ty = 23; tc = ty + a.height / 2                       # 字の上下のまんなか
     my = int(round(tc - SHIP_CY))                          # 船体の中心をそこへ(星は下に垂れる)
     paste_mask(im, a, x, ty, INK); im.alpha_composite(mk, (x + a.width + gap, my)); paste_mask(im, b, x + a.width + gap + mk.width + gap, ty, INK)
-    paste_mask(im, l3, (W - l3.width) // 2, 60, INK)
+    paste_mask(im, l3, (W - l3.width) // 2, H - 19, INK)
     if rusty:   # 字の上にも少しだけ錆が回る
         R_ = random.Random(seed + 1); px = im.load()
         for _ in range(110):
@@ -103,7 +121,7 @@ if __name__ == '__main__':
     F2 = ImageFont.truetype('/usr/share/fonts/opentype/ipafont-gothic/ipag.ttf', 18)
     sk = Image.open('/home/user/project/docs/record/2026-10-02-suzuki/author_sign_sketch.jpg').convert('RGB')
     sheet = Image.new('RGB', (1260, 780), (245, 240, 228)); sd = ImageDraw.Draw(sheet)
-    sd.text((20, 10), '鈴木商店の看板 第 3 案(宇宙船を字の上下のまんなかに、錆を強く)', fill=(60, 50, 40), font=F2)
+    sd.text((20, 10), '鈴木商店の看板 第 4 案(建物の幅 256 ドットより少し狭く、244×76)', fill=(60, 50, 40), font=F2)
     sd.text((20, 44), '作者の下絵', fill=(180, 50, 35), font=F2); sheet.paste(sk.resize((sk.width * 180 // sk.height, 180)), (20, 72))
     mk = mark(INK); big = Image.new('RGBA', mk.size, GROUND); big.alpha_composite(mk)
     sd.text((700, 44), f'マーク {mk.width}×{mk.height} ドットを 8 倍', fill=(180, 50, 35), font=F2)
@@ -114,4 +132,4 @@ if __name__ == '__main__':
     m = bg.copy(); cx = 607; m.alpha_composite(bd, (cx - bd.width // 2, 126 - bd.height))
     sd.text((680, 300), 'ゲームの路地にのせて(画面と同じ 2 倍)', fill=(180, 50, 35), font=F2)
     sheet.paste(m.crop((cx - 140, 20, cx + 140, 230)).resize((560, 420), Image.NEAREST).convert('RGB'), (680, 330))
-    bd.save(OUT + 'sign_v3.png'); sheet.save(OUT + 'sign_mock_v3.png'); print('ok', mk.size)
+    bd.save(OUT + 'sign_v4.png'); sheet.save(OUT + 'sign_mock_v4.png'); print('ok', mk.size)
