@@ -85,6 +85,10 @@
         show(imgKey, onDone, opts) {
           cutscene = { img: imgKey, t0: clock, onDone: onDone || null, full: !!(opts && opts.full) };
         },
+        // 一枚絵を何枚か、ボタンを待たずに、ゆっくり重ねて移り変わらせる(最後の絵のあとで onDone)
+        showSeq(keys, holdSec, onDone) {
+          cutscene = { img: keys[0], seq: keys, hold: holdSec, t0: clock, onDone: onDone || null, full: true };
+        },
         // カメラを y まで動かして、しばらく見せてから戻す
         pan(y, holdMs, onDone) {
           pan = { y, t0: clock, hold: holdMs / 1000, onDone: onDone || null, from: lastCamY };
@@ -200,6 +204,7 @@
       bubbles = [];
       nearObj = null;
       lastCamY = null;
+      if (cutscene && cutscene.ended) cutscene = null;
       for (const tr of map.triggers || []) tr.inside = true; // 出現位置で即発火しないように
       if (map.onEnter) map.onEnter(world.api);
     }
@@ -485,6 +490,7 @@
     function interact() {
       if (!world) return false;
       if (cutscene) {
+        if (cutscene.seq) return true;
         if (clock - cutscene.t0 < 0.6) return true;
         const done = cutscene.onDone;
         cutscene = null;
@@ -721,7 +727,67 @@
       bogiPix.text(ctx, toast.text, x + 10 * s, 15 * s, s);
     }
 
+    // 一枚絵を拡大した下絵(整数倍)。絵ごとに一度だけ作る
+    const cutBufs = new Map();
+    function cutBuf(im, s) {
+      const key = im.src + "@" + s;
+      if (!cutBufs.has(key)) {
+        const c = document.createElement("canvas");
+        c.width = im.width * s;
+        c.height = im.height * s;
+        const g = c.getContext("2d");
+        g.imageSmoothingEnabled = false;
+        g.drawImage(im, 0, 0, c.width, c.height);
+        cutBufs.set(key, c);
+      }
+      return cutBufs.get(key);
+    }
+    function drawSeq() {
+      const el = clock - cutscene.t0;
+      const n = cutscene.seq.length;
+      const fade = Math.min(1.4, cutscene.hold * 0.5);
+      if (el >= n * cutscene.hold) {
+        // 終わったら黒いまま。次のマップに切り替わるまで、前のマップを見せない
+        ctx.fillStyle = "rgb(8, 8, 12)";
+        ctx.fillRect(0, 0, VW, VH);
+        if (!cutscene.ended) {
+          cutscene.ended = true;
+          const done = cutscene.onDone;
+          if (done) setTimeout(done, 0);
+        }
+        return;
+      }
+      ctx.fillStyle = "rgb(8, 8, 12)";
+      ctx.fillRect(0, 0, VW, VH);
+      const i = Math.floor(el / cutscene.hold);
+      const into = el - i * cutscene.hold;
+      const put = (k, alpha) => {
+        const im = img(k);
+        if (!im) return;
+        const fit = Math.max(VW / im.width, VH / im.height);
+        const c = cutBuf(im, Math.max(1, Math.ceil(fit)));
+        const w = Math.round(im.width * fit);
+        const h = Math.round(im.height * fit);
+        ctx.globalAlpha = alpha;
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = "high";
+        ctx.drawImage(c, Math.round((VW - w) / 2), Math.round((VH - h) / 2), w, h);
+        ctx.imageSmoothingEnabled = false;
+        ctx.globalAlpha = 1;
+      };
+      put(cutscene.seq[i], 1);
+      // 次の絵へ、ゆっくり重ねる(最後の絵は、そのまま暗くなって終わる)
+      const left = cutscene.hold - into;
+      if (left < fade) {
+        if (i + 1 < n) put(cutscene.seq[i + 1], 1 - left / fade);
+        else {
+          ctx.fillStyle = `rgba(8, 8, 12, ${1 - left / fade})`;
+          ctx.fillRect(0, 0, VW, VH);
+        }
+      }
+    }
     function drawCutscene() {
+      if (cutscene.seq) return drawSeq();
       const el = clock - cutscene.t0;
       const a = Math.min(1, el / 0.6);
       ctx.fillStyle = `rgba(8, 8, 12, ${0.92 * a})`;
