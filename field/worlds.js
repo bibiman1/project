@@ -2287,7 +2287,14 @@
 
   // A 浜(入口。湾に突き出た桟橋から上がる。北の密林の切れ目の道の先が農園)
   // 「熱帯雨林に一日だけドカ雪が積もった」南極。マップの絵と当たり判定は docs/assets/banana/blockout2.py から
-  const B_SHORE_OBJS = [chirinFollower(null), ...bFront("fg_shore", B_FG.shore)];
+  // 浜のペンギン 7 羽は、足もとの y できーと前後(fg_shore2。docs/assets/banana/fg_penguins.py)。群れの足もとは通れない
+  // 2026-10-03、作者「おかしい」
+  const B_PENGUINS = [
+    ...[[542, 118, 566, 158], [569, 116, 595, 152], [596, 124, 623, 158], [625, 124, 651, 158]].map(([x0, y0, x1, y1]) => kFg("fg_shore2", x0, y0, x1 - x0, y1 - y0, 155)),
+    ...[[544, 152, 571, 187], [569, 152, 595, 187], [596, 154, 623, 188]].map(([x0, y0, x1, y1]) => kFg("fg_shore2", x0, y0, x1 - x0, y1 - y0, 186)),
+    kWall(542, 138, 651, 188),
+  ];
+  const B_SHORE_OBJS = [chirinFollower(null), ...bFront("fg_shore", B_FG.shore), ...B_PENGUINS];
   const B_SHORE = {
     tile: T,
     bg: "#e8eef6",
@@ -3985,7 +3992,7 @@
         if (!api.flag("gotMango")) ["fledFarm", "fledCanal", "chirinJoined"].forEach((f) => api.setFlag(f, false));
       },
       images: Object.fromEntries(
-        ["bg_shore", "bg_farm", "bg_canal", "bg_steps", "fg_shore", "fg_farm", "fg_canal", "fg_steps", "kikori", "chirin", "kikikori", "goron", "v_final"]
+        ["bg_shore", "bg_farm", "bg_canal", "bg_steps", "fg_shore", "fg_shore2", "fg_farm", "fg_canal", "fg_steps", "kikori", "chirin", "kikikori", "goron", "v_final"]
           .map((k) => [k, `${k}.png`])
           .concat([["ki", "./assets/worlds/lake/ki_walk.png"]])
       ),
