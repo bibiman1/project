@@ -2679,9 +2679,10 @@
 
   // D 土手と河川敷。単結晶は、両端が狭まった透明な円柱(作者)。両端に穴が空いている
   // 荷札を持って穴を調べると、荷札を結んで中へ入る → 一枚絵 → 上昇(成層圏、熱圏)→ 衛星軌道
+  // 筒の中の絵を閉じると、暗転せずに、絵の上から上昇の場面へじかに重ねる(D91。前のマップを見せない)
   const sEnter = (api) => {
     api.setFlag("launched");
-    api.show("v_inside", () => api.warp("rise", "view"), { full: true });
+    api.show("v_inside", null, { full: true, into: { map: "rise", spawn: "view" } });
   };
   const sHole = (id, x) =>
     sSpot(id, x, 5.6 * T, sEnter, { range: 50, canInteract: (api) => api.hasItem("荷札") && !api.flag("launched") });
@@ -2702,7 +2703,7 @@
     legend: K_LEGEND,
     drawGround(ctx, ox, oy, img) {
       const get = (k) => (typeof img === "function" ? img(k) : null);
-      const t = Math.min(RISE_DUR, performance.now() / 1000 - riseT0);
+      const t = Math.max(0, Math.min(RISE_DUR, performance.now() / 1000 - riseT0));
       const p = Math.pow(t / RISE_DUR, 1.7);
       const sky = get("rise_sky");
       const VWm = 15 * T;
@@ -2732,8 +2733,9 @@
     },
     spawns: { view: { x: 7 * T, y: 5 * T, facing: "east" } },
     onEnter(api) {
-      riseT0 = performance.now() / 1000;
-      api.later(RISE_DUR * 1000 + 400, () => api.show("v_rise3", () => api.warp("orbit", "west"), { full: true }));
+      // 筒の中の絵が薄くなりきってから(0.8 秒)、上がりはじめる
+      riseT0 = performance.now() / 1000 + 0.8;
+      api.later(RISE_DUR * 1000 + 1200, () => api.show("v_rise3", null, { full: true, into: { map: "orbit", spawn: "west" } }));
     },
     triggers: [],
     objects: [],
@@ -2825,13 +2827,26 @@
     spawns: { view: { x: 7 * T, y: 4 * T, facing: "south" } }, // カメラが画面のいちばん上(oy = 0)に来る位置
     onEnter(api) {
       spaceT0 = performance.now() / 1000;
+      // 流れ星 → 爆発(D91): ボタンを待たない。流れ星の絵から、流れ星の頭へ寄る絵を、だんだん短く切りかえる(1.3 → 0.6 → 0.3 → 0.15 秒)
+      // → 白く光った裏で、夜の河川敷のクレーターへ(暗転しない)
+      const HX = 212; // 流れ星の頭(v_fall の中のドット)
+      const HY = 91;
       api.later(SPACE_DUR * 1000, () =>
-        api.show("v_fall", () => {
-          api.setFlag("fallen");
-          api.setFlag("charred"); // 着地のあと、きーは真っ黒
-          api.setFlag("landing");
-          api.warp("crater", "center");
-        }, { full: true })
+        api.burst(
+          [
+            { img: "v_fall", sec: 1.6, z0: 1, z1: 1.12, cx: 160, cy: 96, fadeIn: 0.3 },
+            { img: "v_fall", sec: 0.6, z0: 1.7, z1: 1.9, cx: HX + 4, cy: HY + 3 },
+            { img: "v_fall", sec: 0.3, z0: 2.8, z1: 3.1, cx: HX + 4, cy: HY + 3 },
+            { img: "v_fall", sec: 0.15, z0: 4.5, z1: 5, cx: HX + 3, cy: HY + 2 },
+            { white: true, sec: 0.08 },
+          ],
+          () => {
+            api.setFlag("fallen");
+            api.setFlag("charred"); // 着地のあと、きーは真っ黒
+            api.setFlag("landing");
+            api.cut("crater", "center");
+          }
+        )
       );
     },
     triggers: [],
@@ -2852,8 +2867,11 @@
     bg: "#101830",
     onEnter(api) {
       if (api.flag("landing")) {
+        // 白が引くと、もう火の玉が上がっている。画面がゆれ、煙が晴れるまで、きーは動かない(D91)
         api.setFlag("landing", false);
-        boomT0 = performance.now() / 1000 + 1.3; // 暗転が明けてから
+        boomT0 = performance.now() / 1000;
+        api.shake(0.7, 7);
+        api.freeze(1.9);
       }
     },
     drawOverlay(ctx, ox, oy) {
@@ -2916,10 +2934,11 @@
 
 
   // ======== 宝舟と首振りエンジン ========
-  // 今の夜、欠けて輪のある月。名前のない小さな漁港と、岬の上の止まった発電所(D84〜D87)。絵と当たり判定は docs/assets/takarabune/
-  // 条件: 鋳物小屋でシリンダーを鋳る手伝い(一枚絵)→ 発電所の奥(正門 → 管理棟 → タービン建屋 → 原子炉建屋 → 炉心)で燃料を拾う
-  // → 暗転して港の宝舟の前へ → ボイラーに燃料をくべる → 甲板で沖へ → 燃料をまくと海が青く光る(一枚絵)→ 港で「白紙の海図」→ 西の坂道から帰る
-  // きーは警告に反応しない。ダメージのしくみはない(D84)
+  // 今の夜、欠けて輪のある月。名前のない小さな漁港と、岬の上の止まった発電所(D84〜D88)。絵と当たり判定は docs/assets/takarabune/
+  // 条件(D88): 発電所の奥(正門 → 管理棟 → タービン建屋 → 原子炉建屋 → 炉心)のプールに飛び込んで「ペレット」→ 暗転して港へ
+  // → 鋳造工房のぼぎにペレットを渡す(炉が青白く燃え、るつぼの金属くずが溶ける。一枚絵)→ 道具「首振りエンジンの部品」
+  // → 宝舟の機関室で部品を取り付け → ボイラーの火室にペレット → 首振りエンジンが動く → 甲板で沖へ → ペレットを海に投げ込む → 青く光る海(一枚絵)
+  // → 港で「白紙の海図」。ペレットは一つで、鋳造・エンジン・海に使いまわす。西の坂道からいつでも帰れる。きーは警告に反応しない(D84)
   const TK_GRIDS = {
     port: [
       "############################",
@@ -3023,11 +3042,37 @@
       "####################",
       "####################",
     ],
+    workshop: [
+      "################",
+      "################",
+      "#####......#####",
+      "#####......#####",
+      "#####......#####",
+      "####...####.####",
+      "####...####.####",
+      "##.....####.####",
+      "##.....####.####",
+      "####........####",
+      "####........####",
+      "#######..#######",
+    ],
+    engineroom: [
+      "################",
+      "################",
+      "####...####..###",
+      "####...####..###",
+      "####...####....#",
+      "####...####....#",
+      "#......####....#",
+      "#......####....#",
+      "#..............#",
+      "################",
+    ],
   };
   const tkMap = (key, cols, rows, extra) =>
     Object.assign({ tile: T, bg: "#0c1220", map: TK_GRIDS[key], legend: K_LEGEND, drawGround: kImage(`bg_${key}`, cols * T, rows * T) }, extra);
   const tkSpot = (id, x, y, interact, extra) => Object.assign({ id, x, y, w: 1, h: 1, range: 48, headY: 40, interact }, extra);
-  // 灯りのゆらぎ(非常灯、回転灯)を、絵の上に光の輪として重ねる
+  // 灯りのゆらぎ(非常灯、回転灯、炉の火)を、絵の上に光の輪として重ねる
   const tkLight = (ctx, x, y, r, rgb, a) => {
     const g = ctx.createRadialGradient(x, y, 2, x, y, r);
     g.addColorStop(0, `rgba(${rgb}, ${a})`);
@@ -3035,29 +3080,112 @@
     ctx.fillStyle = g;
     ctx.fillRect(x - r, y - r, 2 * r, 2 * r);
   };
-  // 首振りエンジン: シリンダーが軸を中心に、左右へゆっくり首を振る
-  const tkEngine = (id, x, y, scale, running) => ({
-    id,
-    x,
-    y,
+  const tkNow = () => performance.now() / 1000;
+  // 湯気のかたまり(上へのぼりながら広がって消える)
+  const tkPuffs = [];
+  const tkPuff = (x, y, vx, vy, life, size) => tkPuffs.push({ x, y, vx, vy, t0: tkNow(), life, size });
+  const tkDrawPuffs = (ctx, ox, oy) => {
+    const now = tkNow();
+    for (let k = tkPuffs.length - 1; k >= 0; k--) {
+      const p = tkPuffs[k];
+      const u = (now - p.t0) / p.life;
+      if (u >= 1) {
+        tkPuffs.splice(k, 1);
+        continue;
+      }
+      const s = Math.round(p.size * (0.6 + u * 1.4));
+      ctx.fillStyle = `rgba(232, 236, 244, ${0.75 * (1 - u)})`;
+      ctx.fillRect(Math.round(ox + p.x + p.vx * u * p.life - s / 2), Math.round(oy + p.y + p.vy * u * p.life - s / 2), s, s);
+    }
+  };
+
+  // ---- 首振りエンジン(首振り式の蒸気機関、D88)----
+  // しくみ: ピストン棒の先がクランクピンに直につながる。クランクが回ると、ピンを追ってシリンダー全体が下の軸(トラニオン)で首を振る。
+  // 首を振ると、軸の面の口が蒸気の入口と出口に交互に重なる(弁の仕掛けがいらない)。複動式なので、1 回転に 2 回、蒸気を吐く(上と下の死点)。
+  // 回転は、ペレットを火室に入れてから、圧力が上がるのを待って(TK_PRESS 秒)、ゆっくり回りはじめ、TK_SPIN 秒で全速になる
+  const TK_PRESS = 2.6;
+  const TK_SPIN = 4;
+  const TK_OMEGA = 2 * Math.PI * 1.1; // 全速(1 秒に 1.1 回転)
+  let tkFireT0 = -1; // ペレットを火室に入れた時刻(読みこみ直したあとは、すでに全速として扱う)
+  const tkFireAge = (api) => (!api.flag("running") ? -1 : tkFireT0 < 0 ? 999 : tkNow() - tkFireT0);
+  const tkCrank = (api) => {
+    const a = tkFireAge(api) - TK_PRESS;
+    if (a <= 0) return 0;
+    return a < TK_SPIN ? (TK_OMEGA * a * a) / (2 * TK_SPIN) : TK_OMEGA * (a - TK_SPIN / 2);
+  };
+  // 死点をまたいだら蒸気を吐く(甲板の煙突、機関室のシリンダーの口)
+  let tkLastHalf = -1;
+  const tkExhaust = (api) => {
+    const h = Math.floor(tkCrank(api) / Math.PI);
+    if (h !== tkLastHalf) {
+      const fire = tkLastHalf >= 0 && h > tkLastHalf;
+      tkLastHalf = h;
+      return fire;
+    }
+    return false;
+  };
+  // 機関室の首振りエンジン(前から見る)。クランク軸の中心 C、シリンダーの軸 O(map のドット)
+  const TK_C = [288, 79];
+  const TK_O = [288, 214];
+  const TK_R = 26; // クランクの半径(首の振れ幅が見えるように、実物の比より少し大きく)
+  const tkEngineObj = {
+    id: "engine",
+    x: 9 * T,
+    y: 7.4 * T,
     w: 1,
     h: 1,
-    sortDy: 10,
-    headY: 26,
-    hidden: (api) => !api.flag("cast"),
+    sortDy: 0,
+    headY: 6.2 * T,
     draw(ctx, sx, sy, t, api) {
-      const im = api.image("engine");
-      if (!im) return;
-      const on = running(api);
-      const a = on ? Math.sin(t * 5) * 0.32 : 0;
-      ctx.save();
-      ctx.translate(sx, sy);
-      ctx.rotate(a);
+      const ok = api.flag("installed"); // ピストンが付くまでは、ピストン棒がない(シリンダーとクランクのあいだが空いている)
+      const ox = sx - this.x;
+      const oy = sy - this.y;
+      const th = tkCrank(api);
+      const cx = ox + TK_C[0];
+      const cy = oy + TK_C[1];
+      const px = cx + TK_R * Math.sin(th);
+      const py = cy - TK_R * Math.cos(th);
+      const qx = ox + TK_O[0];
+      const qy = oy + TK_O[1];
+      const phi = Math.atan2(px - qx, qy - py); // シリンダーの傾き
+      const cyl = api.image("cyl");
+      const fly = api.image("fly");
       ctx.imageSmoothingEnabled = false;
-      ctx.drawImage(im, (-im.width * scale) / 2, (-im.height * scale) / 2, im.width * scale, im.height * scale);
-      ctx.restore();
+      // はずみ車(クランク軸といっしょに回る)
+      if (fly) {
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate(th);
+        ctx.drawImage(fly, -fly.width / 2, -fly.height / 2);
+        ctx.restore();
+      }
+      // シリンダー(下の軸で首を振る)と、ピストン棒(シリンダーの先からクランクピンまで)
+      const SC = 1.6; // シリンダーの絵の倍率
+      const L = cyl ? cyl.height * SC - 8 : 88;
+      const tx = qx + L * Math.sin(phi);
+      const ty = qy - L * Math.cos(phi);
+      if (ok) {
+        ctx.strokeStyle = "#c8ccd4";
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(tx, ty);
+        ctx.lineTo(px, py);
+        ctx.stroke();
+      }
+      if (cyl) {
+        ctx.save();
+        ctx.translate(qx, qy);
+        ctx.rotate(phi);
+        ctx.drawImage(cyl, (-cyl.width * SC) / 2, -cyl.height * SC + 6, cyl.width * SC, cyl.height * SC);
+        ctx.restore();
+      }
+      // クランクピン
+      ctx.fillStyle = "#e0c070";
+      ctx.fillRect(Math.round(px - 3), Math.round(py - 3), 6, 6);
+      // 蒸気を吐くたびに、シリンダーの口(軸のところ)から湯気
+      if (tkExhaust(api)) tkPuff(TK_O[0] + (Math.sin(phi) > 0 ? -12 : 12), TK_O[1] - 6, Math.sin(phi) > 0 ? -14 : 14, -16, 0.9, 8);
     },
-  });
+  };
 
   // A 漁港と岸壁(入口で出口。西の坂道。東の坂道の先が岬の発電所)
   const TK_PORT = tkMap("port", 28, 14, {
@@ -3065,42 +3193,22 @@
       start: { x: 1.2 * T, y: 6.6 * T, facing: "east" },
       east: { x: 26.4 * T, y: 4 * T, facing: "west" },
       boat: { x: 11.2 * T, y: 9.2 * T, facing: "south" },
+      shop: { x: 5.6 * T, y: 7.9 * T, facing: "south" },
+    },
+    drawOverlay(ctx, ox, oy, t, api) {
+      // 宝舟のボイラーが焚けているあいだ、煙突から湯気(エンジンと同じ調子で)
+      if (api.flag("running") && tkExhaust(api)) tkPuff(10 * T + 6, 10.3 * T, -10, -26, 1.4, 10);
+      tkDrawPuffs(ctx, ox, oy);
     },
     triggers: [
       { id: "toGate", x: 27.6 * T, y: 2 * T, w: 1.4 * T, h: 4.6 * T, warp: { map: "gate", spawn: "west" } },
-      // 西の坂道から帰る。白紙の海図を手に入れるまでは帰れない(設計図)
-      {
-        id: "leave",
-        x: -T,
-        y: 5 * T,
-        w: 1.45 * T,
-        h: 3 * T,
-        run(api) {
-          if (api.hasItem("白紙の海図")) return api.exit();
-          api.mutter("まだ帰れない。", 1600); // 仮
-          api.place(1.4 * T, api.player().y);
-        },
-      },
+      // 西の坂道から、いつでも帰れる(D88)
+      { id: "leave", x: -T, y: 5 * T, w: 1.45 * T, h: 3 * T, run: (api) => api.exit() },
     ],
     objects: [
-      // 鋳物小屋のぼぎ(仮の絵。作者が差し替える、D70)。炉の前で青銅を溶かしている。調べると鋳造を手伝う(一枚絵)
-      {
-        id: "bogi",
-        img: "bogi",
-        w: 48,
-        h: 48,
-        x: 6.2 * T,
-        y: 7.3 * T,
-        sortDy: 18,
-        headY: 30,
-        range: 56,
-        interact(api) {
-          if (api.flag("cast")) return api.bubble("bogi", "……", 1200); // 仮
-          api.show("v_cast", () => api.setFlag("cast"));
-        },
-      },
-      tkEngine("engineP", 12.4 * T, 11.2 * T, 1, (api) => api.flag("fueled") && !api.flag("glowed")),
-      // 宝舟: 燃料をくべると首振りエンジンが動き、沖へ。帰ってきたら、舵のそばに白紙の海図
+      // 鋳物小屋(鋳造工房)の大戸
+      tkSpot("shopDoor", 5.6 * T, 7.2 * T, (api) => api.warp("workshop", "door"), { range: 44 }),
+      // 宝舟: 乗りこむと機関室。沖から帰ってきたら、舵のそばに白紙の海図
       tkSpot(
         "boat",
         11.2 * T,
@@ -3113,13 +3221,62 @@
             api.show("v_kaizu");
             return;
           }
-          if (!api.flag("cast") || !api.hasItem("燃料")) return api.mutter("……", 1200); // 仮
-          api.setFlag("fueled"); // 首振りエンジンが首を振りはじめる
-          api.bubble("engineP", "シュッ　シュッ", 1600); // 仮
-          api.later(1700, () => api.warp("deck", "stern"));
+          api.warp("engineroom", "ladder");
         },
         { range: 56, canInteract: (api) => !api.hasItem("白紙の海図") }
       ),
+    ],
+  });
+
+  // 鋳造工房(鋳物小屋の中)。るつぼ炉、トングとシャンク、二つ割の木の鋳枠と砂型、込め台、鋳物砂の山、型ばらしの格子、仕上げ台
+  // ぼぎ(仮の絵、D70)にペレットを渡すと、炉が青白く燃え、るつぼの中の金属くずが溶ける → 鋳造の一枚絵 → ピストン(D92)
+  let tkForgeT0 = -1;
+  const TK_WORKSHOP = tkMap("workshop", 16, 12, {
+    bg: "#14121a",
+    spawns: { door: { x: 7.9 * T, y: 10.4 * T, facing: "north" } },
+    drawOverlay(ctx, ox, oy, t, api) {
+      const fx = ox + 3 * T;
+      const fy = oy + 4 * T;
+      const e = tkForgeT0 < 0 ? (api.flag("cast") ? 99 : -1) : tkNow() - tkForgeT0;
+      if (e < 0) return;
+      // ペレットの熱で、炉が青白く燃える(鋳造のあとは、ゆっくり冷めていく)
+      const heat = api.flag("cast") && e > 6 ? 0.35 : Math.min(1, e / 1.2);
+      tkLight(ctx, fx, fy, 130, "120, 220, 255", 0.55 * heat * (0.9 + 0.1 * Math.sin(t * 9)));
+      tkLight(ctx, fx, fy, 40, "230, 255, 255", 0.8 * heat);
+      // るつぼの中の金属くずが溶けていく(赤 → 橙 → 白っぽい黄)
+      const melt = Math.min(1, Math.max(0, (e - 0.8) / 1.6));
+      if (melt > 0 && !(api.flag("cast") && e > 6)) {
+        ctx.fillStyle = `rgba(255, ${Math.round(120 + 100 * melt)}, ${Math.round(40 + 60 * melt)}, ${0.85 * melt})`;
+        ctx.beginPath();
+        ctx.ellipse(fx, fy + 1, 15, 12, 0, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    },
+    triggers: [{ id: "out", x: 7 * T, y: 11.5 * T, w: 2 * T, h: T, warp: { map: "port", spawn: "shop" } }],
+    objects: [
+      {
+        id: "bogi",
+        img: "bogi",
+        w: 48,
+        h: 48,
+        x: 5.6 * T,
+        y: 3.9 * T,
+        sortDy: 18,
+        headY: 30,
+        range: 56,
+        interact(api) {
+          if (api.flag("cast") || !api.hasItem("ペレット")) return api.bubble("bogi", "……", 1200); // 仮
+          tkForgeT0 = tkNow();
+          api.bubble("bogi", "……！", 1400); // 仮
+          api.later(3000, () =>
+            api.show("v_cast", () => {
+              api.setFlag("cast");
+              // 鋳あがったピストンを、きーが頭の上に掲げる(D92)
+              api.hold("piston", 1.8, () => api.giveItem("ピストン"));
+            }, { full: true })
+          );
+        },
+      },
     ],
   });
 
@@ -3212,38 +3369,189 @@
     objects: [{ id: "alarm", x: 10 * T, y: 1.4 * T, w: 1, h: 1, headY: 4 }],
   });
 
-  // F 格納容器の中(炉心)。行き止まり。炉のふちで燃料ペレットを拾うと、暗転して港の宝舟の前へ(D86)
+  // F 格納容器の中(炉心)。行き止まり。ふたの開いた炉はプール。ふちで調べると飛び込んで、ペレットを抱えて上がってくる → 暗転して港へ(D88)
+  let tkDiveT0 = -1;
+  let tkDiveFrom = [8 * T, 10.4 * T]; // 飛び込んだ場所(ふちのどこからでも)
+  const TK_DIVE = 2.4;
+  // プールのふち(だ円)。きーにいちばん近いふちの点
+  const TK_POOL = { cx: 8 * T, cy: 6 * T + 5, rx: 5 * T + 10, ry: 4 * T + 16 };
+  const tkRim = (x, y) => {
+    const a = Math.atan2((y - TK_POOL.cy) / TK_POOL.ry, (x - TK_POOL.cx) / TK_POOL.rx);
+    return [TK_POOL.cx + TK_POOL.rx * Math.cos(a), TK_POOL.cy + TK_POOL.ry * Math.sin(a)];
+  };
+  const tkDive = (api) => {
+    if (tkDiveT0 >= 0) return;
+    const pl = api.player();
+    tkDiveFrom = [pl.x, pl.y];
+    tkDiveT0 = tkNow();
+    TK_CORE._ki = api.image("ki");
+    api.freeze(TK_DIVE + 0.2);
+    api.later(TK_DIVE * 1000, () => {
+      tkDiveT0 = -1;
+      // 上がってきたきーが、ペレットを頭の上に掲げる(D92)→ 名前 → 暗転して港へ
+      api.hold("pellet", 1.8, () => {
+        api.giveItem("ペレット");
+        api.later(900, () => api.warp("port", "shop"));
+      });
+    });
+  };
   const TK_CORE = tkMap("core", 16, 14, {
     spawns: { south: { x: 8 * T, y: 12.3 * T, facing: "north" } },
     drawOverlay(ctx, ox, oy, t) {
       tkLight(ctx, ox + 8 * T, oy + 6 * T, 7 * T, "120, 210, 255", 0.14 + 0.06 * Math.sin(t * 2.1));
+      if (tkDiveT0 < 0) return;
+      const e = tkNow() - tkDiveT0;
+      // 跳びこむ先: ふちから、プールの水の上へ 3 マス
+      const [fx, fy] = tkDiveFrom;
+      const dx = TK_POOL.cx - fx;
+      const dy = TK_POOL.cy - fy;
+      const dl = Math.hypot(dx, dy) || 1;
+      const x = ox + fx + (dx / dl) * 3 * T;
+      const y = oy + fy + (dy / dl) * 3 * T;
+      // 跳びこむ(弧)→ しぶきと波紋 → 水の中で光る → ペレットを抱えて上がってくる
+      const ki = this._ki;
+      if (e < 0.5 && ki) {
+        const u = e / 0.5;
+        const row = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 2 : 3) : dy < 0 ? 1 : 0;
+        const kx = ox + fx + (x - ox - fx) * u;
+        const footY = oy + fy + (y - oy - fy) * u - Math.sin(u * Math.PI) * 30;
+        ctx.drawImage(ki, 0, row * 64, 64, 64, Math.round(kx - 32), Math.round(footY - 64 + 17), 64, 64);
+      }
+      if (e > 0.45 && e < 2.2) {
+        const u = (e - 0.45) / 1.75;
+        ctx.strokeStyle = `rgba(220, 250, 255, ${1 - u})`;
+        ctx.lineWidth = 2;
+        for (const k of [0, 0.3, 0.6]) {
+          const r = 6 + (u + k) * 50;
+          ctx.beginPath();
+          ctx.ellipse(x, y, r, r * 0.45, 0, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+        if (u < 0.35) {
+          ctx.fillStyle = `rgba(230, 250, 255, ${1 - u / 0.35})`;
+          for (let k = 0; k < 14; k++) {
+            const a = (k / 14) * Math.PI * 2;
+            ctx.fillRect(Math.round(x + Math.cos(a) * 20 * (u / 0.35 + 0.3)), Math.round(y - 10 * Math.sin((u / 0.35) * Math.PI) + Math.sin(a) * 8), 3, 3);
+          }
+        }
+        tkLight(ctx, x, y, 60, "200, 250, 255", 0.6 * Math.sin(u * Math.PI));
+      }
     },
     triggers: [{ id: "toReactor", x: 7 * T, y: 13.5 * T, w: 2 * T, h: T, warp: { map: "reactor", spawn: "north" } }],
     objects: [
+      // プールのふち: どこからでも、調べると飛び込む。水に向かって歩きつづけても飛び込む(作者「プールに入れない」2026-10-03)
       {
-        id: "fuel",
-        img: "fuel",
-        w: 32,
-        h: 32,
+        id: "pool",
         x: 8 * T,
-        y: 10.6 * T,
-        sortDy: 8,
-        headY: 20,
-        range: 50,
-        hidden: (api) => api.hasItem("燃料"),
-        draw(ctx, sx, sy, t) {
-          tkLight(ctx, sx, sy, 34, "140, 230, 255", 0.35 + 0.15 * Math.sin(t * 4));
-        },
-        interact(api) {
-          api.giveItem("燃料");
-          api.later(1200, () => api.warp("port", "boat"));
+        y: 10.4 * T,
+        w: 1,
+        h: 1,
+        range: 54,
+        headY: 30,
+        canInteract: (api) => !api.hasItem("ペレット") && !api.flag("cast") && tkDiveT0 < 0,
+        interact: (api) => tkDive(api),
+        update(dt, t, api) {
+          // ▼ と調べる場所を、きーにいちばん近いふちに置く
+          const pl = api.player();
+          const [rx, ry] = tkRim(pl.x, pl.y);
+          this.x = rx;
+          this.y = ry;
+          if (api.hasItem("ペレット") || api.flag("cast") || tkDiveT0 >= 0) return;
+          // ふちで、水のほうを向いて立ち止まったまま(壁を押している)なら飛び込む
+          const near = Math.hypot(pl.x - rx, pl.y - ry) < 26;
+          const fx = { east: 1, west: -1 }[pl.facing] || 0;
+          const fy = { south: 1, north: -1 }[pl.facing] || 0;
+          const tx = TK_POOL.cx - pl.x;
+          const ty = TK_POOL.cy - pl.y;
+          const toward = (fx * tx + fy * ty) / (Math.hypot(tx, ty) || 1) > 0.5;
+          const still = this._lx === pl.x && this._ly === pl.y;
+          this._lx = pl.x;
+          this._ly = pl.y;
+          this._push = near && toward && still ? (this._push || 0) + dt : 0;
+          if (this._push > 0.35) {
+            this._push = 0;
+            tkDive(api);
+          }
         },
       },
     ],
   });
+  // 飛び込んでいるあいだは、きーを消す(水の中)
+  Object.defineProperty(TK_CORE, "hidePlayer", { get: () => tkDiveT0 >= 0 });
 
-  // G 宝舟の甲板。海が西へ流れる(舳先は東)。首振りエンジンが首を振り、ボイラーの煙突から湯気。舳先で燃料をまく → 海が青く光る
-  let tkSowT0 = -1;
+  // 宝舟の機関室(舳先は東)。西にボイラー、まんなかに首振りエンジンの台、東にはしご(甲板へ)
+  // 首振りエンジンは最初から据わっていて、ピストンだけが欠けている(D92)。ピストンを取り付け、火室にペレットを入れると、圧力計の針が上がり、安全弁が鳴り、エンジンが動きだす
+  const TK_ENGINE = tkMap("engineroom", 16, 10, {
+    bg: "#1a120c",
+    spawns: { ladder: { x: 12 * T, y: 4.6 * T, facing: "south" } },
+    drawOverlay(ctx, ox, oy, t, api) {
+      const age = tkFireAge(api);
+      // 火室: ペレットの青白い光
+      if (age >= 0) {
+        const k = Math.min(1, age / 1);
+        tkLight(ctx, ox + 75, oy + 182, 80, "120, 220, 255", 0.6 * k * (0.9 + 0.1 * Math.sin(t * 11)));
+        tkLight(ctx, ox + 75, oy + 182, 22, "235, 255, 255", 0.9 * k);
+      }
+      // 圧力計の針(0 から、圧力が上がると右へ)
+      const p = age < 0 ? 0 : Math.min(1, age / TK_PRESS);
+      const ga = -2.4 + 2.9 * p + (age > TK_PRESS ? Math.sin(t * 13) * 0.04 : 0);
+      ctx.strokeStyle = "#b02020";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(ox + 80, oy + 132);
+      ctx.lineTo(ox + 80 + Math.sin(ga) * 9, oy + 132 - Math.cos(ga) * 9);
+      ctx.stroke();
+      // 安全弁: 圧力が上がりきると、シューッと吹く
+      if (age > TK_PRESS - 0.6 && age < TK_PRESS + 1.4 && Math.random() < 0.5) tkPuff(100, 70, (Math.random() - 0.5) * 20, -40, 0.8, 6);
+      tkDrawPuffs(ctx, ox, oy);
+    },
+    triggers: [],
+    objects: [
+      tkEngineObj,
+      // エンジンの台: ピストンが欠けている(▼ が出る)。ピストンを持って調べると取り付ける
+      tkSpot(
+        "mount",
+        9 * T,
+        8.1 * T,
+        (api) => {
+          if (!api.hasItem("ピストン")) return api.mutter("……", 1200); // 仮
+          api.takeItem("ピストン");
+          api.setFlag("installed");
+          api.bubble("mount", "ガチャン", 1400); // 仮
+        },
+        { range: 50, headY: 30, canInteract: (api) => !api.flag("installed") }
+      ),
+      // ボイラーの火室: ペレットを入れる
+      tkSpot(
+        "firebox",
+        2.4 * T,
+        6.6 * T,
+        (api) => {
+          tkFireT0 = tkNow();
+          tkLastHalf = -1;
+          api.setFlag("running");
+          api.later(TK_PRESS * 1000 - 400, () => api.bubble("valve", "シューッ", 1600)); // 仮
+        },
+        { range: 50, canInteract: (api) => api.flag("installed") && api.hasItem("ペレット") && !api.flag("running") }
+      ),
+      { id: "valve", x: 100, y: 80, w: 1, h: 1, headY: 6 },
+      // はしご: エンジンが動いていれば甲板へ(沖へ出る)。動いていなければ、港へ降りる
+      tkSpot(
+        "ladder",
+        12.4 * T,
+        4.2 * T,
+        (api) => {
+          if (api.flag("running") && !api.flag("glowed")) api.warp("deck", "stern");
+          else api.warp("port", "boat");
+        },
+        { range: 50 }
+      ),
+    ],
+  });
+
+  // G 宝舟の甲板。海が西へ流れる(舳先は東)。煙突から、エンジンが蒸気を吐くたびに湯気。外輪がかく水しぶき
+  // 舳先で調べると、きーがペレットを海に投げ込む → 沈んで、底から青い光が広がる → 一枚絵(D88)
+  let tkThrowT0 = -1;
   const TK_DECK = {
     tile: T,
     bg: "#0a1430",
@@ -3251,58 +3559,85 @@
     legend: K_LEGEND,
     drawGround(ctx, ox, oy, img, api) {
       const get = (k) => (typeof img === "function" ? img(k) : null);
-      const t = performance.now() / 1000;
+      const t = tkNow();
       const sea = get("sea");
       if (sea) {
         const off = (t * 36) % sea.width;
         for (let x = -off - sea.width; x < 20 * T + sea.width; x += sea.width) ctx.drawImage(sea, Math.round(ox + x), oy, sea.width, 10 * T);
       }
-      // 燃料をまくと、舳先の先の海から青い光が広がる
-      if (tkSowT0 > 0) {
-        const e = t - tkSowT0;
-        const r = 30 + 260 * Math.min(1, e / 3);
-        tkLight(ctx, ox + 18.5 * T, oy + 5 * T, r, "80, 220, 255", Math.min(0.8, e / 1.5));
-        tkLight(ctx, ox + 18.5 * T, oy + 5 * T, r * 0.5, "200, 250, 255", Math.min(0.6, e / 2));
+      // ペレットが沈んだところから、青い光が広がる
+      if (tkThrowT0 > 0) {
+        const e = t - tkThrowT0 - 1.0;
+        if (e > 0) {
+          const r = 30 + 300 * Math.min(1, e / 3.2);
+          tkLight(ctx, ox + 19.6 * T, oy + 5 * T, r, "60, 200, 255", Math.min(0.85, e / 1.4));
+          tkLight(ctx, ox + 19.6 * T, oy + 5 * T, r * 0.45, "210, 252, 255", Math.min(0.7, e / 2));
+        }
       }
       const deck = get("bg_deck");
       if (deck) ctx.drawImage(deck, ox, oy + Math.round(Math.sin(t * 1.3) * 1), 20 * T, 10 * T);
-      // 外輪がかく水しぶき(両舷)
-      ctx.fillStyle = "rgba(220, 235, 255, 0.7)";
+      // 外輪がかく水しぶき(エンジンの回転といっしょ)
+      const th = tkCrank(api);
+      ctx.fillStyle = "rgba(220, 235, 255, 0.75)";
       for (let k = 0; k < 6; k++) {
-        const u = (t * 1.6 + k / 6) % 1;
-        for (const y of [1.5 * T, 8.4 * T]) ctx.fillRect(Math.round(ox + 6 * T - u * 40), Math.round(oy + y + (k % 3) * 6), 3, 2);
+        const u = (th / (Math.PI * 2) + k / 6) % 1;
+        for (const y of [1.5 * T, 8.4 * T]) ctx.fillRect(Math.round(ox + 6 * T - u * 44), Math.round(oy + y + (k % 3) * 6), 3, 2);
       }
-      // ボイラーの煙突から湯気
-      ctx.fillStyle = "rgba(230, 235, 245, 0.55)";
-      for (let k = 0; k < 5; k++) {
-        const u = (t * 0.6 + k / 5) % 1;
-        const s = 4 + Math.floor(u * 8);
-        ctx.fillRect(Math.round(ox + 3 * T + 6 - u * 60), Math.round(oy + 5 * T - 6 - u * 26), s, s);
+      // 煙突(ボイラーの上)から、蒸気を吐くたびに湯気
+      if (tkExhaust(api)) tkPuff(3 * T + 6, 5 * T - 8, -46, -22, 1.6, 9);
+      tkDrawPuffs(ctx, ox, oy);
+    },
+    drawOverlay(ctx, ox, oy) {
+      // ペレットを投げる(弧を描いて舳先の先の海へ)→ しぶき
+      if (tkThrowT0 < 0) return;
+      const e = tkNow() - tkThrowT0;
+      const x0 = ox + 17.4 * T;
+      const y0 = oy + 4.4 * T;
+      const x1 = ox + 19.6 * T;
+      const y1 = oy + 5 * T;
+      const pel = this._pel;
+      if (e < 0.8 && pel) {
+        const u = e / 0.8;
+        ctx.drawImage(pel, Math.round(x0 + (x1 - x0) * u - 8), Math.round(y0 + (y1 - y0) * u - Math.sin(u * Math.PI) * 40 - 8), 16, 16);
+      } else if (e < 1.8) {
+        const u = (e - 0.8) / 1;
+        ctx.fillStyle = `rgba(230, 250, 255, ${1 - u})`;
+        for (let k = 0; k < 10; k++) {
+          const a = (k / 10) * Math.PI * 2;
+          ctx.fillRect(Math.round(x1 + Math.cos(a) * 14 * (u + 0.3)), Math.round(y1 - 12 * Math.sin(u * Math.PI) + Math.sin(a) * 5), 3, 3);
+        }
       }
     },
     spawns: { stern: { x: 4.8 * T, y: 6.5 * T, facing: "east" } },
     onEnter() {
-      tkSowT0 = -1;
+      tkThrowT0 = -1;
     },
     triggers: [],
     objects: [
-      tkEngine("engineD", 7.5 * T, 5 * T, 1.3, (api) => !api.flag("glowed")),
       tkSpot(
         "bow",
         17.4 * T,
         5 * T,
         (api) => {
           api.setFlag("sowing");
-          tkSowT0 = performance.now() / 1000;
-          api.later(3600, () =>
-            api.show("v_glow", () => {
-              api.setFlag("sowing", false);
-              api.setFlag("glowed");
-              api.warp("port", "boat");
-            }, { full: true })
+          api.takeItem("ペレット");
+          tkThrowT0 = tkNow();
+          TK_DECK._pel = api.image("pellet");
+          // しぶきのあと、水の中へ。光りながら沈んでいくペレットを、水面から追いかけて最後の絵へ(D92)
+          api.later(2600, () =>
+            api.burst(
+              [{ img: "v_glow", sec: 3.2, z0: 2.4, z1: 1, cx: 240, cy: 36, cy1: 144, fadeIn: 0.9, ease: "out" }],
+              () =>
+                api.show("v_glow", () => {
+                  api.setFlag("sowing", false);
+                  api.setFlag("glowed");
+                  api.warp("port", "boat");
+                }, { full: true }),
+              { white: false }
+            )
           );
         },
-        { range: 56, canInteract: (api) => !api.flag("sowing") && !api.flag("glowed") }
+        { range: 56, canInteract: (api) => api.hasItem("ペレット") && !api.flag("sowing") && !api.flag("glowed") }
       ),
     ],
   };
@@ -3459,17 +3794,31 @@
       name: "宝舟と首振りエンジン",
       assetBase: "./assets/worlds/takarabune/",
       images: Object.fromEntries(
-        ["bg_port", "bg_gate", "bg_admin", "bg_turbine", "bg_reactor", "bg_core", "bg_deck", "sea", "engine", "bogi", "fuel", "v_cast", "v_glow", "v_kaizu"]
+        ["bg_port", "bg_workshop", "bg_gate", "bg_admin", "bg_turbine", "bg_reactor", "bg_core", "bg_engineroom", "bg_deck", "sea", "cyl", "fly", "bogi", "pellet", "piston", "v_cast", "v_glow", "v_kaizu"]
           .map((k) => [k, `${k}.png`])
           .concat([["ki", "./assets/worlds/lake/ki_walk.png"]])
       ),
       playerSprite: { img: "ki", cell: 64, frames: 7, footY: 17 },
       start: "port",
       startSpawn: "start",
-      maps: { port: TK_PORT, gate: TK_GATE, admin: TK_ADMIN, turbine: TK_TURBINE, reactor: TK_REACTOR, core: TK_CORE, deck: TK_DECK },
-      // 沖で燃料をまいている途中でやめていたら、まくところからやり直せるようにする
+      maps: { port: TK_PORT, workshop: TK_WORKSHOP, gate: TK_GATE, admin: TK_ADMIN, turbine: TK_TURBINE, reactor: TK_REACTOR, core: TK_CORE, engineroom: TK_ENGINE, deck: TK_DECK },
       onEnterWorld(api) {
-        api.setFlag("sowing", false);
+        // 作り直し(D88)の前に遊んだ記録は、最初から遊び直せるように消す(古い道具「燃料」と、その流れのフラグ)
+        if (!api.flag("v2")) {
+          ["cast", "fueled", "glowed", "sowing", "running", "installed"].forEach((f) => api.setFlag(f, false));
+          ["燃料", "白紙の海図", "ペレット", "首振りエンジンの部品"].forEach((n) => api.takeItem(n));
+          api.setFlag("v2");
+        }
+        // 道具の名前を「ピストン」にした(D92)
+        if (api.hasItem("首振りエンジンの部品")) {
+          api.takeItem("首振りエンジンの部品");
+          api.giveItem("ピストン");
+        }
+        // 沖でペレットを投げている途中でやめていたら、投げるところからやり直せるようにする
+        if (api.flag("sowing")) {
+          api.setFlag("sowing", false);
+          if (!api.flag("glowed")) api.giveItem("ペレット");
+        }
       },
     },
   };

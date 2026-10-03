@@ -34,6 +34,10 @@ const ASSET_V = (() => {
     let bubbles = [];
     let cutscene = null; // { img, t0, onDone }
     let pan = null; // { y, t0, hold, onDone }
+    let flash = null; // { t0, sec } 白い光が引いていく(マップが切りかわっても残る)
+    let shake = null; // { t0, sec, amp } 画面のゆれ
+    let freezeUntil = 0; // この時刻まで、きーを動かせない(演出の途中)
+    let held = null; // { img, t0, sec, onDone } 手に入れた物を、きーの頭の上に掲げて見せる
     let toast = null; // { text, until }
     let clock = 0;
     let lastCamY = null;
@@ -92,8 +96,30 @@ const ASSET_V = (() => {
           api.bubble("player", text, ms);
         },
         // 一枚絵。A / Enter で閉じる。{ full: true } なら余白なしで画面いっぱいに(キメの一枚絵)
+        // { into: { map, spawn } } なら、閉じたときに暗転せず、絵の上から次のマップへじかに重ねて移す(前のマップを見せない)
         show(imgKey, onDone, opts) {
-          cutscene = { img: imgKey, t0: clock, onDone: onDone || null, full: !!(opts && opts.full) };
+          cutscene = { img: imgKey, t0: clock, onDone: onDone || null, full: !!(opts && opts.full), into: (opts && opts.into) || null };
+        },
+        // 一枚絵を、だんだん速く切りかえながら寄っていく(ボタンを待たない)。steps: [{ img, sec, z0, z1, cx, cy, fadeIn }]
+        // 最後に白く光り、光ったところで onDone(その裏でマップを切りかえる。白は flash で引かせる)
+        // opts.white === false なら、最後に白く光らずに、最後の一コマのまま onDone(続けて一枚絵を出すときなど)
+        burst(steps, onDone, opts) {
+          cutscene = { burst: steps, t0: clock, onDone: onDone || null, full: true, white: !(opts && opts.white === false) };
+        },
+        // 手に入れた物を、きーの頭の上に掲げて見せる(きらっと光る)。そのあいだ、きーは正面を向いて動かない
+        hold(imgKey, sec, onDone) {
+          player.facing = "south";
+          held = { img: imgKey, t0: clock, sec: sec || 1.6, onDone: onDone || null };
+          freezeUntil = Math.max(freezeUntil, clock + held.sec);
+        },
+        flash(sec) {
+          flash = { t0: clock, sec };
+        },
+        shake(sec, amp) {
+          shake = { t0: clock, sec, amp };
+        },
+        freeze(sec) {
+          freezeUntil = clock + sec;
         },
         // 一枚絵を何枚か、ボタンを待たずに、ゆっくり重ねて移り変わらせる(最後の絵のあとで onDone)
         showSeq(keys, holdSec, onDone) {
@@ -128,6 +154,11 @@ const ASSET_V = (() => {
           if (!host.state.items.includes(name)) host.state.items.push(name);
           host.save();
           api.toast(`${name}`);
+        },
+        // 使った道具を手放す(ペレットを海に投げ込む、など)
+        takeItem(name) {
+          host.state.items = host.state.items.filter((it) => it !== name);
+          host.save();
         },
         // きーの能力(ジャンプなど)。断片で習得し、覚えたあとはどのフィールドでも使える(フラグ「ability.<id>」)
         hasAbility(id) {
@@ -388,7 +419,7 @@ const ASSET_V = (() => {
     }
 
     function busy() {
-      return !!(cutscene || pan);
+      return !!(cutscene || pan || clock < freezeUntil);
     }
 
     function update(dt, t, input) {
@@ -415,7 +446,13 @@ const ASSET_V = (() => {
         }
         return;
       }
+      if (held && clock - held.t0 >= held.sec) {
+        const done = held.onDone;
+        held = null;
+        if (done) done();
+      }
       if (cutscene) return;
+      if (clock < freezeUntil) return;
 
       // すべる床: 氷のタイル、または map.slippery(true か、追従の強さの数値。小さいほどつるつる)
       const slip = map.slippery ? map.slippery(world.api, player.x, player.y) : false;
@@ -504,9 +541,18 @@ const ASSET_V = (() => {
     function interact() {
       if (!world) return false;
       if (cutscene) {
-        if (cutscene.seq) return true;
+        if (cutscene.seq || cutscene.burst || cutscene.outT0 != null) return true;
         if (clock - cutscene.t0 < 0.6) return true;
         const done = cutscene.onDone;
+        if (cutscene.into) {
+          // 絵は消さずに残し、裏で次のマップに切りかえてから、絵だけを薄くしていく
+          const into = cutscene.into;
+          cutscene.outT0 = clock;
+          cutscene.onDone = null;
+          loadMap(into.map, into.spawn);
+          if (done) done();
+          return true;
+        }
         cutscene = null;
         if (done) done();
         return true;
@@ -533,7 +579,18 @@ const ASSET_V = (() => {
       } else {
         lastCamY = cy;
       }
-      return { ox: Math.round(vw / 2 - cx), oy: Math.round(vh / 2 - cy) };
+      let sx = 0;
+      let sy = 0;
+      if (shake) {
+        const u = (clock - shake.t0) / shake.sec;
+        if (u >= 1) shake = null;
+        else {
+          const a = shake.amp * (1 - u) * (1 - u);
+          sx = Math.round((Math.random() * 2 - 1) * a);
+          sy = Math.round((Math.random() * 2 - 1) * a);
+        }
+      }
+      return { ox: Math.round(vw / 2 - cx) + sx, oy: Math.round(vh / 2 - cy) + sy };
     }
 
     function draw(t) {
@@ -592,6 +649,7 @@ const ASSET_V = (() => {
         if (d.player) drawPlayer(ox, oy, t);
         else drawObject(d.o, ox, oy, t);
       }
+      if (held) drawHeld(ox, oy);
 
       if (map.drawOverlay) map.drawOverlay(ctx, ox, oy, t, world.api);
       // 夕方などの色: tintMul は掛け合わせ(暗く、色をのせる)、tint は上から薄く重ねる
@@ -612,6 +670,14 @@ const ASSET_V = (() => {
       ctx.restore();
       if (toast) drawToast();
       if (cutscene) drawCutscene();
+      if (flash) {
+        const u = (clock - flash.t0) / flash.sec;
+        if (u >= 1) flash = null;
+        else {
+          ctx.fillStyle = `rgba(255, 252, 240, ${1 - u})`;
+          ctx.fillRect(0, 0, VW, VH);
+        }
+      }
     }
 
     function drawObject(o, ox, oy, t) {
@@ -639,6 +705,19 @@ const ASSET_V = (() => {
         }
       }
       if (o.draw) o.draw(ctx, sx, sy, t, world.api);
+    }
+
+    // 頭の上に掲げた物(きらっと光る十字と、ふわっと浮く)
+    function drawHeld(ox, oy) {
+      const im = img(held.img);
+      const e = clock - held.t0;
+      const sx = Math.round(player.x + ox);
+      const sy = Math.round(player.y + oy - 46 - Math.min(1, e / 0.25) * 8 + Math.sin(e * 4) * 1.5);
+      const r = 10 + 8 * Math.sin(Math.min(1, e / 0.5) * Math.PI);
+      ctx.fillStyle = "rgba(255, 255, 255, 0.85)";
+      ctx.fillRect(sx - 1, sy - r, 2, 2 * r);
+      ctx.fillRect(sx - r, sy - 1, 2 * r, 2);
+      if (im) ctx.drawImage(im, Math.round(sx - im.width / 2), Math.round(sy - im.height / 2));
     }
 
     function drawPlayer(ox, oy, t) {
@@ -818,10 +897,79 @@ const ASSET_V = (() => {
         }
       }
     }
+    // だんだん速く切りかえながら寄る(burst)
+    function drawBurst() {
+      const steps = cutscene.burst;
+      let el = clock - cutscene.t0;
+      let i = 0;
+      while (i < steps.length && el >= steps[i].sec) {
+        el -= steps[i].sec;
+        i++;
+      }
+      if (i >= steps.length && !cutscene.white) {
+        // 白く光らずに、最後の一コマのまま次へ(onDone で一枚絵を出すと、同じ絵がそのまま残る)
+        const last = steps[steps.length - 1];
+        drawBurstFrame(last, last.sec);
+        if (!cutscene.ended) {
+          cutscene.ended = true;
+          const done = cutscene.onDone;
+          cutscene = null;
+          if (done) done();
+        }
+        return;
+      }
+      if (i >= steps.length) {
+        // 白く光ったところで、次へ(マップの切りかえは onDone で。白は flash で引かせる)
+        ctx.fillStyle = "rgb(255, 252, 240)";
+        ctx.fillRect(0, 0, VW, VH);
+        if (!cutscene.ended) {
+          cutscene.ended = true;
+          const done = cutscene.onDone;
+          cutscene = null;
+          flash = { t0: clock, sec: 0.5 };
+          if (done) done();
+        }
+        return;
+      }
+      const st = steps[i];
+      if (st.white) {
+        ctx.fillStyle = "rgb(255, 252, 240)";
+        ctx.fillRect(0, 0, VW, VH);
+        return;
+      }
+      drawBurstFrame(st, el);
+    }
+    function drawBurstFrame(st, el) {
+      const im = img(st.img);
+      if (!im) return;
+      const u = Math.min(1, el / st.sec);
+      const k = st.ease === "out" ? 1 - (1 - u) * (1 - u) : u * u; // 寄るのも、だんだん速く(out は、だんだんゆっくり)
+      const z = st.z0 + (st.z1 - st.z0) * k;
+      const sw = im.width / z;
+      const sh = im.height / z;
+      const ccx = st.cx + ((st.cx1 != null ? st.cx1 : st.cx) - st.cx) * k;
+      const ccy = st.cy + ((st.cy1 != null ? st.cy1 : st.cy) - st.cy) * k;
+      const sx = clamp(ccx - sw / 2, 0, im.width - sw);
+      const sy = clamp(ccy - sh / 2, 0, im.height - sh);
+      const fit = Math.max(VW / sw, VH / sh);
+      const w = sw * fit;
+      const h = sh * fit;
+      ctx.globalAlpha = st.fadeIn ? Math.min(1, el / st.fadeIn) : 1;
+      ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(im, sx, sy, sw, sh, Math.round((VW - w) / 2), Math.round((VH - h) / 2), Math.round(w), Math.round(h));
+      ctx.globalAlpha = 1;
+    }
     function drawCutscene() {
       if (cutscene.seq) return drawSeq();
+      if (cutscene.burst) return drawBurst();
       const el = clock - cutscene.t0;
-      const a = Math.min(1, el / 0.6);
+      // 閉じたあと、次のマップの上で絵だけが薄くなって消える(into)
+      const out = cutscene.outT0 != null ? Math.min(1, (clock - cutscene.outT0) / 0.8) : 0;
+      if (out >= 1) {
+        cutscene = null;
+        return;
+      }
+      const a = Math.min(1, el / 0.6) * (1 - out);
       ctx.fillStyle = `rgba(8, 8, 12, ${0.92 * a})`;
       ctx.fillRect(0, 0, VW, VH);
       const im = img(cutscene.img);
