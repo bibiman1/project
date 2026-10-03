@@ -1841,6 +1841,12 @@
         y: 2.6 * T,
         sortDy: -30,
         iy: 76, // 調べる場所はドラム缶の手前(ドラム缶のうしろへは回りこまない)
+        // ドラム缶の前のどこからでも写真を調べられる(調べる場所を、ドラム缶の幅の中できーの真上に寄せる)。
+        // 近くのクルーより写真が先になるように。2026-10-03、作者「エクラノプランの夏の思い出写真が見れない」
+        update(dt, t, api) {
+          const px = api.player().x;
+          this.ix = Math.max(222, Math.min(318, px)) - this.x;
+        },
         range: 44,
         interact(api) {
           api.show("v_summer");
@@ -2620,6 +2626,9 @@
       { id: "toRiver", x: 12 * T, y: -T, w: 3 * T, h: 1.3 * T, run: (api) => api.warp(api.flag("fallen") ? "crater" : "river", "south") },
     ],
     objects: [
+      // 鋳物工場ののこぎり屋根は、北の道まで立ち上がっている。道を歩くきーより手前に描く(fg_alley。docs/assets/suzuki/fg_suzuki.py)
+      // 2026-10-03、作者「背景がおかしい」
+      kFg("fg_alley", 478, 258, 200, 76, 440),
       sSpot("shopDoor", 19.25 * T, 7.15 * T, (api) => api.warp("shop", "door")),
       // 印刷屋は無人。伝票を差しこむと、印刷機がひとりでに荷札を刷る(D75)
       sSpot("printer", 8.5 * T, 7.15 * T, (api) => {
@@ -2648,13 +2657,13 @@
       kWall(160, 224, 356, 250),
       {
         id: "tetsubin",
-        w: 32,
-        h: 32,
+        w: 44,
+        h: 44,
         x: 8 * T,
         y: 5.9 * T,
         sortDy: 12,
         iy: 48, // 調べる場所は机の手前
-        headY: 22,
+        headY: 36,
         range: 56,
         interact(api) {
           if (api.flag("charred")) {
@@ -2680,7 +2689,7 @@
             ctx.translate(sx, sy + 14); // 底のまわりで傾ける
             ctx.rotate(tilt);
             if (side > 0) ctx.scale(-1, 1); // 絵の注ぎ口は左。きーが右なら左右を返す
-            ctx.drawImage(im, -16, -30, 32, 32);
+            ctx.drawImage(im, -22, -44, 44, 44); // 44 ドットの絵。底は 41 段目(きーと同じくらいの大きさ。2026-10-03、作者)
             ctx.restore();
           }
           if (pe < 1.5) {
@@ -2690,30 +2699,35 @@
             // 注ぎ口(傾いた鉄瓶の口の先)
             const ca = Math.cos(tilt);
             const sa = Math.sin(tilt);
-            const lx = 9 * side;
-            const ly = -14;
+            const lx = 18 * side; // 注ぎ口の先(絵の (4, 19))
+            const ly = -25;
             const x0 = sx + lx * ca - ly * sa;
             const y0 = sy + 14 + lx * sa + ly * ca;
+            // お湯は注ぎ口から前へ少し出て、そのまま下へ落ちる(上へ弧を描いて鉄瓶の上を越えない。2026-10-03、作者「湯口から反対にでるのはおかしい」)。
+            // 落ちる先は、きーの頭の高さ。横は注ぎ口の前(きーが真下にいても、お湯は注ぎ口の側に落ちる)
+            const lx1 = x0 + side * 4;
+            const hx = side * (tx - lx1) > 0 ? tx : lx1; // きーが注ぎ口より前にいれば、きーのほうへ。そうでなければ注ぎ口からほぼまっすぐ下へ(お湯が戻ってこない)
             ctx.fillStyle = "rgba(220, 240, 255, 1)";
             for (let k = 0; k < 18; k++) {
               const u = ((pe * 1.6 + k / 14) % 1);
-              const x = x0 + (tx - x0) * u;
-              const y = y0 + (ty - y0) * u - Math.sin(u * Math.PI) * 18;
+              const x = x0 + (hx - x0) * u;
+              const y = y0 + (ty - y0) * u * u;
               ctx.fillRect(Math.round(x), Math.round(y), 3, 4);
             }
             ctx.fillStyle = "rgba(255, 255, 255, 0.7)";
             for (let k = 0; k < 6; k++) {
               const u = (pe * 0.8 + k / 6) % 1;
-              ctx.fillRect(Math.round(tx - 10 + k * 4), Math.round(ty - 4 - u * 24), 4, 4);
+              ctx.fillRect(Math.round(hx - 10 + k * 4), Math.round(ty - 4 - u * 24), 4, 4);
             }
           }
           if (api.flag("fallen")) return;
+          // 湯気も注ぎ口から(注ぎ口はきーのほうを向く)
           ctx.fillStyle = "rgba(255, 255, 255, 0.8)";
           const n = this._puff ? 6 : 3;
           for (let k = 0; k < n; k++) {
             const u = (t * 0.7 + k / n) % 1;
             const s = 2 + Math.floor(u * 3);
-            ctx.fillRect(Math.round(sx + 10 + u * 8), Math.round(sy - 8 - u * 22), s, s);
+            ctx.fillRect(Math.round(sx + side * (18 + u * 8)) - (side < 0 ? s : 0), Math.round(sy - 12 - u * 22), s, s);
           }
         },
       },
@@ -3986,7 +4000,7 @@
       name: "荒川の鈴木商店",
       assetBase: "./assets/worlds/suzuki/",
       images: Object.fromEntries(
-        ["bg_stop", "bg_alley", "bg_shop", "bg_river", "bg_crater", "fg_river", "fg_crater", "bg_orbit", "tetsubin", "v_inside", "v_rise3", "v_fall", "rise_sky", "rise_tube", "rise_earth", "rise_cloud", "v_denpyo", "v_nifuda", "v_nouhin"]
+        ["bg_stop", "bg_alley", "bg_shop", "bg_river", "bg_crater", "fg_river", "fg_crater", "fg_alley", "bg_orbit", "tetsubin", "v_inside", "v_rise3", "v_fall", "rise_sky", "rise_tube", "rise_earth", "rise_cloud", "v_denpyo", "v_nifuda", "v_nouhin"]
           .map((k) => [k, `${k}.png`])
           .concat([["ki", "./assets/worlds/lake/ki_walk.png"]])
       ),
