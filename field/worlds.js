@@ -1650,6 +1650,20 @@
     const im = typeof img === "function" && img(key);
     if (im) ctx.drawImage(im, ox, oy, w, h);
   };
+  // 床に立つ物の切り出し(fg_<map>.png の x0, y0, w, h)を、足もとの y(base)できーと前後させる
+  // 2026-10-03、作者「重ね合わせみてね」。切り出しは docs/assets/kasumi/fg_kasumi.py
+  const kFg = (img, x0, y0, w, h, base) => ({
+    id: `fg${x0}_${y0}`,
+    x: x0 + w / 2,
+    y: base,
+    w: 1,
+    h: 1,
+    draw(ctx, sx, sy, t, api) {
+      const im = api.image(img);
+      if (im) ctx.drawImage(im, x0, y0, w, h, sx - this.x + x0, sy - this.y + y0, w, h);
+    },
+  });
+  const kWall = (x0, y0, x1, y1) => ({ id: `wall${x0}_${y0}`, x: (x0 + x1) / 2, y: (y0 + y1) / 2, w: 1, h: 1, solid: { w: x1 - x0, h: y1 - y0 } });
 
   // A 蓮田のあぜ道(入口。北の門柱の先が基地跡)
   const K_LOTUS = {
@@ -1705,6 +1719,15 @@
       }
     },
     objects: [
+      // 門(門柱 2 本と上の看板)、衛兵所、見張り台、吹き流しは、足もとの y できーと前後。門柱と吹き流しの根もと、右はしのドラム缶はふさぐ
+      kFg("fg_shore", 463, 476, 96, 80, 553),
+      kFg("fg_shore", 603, 489, 106, 68, 555),
+      kFg("fg_shore", 799, 318, 78, 162, 478),
+      kFg("fg_shore", 941, 318, 72, 136, 452),
+      kWall(463, 540, 488, 556),
+      kWall(533, 540, 559, 556),
+      kWall(940, 444, 950, 454),
+      kWall(764, 416, 786, 448),
       {
         id: "slipTip",
         x: 16.5 * T,
@@ -1728,7 +1751,7 @@
     c === 13 ||
     (r === 9 && !(c === 6 || c === 7)) ||
     (r === 3 && c >= 1 && c <= 10) ||
-    (r === 4 && c >= 10 && c <= 11) ||
+    (r === 4 && c >= 1 && c <= 11) || // 機体の模型とドラム缶の手前まで(うしろに回りこまない)
     (r === 6 && c >= 5 && c <= 7) ||
     (r === 7 && c >= 8 && c <= 12);
   const crewMember = (id, img, fx, fy, phase) =>
@@ -1802,6 +1825,10 @@
     },
 
     objects: [
+      // 木、整備台、ゴンドラは、足もとの y できーと前後
+      kFg("fg_hangar", 318, 86, 74, 96, 178),
+      kFg("fg_hangar", 156, 186, 102, 48, 231),
+      kFg("fg_hangar", 266, 200, 150, 72, 258),
       // ドラム缶の上の波板の壁に、夏の日の集合写真(機体とパイロットと整備兵。黒い台紙)
       {
         id: "photo",
@@ -1811,7 +1838,7 @@
         x: 8.4 * T,
         y: 2.6 * T,
         sortDy: -30,
-        iy: 50,
+        iy: 76, // 調べる場所はドラム缶の手前(ドラム缶のうしろへは回りこまない)
         range: 44,
         interact(api) {
           api.show("v_summer");
@@ -1942,6 +1969,11 @@
     triggers: [{ id: "cockpit", x: 14.6 * T, y: 3 * T, w: T, h: 4 * T, warp: { map: "cockpit", spawn: "door" } }],
     objects: [
       { id: "ladderAft", x: 2 * T, y: 3.1 * T, w: 1, h: 1, range: 44, interact: (api) => api.warp("wing", "hatch") },
+      // 酸素ボンベの架台、機関士の座席、通信機の台と腰掛け、ロッカーは、足もとの y できーと前後
+      kFg("fg_cabin", 98, 30, 56, 122, 150),
+      kFg("fg_cabin", 163, 90, 59, 76, 163),
+      kFg("fg_cabin", 268, 30, 76, 136, 163),
+      kFg("fg_cabin", 381, 8, 46, 148, 154),
     ],
   };
 
@@ -1957,6 +1989,9 @@
     // 床の乗降口(下の段)に下りると外へ
     triggers: [{ id: "out", x: 3.6 * T, y: 6 * T, w: 2.8 * T, h: T, warp: { map: "cabin", spawn: "fore" } }],
     objects: [
+      // 2 つの座席(左はミイラさまごと)は、足もとの y できーと前後
+      kFg("fg_cockpit", 44, 70, 88, 128, 196),
+      kFg("fg_cockpit", 188, 94, 90, 104, 196),
       // 左の機長席のミイラさま(背景に描いてある)。話しかけると遊覧飛行
       {
         id: "mummy",
@@ -3897,7 +3932,7 @@
       name: "霞ヶ浦のエクラノプラン",
       assetBase: "./assets/worlds/kasumi/",
       images: Object.fromEntries(
-        ["bg_lotus", "bg_hangar", "bg_wing", "bg_cabin", "bg_cockpit", "crew_hawk", "crew_wagtail", "crew_rooster", "fl_sky", "fl_hills", "fl_wbase", "fl_ripple", "fl_mist", "fl_ekrano", "fl_ekrano_top", "fl_ekrano_shadow", "fl_lake", "v_flight", "v_summer", "photo_summer", "face_mummy"]
+        ["bg_lotus", "bg_hangar", "bg_wing", "bg_cabin", "bg_cockpit", "fg_shore", "fg_hangar", "fg_cabin", "fg_cockpit", "crew_hawk", "crew_wagtail", "crew_rooster", "fl_sky", "fl_hills", "fl_wbase", "fl_ripple", "fl_mist", "fl_ekrano", "fl_ekrano_top", "fl_ekrano_shadow", "fl_lake", "v_flight", "v_summer", "photo_summer", "face_mummy"]
           .map((k) => [k, `${k}.png`])
           .concat([["bg_shore", "bg_shore.png"], ["ki", "./assets/worlds/lake/ki_walk.png"]])
       ),
