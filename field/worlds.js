@@ -2657,13 +2657,13 @@
       kWall(160, 224, 356, 250),
       {
         id: "tetsubin",
-        w: 32,
-        h: 32,
+        w: 44,
+        h: 44,
         x: 8 * T,
         y: 5.9 * T,
         sortDy: 12,
         iy: 48, // 調べる場所は机の手前
-        headY: 22,
+        headY: 36,
         range: 56,
         interact(api) {
           if (api.flag("charred")) {
@@ -2689,7 +2689,7 @@
             ctx.translate(sx, sy + 14); // 底のまわりで傾ける
             ctx.rotate(tilt);
             if (side > 0) ctx.scale(-1, 1); // 絵の注ぎ口は左。きーが右なら左右を返す
-            ctx.drawImage(im, -16, -30, 32, 32);
+            ctx.drawImage(im, -22, -44, 44, 44); // 44 ドットの絵。底は 41 段目(きーと同じくらいの大きさ。2026-10-03、作者)
             ctx.restore();
           }
           if (pe < 1.5) {
@@ -2699,14 +2699,14 @@
             // 注ぎ口(傾いた鉄瓶の口の先)
             const ca = Math.cos(tilt);
             const sa = Math.sin(tilt);
-            const lx = 9 * side;
-            const ly = -14;
+            const lx = 18 * side; // 注ぎ口の先(絵の (4, 19))
+            const ly = -25;
             const x0 = sx + lx * ca - ly * sa;
             const y0 = sy + 14 + lx * sa + ly * ca;
             // お湯は注ぎ口から前へ少し出て、そのまま下へ落ちる(上へ弧を描いて鉄瓶の上を越えない。2026-10-03、作者「湯口から反対にでるのはおかしい」)。
             // 落ちる先は、きーの頭の高さ。横は注ぎ口の前(きーが真下にいても、お湯は注ぎ口の側に落ちる)
-            const lx1 = x0 + side * 10;
-            const hx = Math.abs(tx - x0) < 24 ? lx1 : tx; // きーが離れていれば、きーのほうへ
+            const lx1 = x0 + side * 4;
+            const hx = side * (tx - lx1) > 0 ? tx : lx1; // きーが注ぎ口より前にいれば、きーのほうへ。そうでなければ注ぎ口からほぼまっすぐ下へ(お湯が戻ってこない)
             ctx.fillStyle = "rgba(220, 240, 255, 1)";
             for (let k = 0; k < 18; k++) {
               const u = ((pe * 1.6 + k / 14) % 1);
@@ -2727,7 +2727,7 @@
           for (let k = 0; k < n; k++) {
             const u = (t * 0.7 + k / n) % 1;
             const s = 2 + Math.floor(u * 3);
-            ctx.fillRect(Math.round(sx + side * (10 + u * 8)) - (side < 0 ? s : 0), Math.round(sy - 8 - u * 22), s, s);
+            ctx.fillRect(Math.round(sx + side * (18 + u * 8)) - (side < 0 ? s : 0), Math.round(sy - 12 - u * 22), s, s);
           }
         },
       },
