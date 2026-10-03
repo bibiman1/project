@@ -2568,6 +2568,7 @@
     ],
   });
 
+  let sPrinting = false;
   // B 町工場と長屋の路地(北の階段の先が土手。入口はどれも南の小道に向く)
   const S_ALLEY = sMap("alley", 28, 16, {
     drawOverlay: sNight(28, 16),
@@ -2585,9 +2586,13 @@
       sSpot("shopDoor", 19.25 * T, 7.15 * T, (api) => api.warp("shop", "door")),
       // 印刷屋は無人。伝票を差しこむと、印刷機がひとりでに荷札を刷る(D75)
       sSpot("printer", 8.5 * T, 7.15 * T, (api) => {
-        if (api.hasItem("荷札") || !api.hasItem("伝票")) return api.mutter("……", 1200); // 仮
+        if (api.hasItem("荷札") || !api.hasItem("伝票") || sPrinting) return api.mutter("……", 1200); // 仮
+        // 刷っているあいだにもう一度調べても、2 枚目は刷らない(2026-10-03、作者「荷札が2回でる」)
+        sPrinting = true;
         api.bubble("printer", "ガシャン ガシャン", 1400); // 仮
         api.later(1500, () => {
+          sPrinting = false;
+          if (api.hasItem("荷札")) return;
           api.giveItem("荷札");
           api.show("v_nifuda");
         });
@@ -2604,7 +2609,6 @@
     objects: [
       {
         id: "tetsubin",
-        img: "tetsubin",
         w: 32,
         h: 32,
         x: 8 * T,
@@ -2625,14 +2629,31 @@
         },
         // 怒っているあいだ、口から湯気(流れ星のあとは止む)
         draw(ctx, sx, sy, t, api) {
-          // お湯を注ぐ(注ぎ口から、きーの頭へ弧を描いて落ちる)
+          // お湯を注ぐときは、鉄瓶がきーのほうへ傾き(0.3 秒)、注ぎ口からお湯が出て、注ぎ終わると戻る(2026-10-03、作者)
           const pe = this._pourT0 ? performance.now() / 1000 - this._pourT0 : 99;
+          const pl0 = api.player();
+          const side = pl0.x >= this.x ? 1 : -1; // 注ぎ口はきーのほう
+          const tilt = pe < 1.9 ? side * 0.7 * Math.min(1, pe / 0.3, (1.9 - pe) / 0.3) : 0;
+          const im = api.image("tetsubin");
+          if (im) {
+            ctx.save();
+            ctx.translate(sx, sy + 14); // 底のまわりで傾ける
+            ctx.rotate(tilt);
+            if (side > 0) ctx.scale(-1, 1); // 絵の注ぎ口は左。きーが右なら左右を返す
+            ctx.drawImage(im, -16, -30, 32, 32);
+            ctx.restore();
+          }
           if (pe < 1.5) {
             const pl = api.player();
             const tx = sx + (pl.x - this.x);
             const ty = sy + (pl.y - this.y) - 30;
-            const x0 = sx + 12;
-            const y0 = sy - 4;
+            // 注ぎ口(傾いた鉄瓶の口の先)
+            const ca = Math.cos(tilt);
+            const sa = Math.sin(tilt);
+            const lx = 9 * side;
+            const ly = -14;
+            const x0 = sx + lx * ca - ly * sa;
+            const y0 = sy + 14 + lx * sa + ly * ca;
             ctx.fillStyle = "rgba(220, 240, 255, 1)";
             for (let k = 0; k < 18; k++) {
               const u = ((pe * 1.6 + k / 14) % 1);
@@ -3137,7 +3158,7 @@
     sortDy: 0,
     headY: 6.2 * T,
     draw(ctx, sx, sy, t, api) {
-      const ok = api.flag("installed"); // ピストンが付くまでは、ピストン棒がない(シリンダーとクランクのあいだが空いている)
+      const ok = api.flag("installed"); // コンロッドが付くまでは、シリンダーとクランクのあいだが空いている
       const ox = sx - this.x;
       const oy = sy - this.y;
       const th = tkCrank(api);
@@ -3164,13 +3185,15 @@
       const L = cyl ? cyl.height * SC - 8 : 88;
       const tx = qx + L * Math.sin(phi);
       const ty = qy - L * Math.cos(phi);
-      if (ok) {
-        ctx.strokeStyle = "#c8ccd4";
-        ctx.lineWidth = 3;
-        ctx.beginPath();
-        ctx.moveTo(tx, ty);
-        ctx.lineTo(px, py);
-        ctx.stroke();
+      const rod = api.image("conrod");
+      if (ok && rod) {
+        // コンロッドの絵: 上の目玉をクランクピンに合わせ、シリンダーの軸の向きに下へのばす(下のはしはシリンダーの中に隠れる)
+        const RS = 1.4;
+        ctx.save();
+        ctx.translate(px, py);
+        ctx.rotate(phi);
+        ctx.drawImage(rod, (-rod.width * RS) / 2, -4 * RS, rod.width * RS, rod.height * RS);
+        ctx.restore();
       }
       if (cyl) {
         ctx.save();
@@ -3179,9 +3202,6 @@
         ctx.drawImage(cyl, (-cyl.width * SC) / 2, -cyl.height * SC + 6, cyl.width * SC, cyl.height * SC);
         ctx.restore();
       }
-      // クランクピン
-      ctx.fillStyle = "#e0c070";
-      ctx.fillRect(Math.round(px - 3), Math.round(py - 3), 6, 6);
       // 蒸気を吐くたびに、シリンダーの口(軸のところ)から湯気
       if (tkExhaust(api)) tkPuff(TK_O[0] + (Math.sin(phi) > 0 ? -12 : 12), TK_O[1] - 6, Math.sin(phi) > 0 ? -14 : 14, -16, 0.9, 8);
     },
@@ -3229,7 +3249,7 @@
   });
 
   // 鋳造工房(鋳物小屋の中)。るつぼ炉、トングとシャンク、二つ割の木の鋳枠と砂型、込め台、鋳物砂の山、型ばらしの格子、仕上げ台
-  // ぼぎ(仮の絵、D70)にペレットを渡すと、炉が青白く燃え、るつぼの中の金属くずが溶ける → 鋳造の一枚絵 → ピストン(D92)
+  // ぼぎ(仮の絵、D70)にペレットを渡すと、炉が青白く燃え、るつぼの中の金属くずが溶ける → 鋳造の一枚絵 → コンロッド(D95)
   let tkForgeT0 = -1;
   const TK_WORKSHOP = tkMap("workshop", 16, 12, {
     bg: "#14121a",
@@ -3271,8 +3291,8 @@
           api.later(3000, () =>
             api.show("v_cast", () => {
               api.setFlag("cast");
-              // 鋳あがったピストンを、きーが頭の上に掲げる(D92)
-              api.hold("piston", 1.8, () => api.giveItem("ピストン"));
+              // 鋳あがったコンロッドを、きーが頭の上にななめに掲げる(D92、D95)
+              api.hold("conrod", 1.8, () => api.giveItem("コンロッド"), { rot: -0.7 });
             }, { full: true })
           );
         },
@@ -3480,7 +3500,7 @@
   Object.defineProperty(TK_CORE, "hidePlayer", { get: () => tkDiveT0 >= 0 });
 
   // 宝舟の機関室(舳先は東)。西にボイラー、まんなかに首振りエンジンの台、東にはしご(甲板へ)
-  // 首振りエンジンは最初から据わっていて、ピストンだけが欠けている(D92)。ピストンを取り付け、火室にペレットを入れると、圧力計の針が上がり、安全弁が鳴り、エンジンが動きだす
+  // 首振りエンジンは最初から据わっていて、コンロッドだけが欠けている(D92、D95)。コンロッドを取り付け、火室にペレットを入れると、圧力計の針が上がり、安全弁が鳴り、エンジンが動きだす
   const TK_ENGINE = tkMap("engineroom", 16, 10, {
     bg: "#1a120c",
     spawns: { ladder: { x: 12 * T, y: 4.6 * T, facing: "south" } },
@@ -3508,14 +3528,14 @@
     triggers: [],
     objects: [
       tkEngineObj,
-      // エンジンの台: ピストンが欠けている(▼ が出る)。ピストンを持って調べると取り付ける
+      // エンジンの台: コンロッドが欠けている(▼ が出る)。コンロッドを持って調べると取り付ける
       tkSpot(
         "mount",
         9 * T,
         8.1 * T,
         (api) => {
-          if (!api.hasItem("ピストン")) return api.mutter("……", 1200); // 仮
-          api.takeItem("ピストン");
+          if (!api.hasItem("コンロッド")) return api.mutter("……", 1200); // 仮
+          api.takeItem("コンロッド");
           api.setFlag("installed");
           api.bubble("mount", "ガチャン", 1400); // 仮
         },
@@ -3598,7 +3618,7 @@
       const pel = this._pel;
       if (e < 0.8 && pel) {
         const u = e / 0.8;
-        ctx.drawImage(pel, Math.round(x0 + (x1 - x0) * u - 8), Math.round(y0 + (y1 - y0) * u - Math.sin(u * Math.PI) * 40 - 8), 16, 16);
+        ctx.drawImage(pel, Math.round(x0 + (x1 - x0) * u - pel.width / 2), Math.round(y0 + (y1 - y0) * u - Math.sin(u * Math.PI) * 40 - pel.height / 2));
       } else if (e < 1.8) {
         const u = (e - 0.8) / 1;
         ctx.fillStyle = `rgba(230, 250, 255, ${1 - u})`;
@@ -3624,16 +3644,16 @@
           tkThrowT0 = tkNow();
           TK_DECK._pel = api.image("pellet");
           // しぶきのあと、水の中へ。光りながら沈んでいくペレットを、水面から追いかけて最後の絵へ(D92)
+          // 水面から寄ってきた絵が、そのままキメの一枚絵になる(A で閉じる)。一枚絵を出しなおさない(2026-10-03、作者「最後の絵の出方が2回でる」)
           api.later(2600, () =>
             api.burst(
               [{ img: "v_glow", sec: 3.2, z0: 2.4, z1: 1, cx: 240, cy: 36, cy1: 144, fadeIn: 0.9, ease: "out" }],
-              () =>
-                api.show("v_glow", () => {
-                  api.setFlag("sowing", false);
-                  api.setFlag("glowed");
-                  api.warp("port", "boat");
-                }, { full: true }),
-              { white: false }
+              () => {
+                api.setFlag("sowing", false);
+                api.setFlag("glowed");
+                api.warp("port", "boat");
+              },
+              { hold: true }
             )
           );
         },
@@ -3794,7 +3814,7 @@
       name: "宝舟と首振りエンジン",
       assetBase: "./assets/worlds/takarabune/",
       images: Object.fromEntries(
-        ["bg_port", "bg_workshop", "bg_gate", "bg_admin", "bg_turbine", "bg_reactor", "bg_core", "bg_engineroom", "bg_deck", "sea", "cyl", "fly", "bogi", "pellet", "piston", "v_cast", "v_glow", "v_kaizu"]
+        ["bg_port", "bg_workshop", "bg_gate", "bg_admin", "bg_turbine", "bg_reactor", "bg_core", "bg_engineroom", "bg_deck", "sea", "cyl", "fly", "bogi", "pellet", "conrod", "v_cast", "v_glow", "v_kaizu"]
           .map((k) => [k, `${k}.png`])
           .concat([["ki", "./assets/worlds/lake/ki_walk.png"]])
       ),
@@ -3809,10 +3829,12 @@
           ["燃料", "白紙の海図", "ペレット", "首振りエンジンの部品"].forEach((n) => api.takeItem(n));
           api.setFlag("v2");
         }
-        // 道具の名前を「ピストン」にした(D92)
-        if (api.hasItem("首振りエンジンの部品")) {
-          api.takeItem("首振りエンジンの部品");
-          api.giveItem("ピストン");
+        // 道具の名前を「コンロッド」にした(D92 → D95)
+        for (const old of ["首振りエンジンの部品", "ピストン"]) {
+          if (api.hasItem(old)) {
+            api.takeItem(old);
+            api.giveItem("コンロッド");
+          }
         }
         // 沖でペレットを投げている途中でやめていたら、投げるところからやり直せるようにする
         if (api.flag("sowing")) {

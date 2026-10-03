@@ -23,6 +23,9 @@ earth.resize((480, int(72 * 480 / 896)), Image.BOX).save(A + 'rise_earth.png')
 # 手前の雲: 空の絵の雲の帯から、白いところだけ
 band = np.asarray(sky.crop((0, 680, 240, 750))).astype(float)
 lum = band.mean(axis=2); a = np.clip((lum - 170) / 50, 0, 1) * 0.9
+# 帯を横に並べたつなぎ目で、端にかかった雲が縦に切れないよう、左右の端に向かって薄くする(2026-10-03、作者「上昇時に雲がかけている」)
+xs = np.arange(a.shape[1]); edge = np.clip(np.minimum(xs, a.shape[1] - 1 - xs) / 28.0, 0, 1)
+a = a * edge[None, :]
 cl = Image.fromarray(np.dstack([band, a * 255]).astype('uint8'), 'RGBA')
 cl.resize((cl.width * 2, cl.height * 2), Image.NEAREST).save(A + 'rise_cloud.png')
 print('ok', im.size)
