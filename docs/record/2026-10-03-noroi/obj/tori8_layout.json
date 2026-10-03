@@ -1,0 +1,45 @@
+{
+ "object": {
+  "id": "fa44d707-226d-4fb8-a1a7-f8e9be8f88be",
+  "name": "base",
+  "prompt": "toribogi car, a Japanese wooden pull toy: a bottle-shaped orange mother duck with a red chest and painted gold and black wing on a wire fork with one small disc wheel, pulling a round orange tub with a black rim and two big wooden wheels; inside the tub a small turntable with two little ochre ducklings",
+  "size": {
+   "width": 124,
+   "height": 124
+  },
+  "directions": 8,
+  "view": "low top-down"
+ },
+ "spritesheet": {
+  "path": "toribogi_car_a_Japanese_woode.png",
+  "cell_size": {
+   "width": 124,
+   "height": 124
+  },
+  "sheet_size": {
+   "width": 992,
+   "height": 124
+  },
+  "columns": 8,
+  "pivot": "cell-center",
+  "rows": [
+   {
+    "row": 0,
+    "type": "rotations",
+    "frame_count": 8,
+    "directions": [
+     "south",
+     "south-east",
+     "east",
+     "north-east",
+     "north",
+     "north-west",
+     "west",
+     "south-west"
+    ]
+   }
+  ]
+ },
+ "export_version": "1.0",
+ "export_date": "2026-10-03T12:46:47.567704+00:00"
+}

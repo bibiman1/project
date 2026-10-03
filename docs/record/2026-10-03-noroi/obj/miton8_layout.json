@@ -1,0 +1,45 @@
+{
+ "object": {
+  "id": "c40570cd-771b-459e-861a-abd1b119597e",
+  "name": "base",
+  "prompt": "miton, a tall straight cylinder-shaped folk toy lady with no neck, cream body, pink pig face with big round snout, small pointed pig ears, round glasses, pearl necklace",
+  "size": {
+   "width": 97,
+   "height": 97
+  },
+  "directions": 8,
+  "view": "low top-down"
+ },
+ "spritesheet": {
+  "path": "miton_a_tall_straight_cylinde.png",
+  "cell_size": {
+   "width": 97,
+   "height": 97
+  },
+  "sheet_size": {
+   "width": 776,
+   "height": 97
+  },
+  "columns": 8,
+  "pivot": "cell-center",
+  "rows": [
+   {
+    "row": 0,
+    "type": "rotations",
+    "frame_count": 8,
+    "directions": [
+     "south",
+     "south-east",
+     "east",
+     "north-east",
+     "north",
+     "north-west",
+     "west",
+     "south-west"
+    ]
+   }
+  ]
+ },
+ "export_version": "1.0",
+ "export_date": "2026-10-03T12:46:49.308131+00:00"
+}
