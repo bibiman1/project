@@ -37,6 +37,7 @@ const ASSET_V = (() => {
     let flash = null; // { t0, sec } 白い光が引いていく(マップが切りかわっても残る)
     let shake = null; // { t0, sec, amp } 画面のゆれ
     let freezeUntil = 0; // この時刻まで、きーを動かせない(演出の途中)
+    let held = null; // { img, t0, sec, onDone } 手に入れた物を、きーの頭の上に掲げて見せる
     let toast = null; // { text, until }
     let clock = 0;
     let lastCamY = null;
@@ -101,8 +102,15 @@ const ASSET_V = (() => {
         },
         // 一枚絵を、だんだん速く切りかえながら寄っていく(ボタンを待たない)。steps: [{ img, sec, z0, z1, cx, cy, fadeIn }]
         // 最後に白く光り、光ったところで onDone(その裏でマップを切りかえる。白は flash で引かせる)
-        burst(steps, onDone) {
-          cutscene = { burst: steps, t0: clock, onDone: onDone || null, full: true };
+        // opts.white === false なら、最後に白く光らずに、最後の一コマのまま onDone(続けて一枚絵を出すときなど)
+        burst(steps, onDone, opts) {
+          cutscene = { burst: steps, t0: clock, onDone: onDone || null, full: true, white: !(opts && opts.white === false) };
+        },
+        // 手に入れた物を、きーの頭の上に掲げて見せる(きらっと光る)。そのあいだ、きーは正面を向いて動かない
+        hold(imgKey, sec, onDone) {
+          player.facing = "south";
+          held = { img: imgKey, t0: clock, sec: sec || 1.6, onDone: onDone || null };
+          freezeUntil = Math.max(freezeUntil, clock + held.sec);
         },
         flash(sec) {
           flash = { t0: clock, sec };
@@ -438,6 +446,11 @@ const ASSET_V = (() => {
         }
         return;
       }
+      if (held && clock - held.t0 >= held.sec) {
+        const done = held.onDone;
+        held = null;
+        if (done) done();
+      }
       if (cutscene) return;
       if (clock < freezeUntil) return;
 
@@ -636,6 +649,7 @@ const ASSET_V = (() => {
         if (d.player) drawPlayer(ox, oy, t);
         else drawObject(d.o, ox, oy, t);
       }
+      if (held) drawHeld(ox, oy);
 
       if (map.drawOverlay) map.drawOverlay(ctx, ox, oy, t, world.api);
       // 夕方などの色: tintMul は掛け合わせ(暗く、色をのせる)、tint は上から薄く重ねる
@@ -691,6 +705,19 @@ const ASSET_V = (() => {
         }
       }
       if (o.draw) o.draw(ctx, sx, sy, t, world.api);
+    }
+
+    // 頭の上に掲げた物(きらっと光る十字と、ふわっと浮く)
+    function drawHeld(ox, oy) {
+      const im = img(held.img);
+      const e = clock - held.t0;
+      const sx = Math.round(player.x + ox);
+      const sy = Math.round(player.y + oy - 46 - Math.min(1, e / 0.25) * 8 + Math.sin(e * 4) * 1.5);
+      const r = 10 + 8 * Math.sin(Math.min(1, e / 0.5) * Math.PI);
+      ctx.fillStyle = "rgba(255, 255, 255, 0.85)";
+      ctx.fillRect(sx - 1, sy - r, 2, 2 * r);
+      ctx.fillRect(sx - r, sy - 1, 2 * r, 2);
+      if (im) ctx.drawImage(im, Math.round(sx - im.width / 2), Math.round(sy - im.height / 2));
     }
 
     function drawPlayer(ox, oy, t) {
@@ -879,6 +906,18 @@ const ASSET_V = (() => {
         el -= steps[i].sec;
         i++;
       }
+      if (i >= steps.length && !cutscene.white) {
+        // 白く光らずに、最後の一コマのまま次へ(onDone で一枚絵を出すと、同じ絵がそのまま残る)
+        const last = steps[steps.length - 1];
+        drawBurstFrame(last, last.sec);
+        if (!cutscene.ended) {
+          cutscene.ended = true;
+          const done = cutscene.onDone;
+          cutscene = null;
+          if (done) done();
+        }
+        return;
+      }
       if (i >= steps.length) {
         // 白く光ったところで、次へ(マップの切りかえは onDone で。白は flash で引かせる)
         ctx.fillStyle = "rgb(255, 252, 240)";
@@ -898,14 +937,20 @@ const ASSET_V = (() => {
         ctx.fillRect(0, 0, VW, VH);
         return;
       }
+      drawBurstFrame(st, el);
+    }
+    function drawBurstFrame(st, el) {
       const im = img(st.img);
       if (!im) return;
-      const u = el / st.sec;
-      const z = st.z0 + (st.z1 - st.z0) * u * u; // 寄るのも、だんだん速く
+      const u = Math.min(1, el / st.sec);
+      const k = st.ease === "out" ? 1 - (1 - u) * (1 - u) : u * u; // 寄るのも、だんだん速く(out は、だんだんゆっくり)
+      const z = st.z0 + (st.z1 - st.z0) * k;
       const sw = im.width / z;
       const sh = im.height / z;
-      const sx = clamp(st.cx - sw / 2, 0, im.width - sw);
-      const sy = clamp(st.cy - sh / 2, 0, im.height - sh);
+      const ccx = st.cx + ((st.cx1 != null ? st.cx1 : st.cx) - st.cx) * k;
+      const ccy = st.cy + ((st.cy1 != null ? st.cy1 : st.cy) - st.cy) * k;
+      const sx = clamp(ccx - sw / 2, 0, im.width - sw);
+      const sy = clamp(ccy - sh / 2, 0, im.height - sh);
       const fit = Math.max(VW / sw, VH / sh);
       const w = sw * fit;
       const h = sh * fit;

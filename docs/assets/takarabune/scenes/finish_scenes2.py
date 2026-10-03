@@ -18,3 +18,6 @@ print('ok')
 # 最後の絵は、構図案 C(水の中から見上げる)に描き直した(D89)。月は入れない。上の版を置きかえる
 Image.open(S + 'glow3_s5.png').convert('RGBA').save(OUT + 'v_glow.png')
 print('v_glow = glow3_s5')
+# 最後の絵を、船なしの「光りながら沈んでいくペレット」に描き直した(D92)。glow4.py の下絵 → PixelLab 3 回 → seed 3
+Image.open(S + 'glow4_s3.png').convert('RGBA').save(OUT + 'v_glow.png')
+print('v_glow = glow4_s3')

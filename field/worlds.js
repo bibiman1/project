@@ -3136,8 +3136,8 @@
     h: 1,
     sortDy: 0,
     headY: 6.2 * T,
-    hidden: (api) => !api.flag("installed"),
     draw(ctx, sx, sy, t, api) {
+      const ok = api.flag("installed"); // ピストンが付くまでは、ピストン棒がない(シリンダーとクランクのあいだが空いている)
       const ox = sx - this.x;
       const oy = sy - this.y;
       const th = tkCrank(api);
@@ -3164,12 +3164,14 @@
       const L = cyl ? cyl.height * SC - 8 : 88;
       const tx = qx + L * Math.sin(phi);
       const ty = qy - L * Math.cos(phi);
-      ctx.strokeStyle = "#c8ccd4";
-      ctx.lineWidth = 3;
-      ctx.beginPath();
-      ctx.moveTo(tx, ty);
-      ctx.lineTo(px, py);
-      ctx.stroke();
+      if (ok) {
+        ctx.strokeStyle = "#c8ccd4";
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(tx, ty);
+        ctx.lineTo(px, py);
+        ctx.stroke();
+      }
       if (cyl) {
         ctx.save();
         ctx.translate(qx, qy);
@@ -3227,7 +3229,7 @@
   });
 
   // 鋳造工房(鋳物小屋の中)。るつぼ炉、トングとシャンク、二つ割の木の鋳枠と砂型、込め台、鋳物砂の山、型ばらしの格子、仕上げ台
-  // ぼぎ(仮の絵、D70)にペレットを渡すと、炉が青白く燃え、るつぼの中の金属くずが溶ける → 鋳造の一枚絵 → 首振りエンジンの部品
+  // ぼぎ(仮の絵、D70)にペレットを渡すと、炉が青白く燃え、るつぼの中の金属くずが溶ける → 鋳造の一枚絵 → ピストン(D92)
   let tkForgeT0 = -1;
   const TK_WORKSHOP = tkMap("workshop", 16, 12, {
     bg: "#14121a",
@@ -3269,7 +3271,8 @@
           api.later(3000, () =>
             api.show("v_cast", () => {
               api.setFlag("cast");
-              api.giveItem("首振りエンジンの部品");
+              // 鋳あがったピストンを、きーが頭の上に掲げる(D92)
+              api.hold("piston", 1.8, () => api.giveItem("ピストン"));
             }, { full: true })
           );
         },
@@ -3382,11 +3385,14 @@
     tkDiveFrom = [pl.x, pl.y];
     tkDiveT0 = tkNow();
     TK_CORE._ki = api.image("ki");
-    api.freeze(TK_DIVE + 1.6);
+    api.freeze(TK_DIVE + 0.2);
     api.later(TK_DIVE * 1000, () => {
       tkDiveT0 = -1;
-      api.giveItem("ペレット");
-      api.later(1400, () => api.warp("port", "shop"));
+      // 上がってきたきーが、ペレットを頭の上に掲げる(D92)→ 名前 → 暗転して港へ
+      api.hold("pellet", 1.8, () => {
+        api.giveItem("ペレット");
+        api.later(900, () => api.warp("port", "shop"));
+      });
     });
   };
   const TK_CORE = tkMap("core", 16, 14, {
@@ -3474,7 +3480,7 @@
   Object.defineProperty(TK_CORE, "hidePlayer", { get: () => tkDiveT0 >= 0 });
 
   // 宝舟の機関室(舳先は東)。西にボイラー、まんなかに首振りエンジンの台、東にはしご(甲板へ)
-  // 部品を台に取り付けると、エンジンが組み上がる。火室にペレットを入れると、圧力計の針が上がり、安全弁が鳴り、エンジンが動きだす
+  // 首振りエンジンは最初から据わっていて、ピストンだけが欠けている(D92)。ピストンを取り付け、火室にペレットを入れると、圧力計の針が上がり、安全弁が鳴り、エンジンが動きだす
   const TK_ENGINE = tkMap("engineroom", 16, 10, {
     bg: "#1a120c",
     spawns: { ladder: { x: 12 * T, y: 4.6 * T, facing: "south" } },
@@ -3502,17 +3508,18 @@
     triggers: [],
     objects: [
       tkEngineObj,
-      // エンジンの台: 部品を取り付ける
+      // エンジンの台: ピストンが欠けている(▼ が出る)。ピストンを持って調べると取り付ける
       tkSpot(
         "mount",
         9 * T,
         8.1 * T,
         (api) => {
-          api.takeItem("首振りエンジンの部品");
+          if (!api.hasItem("ピストン")) return api.mutter("……", 1200); // 仮
+          api.takeItem("ピストン");
           api.setFlag("installed");
           api.bubble("mount", "ガチャン", 1400); // 仮
         },
-        { range: 50, headY: 30, canInteract: (api) => api.hasItem("首振りエンジンの部品") && !api.flag("installed") }
+        { range: 50, headY: 30, canInteract: (api) => !api.flag("installed") }
       ),
       // ボイラーの火室: ペレットを入れる
       tkSpot(
@@ -3616,12 +3623,18 @@
           api.takeItem("ペレット");
           tkThrowT0 = tkNow();
           TK_DECK._pel = api.image("pellet");
-          api.later(5200, () =>
-            api.show("v_glow", () => {
-              api.setFlag("sowing", false);
-              api.setFlag("glowed");
-              api.warp("port", "boat");
-            }, { full: true })
+          // しぶきのあと、水の中へ。光りながら沈んでいくペレットを、水面から追いかけて最後の絵へ(D92)
+          api.later(2600, () =>
+            api.burst(
+              [{ img: "v_glow", sec: 3.2, z0: 2.4, z1: 1, cx: 240, cy: 36, cy1: 144, fadeIn: 0.9, ease: "out" }],
+              () =>
+                api.show("v_glow", () => {
+                  api.setFlag("sowing", false);
+                  api.setFlag("glowed");
+                  api.warp("port", "boat");
+                }, { full: true }),
+              { white: false }
+            )
           );
         },
         { range: 56, canInteract: (api) => api.hasItem("ペレット") && !api.flag("sowing") && !api.flag("glowed") }
@@ -3781,7 +3794,7 @@
       name: "宝舟と首振りエンジン",
       assetBase: "./assets/worlds/takarabune/",
       images: Object.fromEntries(
-        ["bg_port", "bg_workshop", "bg_gate", "bg_admin", "bg_turbine", "bg_reactor", "bg_core", "bg_engineroom", "bg_deck", "sea", "cyl", "fly", "bogi", "pellet", "v_cast", "v_glow", "v_kaizu"]
+        ["bg_port", "bg_workshop", "bg_gate", "bg_admin", "bg_turbine", "bg_reactor", "bg_core", "bg_engineroom", "bg_deck", "sea", "cyl", "fly", "bogi", "pellet", "piston", "v_cast", "v_glow", "v_kaizu"]
           .map((k) => [k, `${k}.png`])
           .concat([["ki", "./assets/worlds/lake/ki_walk.png"]])
       ),
@@ -3795,6 +3808,11 @@
           ["cast", "fueled", "glowed", "sowing", "running", "installed"].forEach((f) => api.setFlag(f, false));
           ["燃料", "白紙の海図", "ペレット", "首振りエンジンの部品"].forEach((n) => api.takeItem(n));
           api.setFlag("v2");
+        }
+        // 道具の名前を「ピストン」にした(D92)
+        if (api.hasItem("首振りエンジンの部品")) {
+          api.takeItem("首振りエンジンの部品");
+          api.giveItem("ピストン");
         }
         // 沖でペレットを投げている途中でやめていたら、投げるところからやり直せるようにする
         if (api.flag("sowing")) {
