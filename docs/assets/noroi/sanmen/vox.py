@@ -47,9 +47,11 @@ class Model:
     def ell(self, cx, cy, cz, rx, ry, rz):
         return ((self.X - cx) / rx) ** 2 + ((self.Y - cy) / ry) ** 2 + ((self.Z - cz) / rz) ** 2 <= 1
     def prism_x(self, poly, x0, x1):  # (y, z) の多角形を x の向きに押し出す
-        from matplotlib.path import Path
-        pts = np.stack([self.Y[0].ravel(), self.Z[0].ravel()], 1)
-        inside = Path(poly).contains_points(pts).reshape(self.Y[0].shape)
+        from PIL import Image as _I, ImageDraw as _D
+        ny, nz = self.shape[1], self.shape[2]
+        im = _I.new('L', (ny, nz), 0)
+        _D.Draw(im).polygon([(y - self.y0 - 0.5, z - self.z0 - 0.5) for y, z in poly], fill=1)
+        inside = np.array(im, bool).T          # [y, z]
         return np.broadcast_to(inside, self.shape) & (self.X >= x0) & (self.X < x1)
     def pipe(self, p0, p1, r):
         p0 = np.array(p0, float); p1 = np.array(p1, float); d = p1 - p0; L2 = (d * d).sum()
@@ -66,12 +68,18 @@ class Model:
         P = np.stack([self.X[idx], self.Y[idx], self.Z[idx]], 1)
         sx = P @ R; sy = P @ S; near = P @ V
         filled = self.m > 0
-        N = np.zeros(self.shape + (3,))
-        pad = np.pad(filled, 1)
-        for dx, dy, dz in [(1, 0, 0), (-1, 0, 0), (0, 1, 0), (0, -1, 0), (0, 0, 1), (0, 0, -1)]:
-            nb = pad[1 + dx:1 + dx + self.shape[0], 1 + dy:1 + dy + self.shape[1], 1 + dz:1 + dz + self.shape[2]]
-            empty = ~nb
-            N[..., 0] += empty * dx; N[..., 1] += empty * dy; N[..., 2] += empty * dz
+        # 法線: ぼかした占有の勾配(段々の縞が出ないように)
+        def blur(a, r=2):
+            for ax in range(3):
+                a = np.pad(a, [(r + 1, r) if i == ax else (0, 0) for i in range(3)], mode='edge')
+                c = np.cumsum(a, axis=ax)
+                sl = lambda st, en: tuple(slice(st, en) if i == ax else slice(None) for i in range(3))
+                n_ = a.shape[ax] - 2 * r - 1
+                a = (c[sl(2 * r + 1, 2 * r + 1 + n_)] - c[sl(0, n_)]) / (2 * r + 1)
+            return a
+        B = blur(filled.astype(float))
+        g = np.gradient(B)
+        N = -np.stack(g, -1)
         n = N[idx]; nl = np.linalg.norm(n, axis=1); n = n / np.maximum(nl, 1e-6)[:, None]
         L = light if light is not None else (0.8 * U + 0.45 * V - 0.35 * R)
         L = L / np.linalg.norm(L)
@@ -88,7 +96,7 @@ class Model:
         gl = np.array([MATS[self.mats[k]][1] for k in mi], float)
         dif = np.where(has, np.clip(ns @ L, 0, 1), 0.4)
         sp = np.clip(ns @ Hh, 0, 1) ** 14
-        c = np.clip(base * (0.5 + 0.55 * dif[:, None]) + (gl * 255 * sp)[:, None], 0, 255)
+        c = np.clip(base * (0.62 + 0.45 * dif[:, None]) + (gl * 255 * sp)[:, None], 0, 255)
         col = np.zeros((H * W, 3)); pid = np.zeros(H * W, int); zb = np.full(H * W, -1e9)
         L_ = lin[sel]; col[L_] = c; pid[L_] = pi * 1000 + mi; zb[L_] = near[sel]
         col = col.reshape(H, W, 3); pid = pid.reshape(H, W); zb = zb.reshape(H, W)
@@ -103,7 +111,7 @@ class Model:
         im = Image.fromarray(img, 'RGBA')
         proj = lambda p: (float(np.array(p, float) @ R) - ox, float(np.array(p, float) @ S) - oy)
         return im, proj
-    def view(self, name, elev=30):
+    def view(self, name, elev=16):
         U = np.array([0, 0, 1.0])
         if name == 'top': return self.render((0, -1, 0), (1, 0, 0), (0, 0, 1))
         R, V = VIEWS[name]
