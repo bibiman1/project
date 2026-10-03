@@ -4004,7 +4004,7 @@
 
   // A 峠のトンネルの出口(入口で出口)。待避所に、ぽんぽんカーとドラム缶(れんがの上で木の葉が燃える)
   // 木の葉のぼぎが北の小道から木の葉を運んできて、ドラム缶にあける(「もってきた　ぽんぽんカー　もってきた」作者のスケッチ)
-  // 火が燃えあがると、ぽんぽんカーは東へ走り去る。線でつながったドラム缶を引きずって(有線 D125)
+  // 火が燃えあがると、ぽんぽんカーは東へ走り去る。ドラム缶は峠に残り、線だけがのびてついていく(有線 D125。ドラム缶ごと動くのはだめ D131)
   const N_CAR0 = 13 * T; // 待避所のぽんぽんカーの x
   const N_DRUM = 2.2 * T; // ドラム缶(ぽんぽんカーの西どなり)
   let nFuelT0 = -1;
@@ -4023,14 +4023,13 @@
     },
     drawOverlay(ctx, ox, oy, t, api) {
       const e = nFuelAge(api);
-      if (!nGone(api)) {
-        const cx = nCarX(api);
-        const dx = cx - N_DRUM;
-        const up = e > N_FUEL.dump && e < N_FUEL.go + 1 ? 1.7 : 1;
-        nGlow(ctx, ox + dx, oy + 4.7 * T - 46, 20 * up, "255, 150, 60", 0.32 + 0.1 * Math.sin(t * 11));
-        nCable(ctx, ox + dx + 12, oy + 4.7 * T - 44, ox + cx - 30, oy + 4.7 * T - 30, 10);
-        if (e > N_FUEL.fire && Math.random() < 0.35) nPuff(cx - 34, 4.7 * T - 30, -30, -18, 0.8, 7);
-      }
+      const dx = N_CAR0 - N_DRUM;
+      const up = e > N_FUEL.dump && e < N_FUEL.go + 1 ? 1.7 : 1;
+      nGlow(ctx, ox + dx, oy + 4.7 * T - 46, 20 * up, "255, 150, 60", 0.32 + 0.1 * Math.sin(t * 11));
+      // 線: ドラム缶から、ぽんぽんカーへ(走り去ったあとは、東の道の先へのびたまま)
+      const cx = nGone(api) ? 28 * T + 40 : nCarX(api);
+      nCable(ctx, ox + dx + 12, oy + 4.7 * T - 44, ox + cx - 30, oy + 4.7 * T - 30, nGone(api) ? 2 : 10);
+      if (!nGone(api) && e > N_FUEL.fire && Math.random() < 0.35) nPuff(cx - 34, 4.7 * T - 30, -30, -18, 0.8, 7);
       nDrawPuffs(ctx, ox, oy);
     },
     triggers: [
@@ -4069,14 +4068,7 @@
           if (this.x > N_CAR0) this.solid = null;
         },
       }),
-      nSprite("drum", "drum", N_CAR0 - N_DRUM, 4.7 * T, 46, 62, {
-        hidden: nGone,
-        solid: { w: 34, h: 16, dy: -8 },
-        update(dt, t, api) {
-          this.x = nCarX(api) - N_DRUM;
-          if (this.x > N_CAR0 - N_DRUM) this.solid = null;
-        },
-      }),
+      nSprite("drum", "drum", N_CAR0 - N_DRUM, 4.7 * T, 46, 62, { solid: { w: 34, h: 16, dy: -8 } }),
       nSprite("fueler", "fueler", 18.9 * T, 1.2 * T, 26, 40, {
         range: 44,
         interact: (api) => api.bubble("fueler", "……", 1200), // 仮
@@ -4100,6 +4092,10 @@
       east: { x: 26.8 * T, y: 8.5 * T, facing: "west" },
       diner: { x: 14 * T, y: 6 * T, facing: "south" },
     },
+    // ぽんぽんカーの線は、西の峠のドラム缶からのびてくる
+    drawOverlay(ctx, ox, oy, t, api) {
+      if (!nAtStrip(api)) nCable(ctx, ox - 10, oy + 9.6 * T, ox + 10.6 * T - 24, oy + 11.2 * T - 26, 30);
+    },
     triggers: [
       { id: "toPass", x: -T, y: 5 * T, w: 1.45 * T, h: 7 * T, warp: { map: "pass", spawn: "east" } },
       { id: "toStrip", x: 27.55 * T, y: 5 * T, w: 1.45 * T, h: 7 * T, warp: { map: "strip", spawn: "west" } },
@@ -4107,7 +4103,6 @@
     ],
     objects: [
       nSprite("ponpon", "ponpon_s", 10.6 * T, 11.2 * T, 65, 60, { hidden: nAtStrip, shake: true, solid: { w: 56, h: 22, dy: -10 }, range: 56, interact: nTalk("ponpon") }),
-      nSprite("drum", "drum", 12.4 * T, 11.1 * T, 46, 62, { hidden: nAtStrip, solid: { w: 34, h: 16, dy: -8 } }),
       nSprite("toribogi", "tori_s", 5.2 * T, 11.3 * T, 64, 86, { hidden: nAtStrip, solid: { w: 52, h: 22, dy: -10 }, range: 56, interact: nTalk("toribogi") }),
       nSprite("akabeko", "akabeko_s", 16.6 * T, 11.2 * T, 46, 50, { hidden: nAtStrip, shake: true, solid: { w: 40, h: 22, dy: -10 }, range: 56, interact: nTalk("akabeko") }),
       nSprite("kokeshi", "kokeshi_s", 19.6 * T, 11.2 * T, 25, 56, { hidden: nAtStrip, solid: { w: 22, h: 14, dy: -7 }, range: 50, interact: nTalk("kokeshi") }),
@@ -4225,7 +4220,7 @@
         ctx.fillStyle = "rgba(255, 248, 230, 0.10)";
         ctx.fillRect(ox + 21 * T + Math.sin(t * 3 + k * 1.7) * 10, oy + y, 7 * T, 6);
       }
-      if (nAtStrip(api)) nCable(ctx, ox + 4.6 * T, oy + 5.2 * T - 40, ox + 7.4 * T - 36, oy + 5.25 * T - 24, 8);
+      if (nAtStrip(api)) nCable(ctx, ox - 10, oy + 4.2 * T, ox + 7.6 * T - 40, oy + 5.25 * T - 24, 18); // 線は西の峠のドラム缶から
       nDrawPuffs(ctx, ox, oy);
     },
     triggers: [{ id: "toDrivein", x: -T, y: 3 * T, w: 1.45 * T, h: 7 * T, warp: { map: "drivein", spawn: "east" } }],
@@ -4235,7 +4230,6 @@
       nSprite("kokeshi", "kokeshi_e", 15.4 * T, 4.4 * T, 72, 51, { hidden: (api) => !nAtStrip(api), range: 56, interact: nTalk("kokeshi") }),
       nSprite("tansu", "tansu_e", 19.4 * T, 4.4 * T, 118, 89, { hidden: (api) => !nAtStrip(api), shake: true, range: 70, interact: nTalk("tansu") }),
       nSprite("miton", "miton_s", 22.4 * T, 4.4 * T, 36, 66, { hidden: (api) => !nAtStrip(api), range: 50, interact: (api) => api.bubble("miton", "……", 1400) }),
-      nSprite("drum", "drum", 4.6 * T, 5.25 * T, 46, 62, { hidden: (api) => !nAtStrip(api) }),
       nSprite("ponpon", "ponpon_e", 7.6 * T, 5.25 * T, 80, 59, { hidden: (api) => !nAtStrip(api), shake: true, range: 56, interact: nTalk("ponpon") }),
       nSprite("akabeko", "akabeko_e", 7.6 * T, 6.9 * T, 67, 46, {
         hidden: (api) => !nAtStrip(api),
@@ -4257,7 +4251,7 @@
   // E 競争(横から見る多重スクロール。画面ちょうど)。本物のドラッグレースの手順(D125、settei/race_storyboard.png)
   // バーンナウト(白煙、画面のゆれ)→ ステージ(信号の上の小さな灯り)→ スポーツマン・ツリー(黄が 0.5 秒ごと → 青で A。青より前は赤で負け)
   // → 発進(ホイールスピンの白煙、赤べこは鼻を上げてウィリー、空気がふるえる)。ぼぎカーは無慣性で、押した瞬間に全速、きーが背中に張り付く(D123)
-  // ぽんぽんカーは奥の車線。ゴールの直前で線がのびきり、バンジージャンプのようにドラム缶まで引き戻される(D125)
+  // ぽんぽんカーは奥の車線。ゴールの直前で線がのびきり、バンジージャンプのように峠の方へ引き戻される(D125)
   // 勝つと、ゴールの向こうに、かつてのちゃんの見物人の影が現れて消える(歓声 D126)→ 一枚絵 → タイムスリップ
   const N_RACE_D = 640;
   const N_KI_V = 125;
@@ -4287,7 +4281,7 @@
     let ponLift = 0;
     if (nr.snapT >= 0) {
       const u = Math.min(1, (s - nr.snapT) / 1.3);
-      pon = lim * (1 - u);
+      pon = lim * (1 - u) - u * u * 900; // 峠の方へ、画面の左の外まで引き戻される
       ponLift = Math.sin(u * Math.PI) * 70;
     }
     return { s, ki, aka, pon, ponLift };
@@ -4387,13 +4381,11 @@
       const launch = (st) => st >= 0 && st < 0.7;
       // 奥: ぽんぽんカーとドラム缶、線
       const pim = get("ponpon_e");
-      const drum = get("drum");
-      const dX = X0 - 40 - cam;
-      if (drum) ctx.drawImage(drum, Math.round(ox + dX - drum.width), Math.round(oy + 202 - drum.height));
       const px = X0 + pon - cam;
       if (pim) {
         const py = 204 - ponLift;
-        nCable(ctx, ox + dX - 14, oy + 202 - 44, ox + px - pim.width + 10, oy + py - 22, nr.snapT >= 0 ? 4 : Math.max(2, 26 - pon / 20));
+        // 線は画面の左の外(峠のドラム缶)からのびる
+        nCable(ctx, ox - 20, oy + 150, ox + px - pim.width + 10, oy + py - 22, nr.snapT >= 0 ? 4 : Math.max(2, 26 - pon / 20));
         ctx.drawImage(pim, Math.round(ox + px - pim.width), Math.round(oy + py - pim.height + (s > 1 ? Math.sin(s * 40) : 0)));
         if ((burn || launch(s - N_GREEN - N_PON.react)) && Math.random() < 0.7) nPuff(px - pim.width + 10 + cam, 202, -40, -14, 0.9, 9);
       }

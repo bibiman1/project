@@ -1,0 +1,45 @@
+{
+ "object": {
+  "id": "9bc527f8-2c32-4ab0-a2ff-22406220c502",
+  "name": "base",
+  "prompt": "miton, a pig: a simple straight tube-shaped body like a kokeshi doll with the head as wide as the body, smooth pale pink pig skin, no fur, round pig face with a big round snout, small pointed ears, round wire glasses, pearl necklace",
+  "size": {
+   "width": 97,
+   "height": 97
+  },
+  "directions": 8,
+  "view": "low top-down"
+ },
+ "spritesheet": {
+  "path": "miton_a_pig_a_simple_straigh.png",
+  "cell_size": {
+   "width": 97,
+   "height": 97
+  },
+  "sheet_size": {
+   "width": 776,
+   "height": 97
+  },
+  "columns": 8,
+  "pivot": "cell-center",
+  "rows": [
+   {
+    "row": 0,
+    "type": "rotations",
+    "frame_count": 8,
+    "directions": [
+     "south",
+     "south-east",
+     "east",
+     "north-east",
+     "north",
+     "north-west",
+     "west",
+     "south-west"
+    ]
+   }
+  ]
+ },
+ "export_version": "1.0",
+ "export_date": "2026-10-03T13:07:56.092982+00:00"
+}
