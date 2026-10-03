@@ -256,6 +256,7 @@
 
 ### 本番前にすること
 - テスト用の `SHOW_ALL_FRAGMENTS`(`field/worlds.js`)を false に戻す(断片が順番どおりに現れるようにする)。
+- ステータス画面のデバッグ用「はじめから」(`field/script.js` の `ST_CMDS` の `reset`)を消す(D94)。
 
 ## セーブポイント
 
