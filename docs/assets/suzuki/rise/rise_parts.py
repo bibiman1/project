@@ -11,7 +11,7 @@ tube = orb[64:250, 0:896]
 lum = tube.mean(axis=2)
 alpha = np.clip((lum - 30) / 170, 0, 1)
 alpha[lum < 45] = 0                                  # 星は消す
-alpha[:24, 690:] = 0                                 # 右上にかかる月を消す
+alpha[:13, 700:840] = 0                              # 右上にかかる月(の下のはし)だけを消す。筒の上の縁は残す(2026-10-03、作者の指摘で直した)
 rgb = np.clip(tube / np.maximum(alpha[..., None], 0.35), 0, 255)
 out = np.dstack([rgb, alpha * 255]).astype('uint8')
 im = Image.fromarray(out, 'RGBA')
