@@ -21,3 +21,6 @@ print('v_glow = glow3_s5')
 # 最後の絵を、船なしの「光りながら沈んでいくペレット」に描き直した(D92)。glow4.py の下絵 → PixelLab 3 回 → seed 3
 Image.open(S + 'glow4_s3.png').convert('RGBA').save(OUT + 'v_glow.png')
 print('v_glow = glow4_s3')
+# 作者が下絵のほうを選んだ(D93、2026-10-03「これにしておいてね」)。PixelLab にかけない glow4_in.png をそのまま使う
+Image.open(S + 'glow4_in.png').convert('RGBA').save(OUT + 'v_glow.png')
+print('v_glow = glow4_in')
