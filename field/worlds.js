@@ -4439,7 +4439,7 @@
         const stand = get("rc_ki_back");
         if (nr.go < 0 && stand && kim) {
           const w = stand.width * f, h = stand.height * f;
-          const footY = y - bh + 30 * f;
+          const footY = y - bh + 22 * f;
           ctx.drawImage(stand, Math.round(ox + x - w / 2), Math.round(oy + footY - h + shake), Math.round(w), Math.round(h));
         }
         const r = nDrawCar(ctx, kim, ox, oy, N_LANE.ki, ki, shake);
@@ -4447,7 +4447,7 @@
         const stick = get("rc_ki_stick");
         if (nr.go >= 0 && stick) {
           const w = stick.width * f, h = stick.height * f;
-          const footY = y - bh + 16 * f;
+          const footY = y - bh + 12 * f;
           ctx.drawImage(stick, Math.round(ox + x - w / 2), Math.round(oy + footY - h + shake), Math.round(w), Math.round(h));
         }
         if (burn && Math.random() < 0.3) {

@@ -111,11 +111,15 @@ class Model:
         im = Image.fromarray(img, 'RGBA')
         proj = lambda p: (float(np.array(p, float) @ R) - ox, float(np.array(p, float) @ S) - oy)
         return im, proj
-    def view(self, name, elev=16):
+    def view(self, name, elev=16, yaw=0):
+        # yaw: 見る人が z 軸のまわりに回りこむ角度(度)。正で、画面の左にある面(西へ走るなら前の面)が見える
         U = np.array([0, 0, 1.0])
         if name == 'top': return self.render((0, -1, 0), (1, 0, 0), (0, 0, 1))
         R, V = VIEWS[name]
         R = np.array(R, float); V = np.array(V, float)
+        if yaw:
+            a = math.radians(yaw)
+            R, V = R * math.cos(a) + V * math.sin(a), V * math.cos(a) - R * math.sin(a)
         if name.startswith('o_'):
             e = math.radians(elev)
             return self.render(R, -U * math.cos(e) + V * math.sin(e), V * math.cos(e) + U * math.sin(e))
