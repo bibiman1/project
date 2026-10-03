@@ -2641,7 +2641,9 @@
     bg: "#3a3230",
     spawns: { door: { x: 8 * T, y: 10.5 * T, facing: "north" } },
     triggers: [{ id: "out", x: 7 * T, y: 11.7 * T, w: 2 * T, h: T, warp: { map: "alley", spawn: "shop" } }],
+    // 机の前の脚のあたりまで(机の足もと)は通れない(2026-10-03、作者「重ね合わせみてね」)
     objects: [
+      kWall(160, 224, 356, 250),
       {
         id: "tetsubin",
         w: 32,
@@ -2649,6 +2651,7 @@
         x: 8 * T,
         y: 5.9 * T,
         sortDy: 12,
+        iy: 48, // 調べる場所は机の手前
         headY: 22,
         range: 56,
         interact(api) {
@@ -2728,7 +2731,7 @@
             api.show("v_denpyo");
           }
         },
-        { canInteract: (api) => (api.flag("fallen") ? !api.hasItem("納品書") : !api.hasItem("伝票")), range: 50 }
+        { canInteract: (api) => (api.flag("fallen") ? !api.hasItem("納品書") : !api.hasItem("伝票")), range: 50, iy: 45 } // 調べる場所は机の手前
       ),
     ],
   });
@@ -2745,7 +2748,14 @@
   const S_RIVER = sMap("river", 28, 14, {
     spawns: { south: { x: 13.5 * T, y: 13.3 * T, facing: "north" } },
     triggers: [{ id: "toAlley", x: 12 * T, y: 13.75 * T, w: 3 * T, h: T, warp: { map: "alley", spawn: "north" } }],
-    objects: [sHole("holeW", 2.4 * T), sHole("holeE", 25.6 * T)],
+    objects: [
+      sHole("holeW", 2.4 * T),
+      sHole("holeE", 25.6 * T),
+      // 木の輪は、足もとの y できーと前後(下をくぐれる)。根もとはふさぐ。切り出しは docs/assets/suzuki/fg_suzuki.py
+      kFg("fg_river", 706, 218, 194, 80, 292),
+      kWall(708, 284, 722, 294),
+      kWall(882, 284, 898, 294),
+    ],
   });
   // 上昇: 外から見る。単結晶は画面のまんなかに止まり、背景(荒川の町 → 夕焼けの雲 → 成層圏 → 熱圏 → 宇宙)が下へ流れる。
   // 手前の雲は空より速く流れる。はじめゆっくり、だんだん速く。軌道に出たら、筒の中の絵をもう一度見せる(作者)
@@ -2985,7 +2995,14 @@
       south: { x: 13.5 * T, y: 13.3 * T, facing: "north" },
     },
     triggers: [{ id: "toAlley", x: 12 * T, y: 13.75 * T, w: 3 * T, h: T, warp: { map: "alley", spawn: "north" } }],
-    objects: [],
+    // 石のアーチと小さな柱は、足もとの y できーと前後(アーチの下はくぐれる)。根もとはふさぐ
+    objects: [
+      kFg("fg_crater", 704, 218, 194, 100, 313),
+      kFg("fg_crater", 788, 314, 34, 48, 357),
+      kWall(706, 296, 734, 316),
+      kWall(868, 296, 896, 316),
+      kWall(790, 344, 820, 358),
+    ],
   });
 
 
@@ -3966,7 +3983,7 @@
       name: "荒川の鈴木商店",
       assetBase: "./assets/worlds/suzuki/",
       images: Object.fromEntries(
-        ["bg_stop", "bg_alley", "bg_shop", "bg_river", "bg_crater", "bg_orbit", "tetsubin", "v_inside", "v_rise3", "v_fall", "rise_sky", "rise_tube", "rise_earth", "rise_cloud", "v_denpyo", "v_nifuda", "v_nouhin"]
+        ["bg_stop", "bg_alley", "bg_shop", "bg_river", "bg_crater", "fg_river", "fg_crater", "bg_orbit", "tetsubin", "v_inside", "v_rise3", "v_fall", "rise_sky", "rise_tube", "rise_earth", "rise_cloud", "v_denpyo", "v_nifuda", "v_nouhin"]
           .map((k) => [k, `${k}.png`])
           .concat([["ki", "./assets/worlds/lake/ki_walk.png"]])
       ),
