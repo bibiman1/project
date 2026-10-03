@@ -2980,11 +2980,11 @@
     gate: [
       "###########....#############",
       "###########....#############",
-      "............................",
       "###########....#############",
-      ".................###........",
-      ".................###........",
-      ".................###........",
+      "###########....#############",
+      "###########....#############",
+      ".................####.......",
+      ".................####.......",
       "............................",
       "............................",
       "############################",
@@ -2994,7 +2994,7 @@
       "########################",
       "#.############.........#",
       "#.############..######.#",
-      "#...########....######.#",
+      "#.############..######.#",
       "#......................#",
       "#......................#",
       "#......................#",
@@ -3055,7 +3055,7 @@
       "####################",
       "####################",
       "####################",
-      "##...............###",
+      "#####............###",
       "####..###.#.......##",
       "####..###.#.......##",
       "##...............###",
@@ -3310,16 +3310,38 @@
   });
 
   // B 正門(西から坂道で上がってくる。鎖の切れた門を抜けて北へ)
+  // 正門の前後(fg_gate。docs/assets/takarabune/fg_gate.py)。2026-10-03、作者「金網フェンスは？前後関係」
+  // フェンスの根もと(y 158)より北へは行けない。門は半開きで、2 枚の扉のあいだだけ通れる(扉の足もとの線の奥はふさぐ)。
+  // 扉は地面に斜めに立つので、幅 6 の縦の帯に切って、帯ごとの足もとの y できーと前後を決める。守衛所と立て札は足もとの y で
+  // 切り出した絵(fg_*.png の x0, y0, w, h)を、足もとの y(base)できーと前後させる。bob は絵のゆれ(甲板)
+  const tkFg = (img, x0, y0, w, h, base, bob) => ({
+    id: `fg${x0}_${y0}`,
+    x: x0 + w / 2,
+    y: base,
+    w: 1,
+    h: 1,
+    draw(ctx, sx, sy, t, api) {
+      const im = api.image(img);
+      const dy = bob ? bob() : 0;
+      if (im) ctx.drawImage(im, x0, y0, w, h, sx - this.x + x0, sy - this.y + y0 + dy, w, h);
+    },
+  });
+  const TK_GATE_FG = [];
+  for (let x = 356; x < 414; x += 6) TK_GATE_FG.push(tkFg("fg_gate", x, 68, 6, 136, 160 + ((x + 3 - 355) * 40) / 55));   // 左の扉: (355,160)→(410,200)
+  for (let x = 424; x < 478; x += 6) TK_GATE_FG.push(tkFg("fg_gate", x, 68, 6, 136, 158 + ((478 - x - 3) * 32) / 51));   // 右の扉: (478,158)→(427,190)
+  TK_GATE_FG.push(tkFg("fg_gate", 537, 125, 113, 90, 214), tkFg("fg_gate", 646, 174, 32, 43, 216));   // 守衛所、立て札
+  const tkWall = (x0, y0, x1, y1) => ({ id: `wall${x0}`, x: (x0 + x1) / 2, y: (y0 + y1) / 2, w: 1, h: 1, solid: { w: x1 - x0, h: y1 - y0 } });
   const TK_GATE = tkMap("gate", 28, 10, {
     spawns: {
       west: { x: 1.2 * T, y: 7.4 * T, facing: "east" },
-      north: { x: 12.9 * T, y: 1.3 * T, facing: "south" },
+      north: { x: 419, y: 1.3 * T, facing: "south" },
     },
     triggers: [
       { id: "toPort", x: -T, y: 6 * T, w: 1.45 * T, h: 3 * T, warp: { map: "port", spawn: "east" } },
       { id: "toAdmin", x: 11 * T, y: -T, w: 4 * T, h: 1.45 * T, warp: { map: "admin", spawn: "south" } },
     ],
-    objects: [],
+    // 門の通り道(x 404〜432)の左右: 扉の足もとの線より奥を、段々にふさぐ
+    objects: [...TK_GATE_FG, tkWall(352, 0, 378, 180), tkWall(378, 0, 404, 200), tkWall(432, 0, 455, 192), tkWall(455, 0, 480, 175)],
   });
 
   // C 管理棟(南の玄関から入り、東の扉から出る)。非常灯の緑だけが、ゆっくり明滅する
@@ -3354,7 +3376,13 @@
       { id: "toAdmin", x: -T, y: 8 * T, w: 1.45 * T, h: 2 * T, warp: { map: "admin", spawn: "east" } },
       { id: "toReactor", x: 27.55 * T, y: 2 * T, w: 1.45 * T, h: 2 * T, warp: { map: "reactor", spawn: "west" } },
     ],
-    objects: [],
+    // 床に立つ操作盤と立て看板(fg_turbine。docs/assets/takarabune/fg_more.py)。足もとはふさぐ
+    objects: [
+      tkFg("fg_turbine", 393, 240, 27, 61, 300),
+      tkFg("fg_turbine", 812, 238, 39, 47, 284),
+      tkWall(392, 284, 420, 300),
+      tkWall(812, 226, 851, 285), // 看板のうしろもふさぐ(きーが看板にすっかり隠れるので)
+    ],
   });
 
   // E 原子炉建屋(西から入る。北の二重扉の先が炉心)。赤い回転灯が回り、警報が鳴りっぱなし
@@ -3659,6 +3687,7 @@
   // G 宝舟の甲板。海が西へ流れる(舳先は東)。煙突から、エンジンが蒸気を吐くたびに湯気。外輪がかく水しぶき
   // 舳先で調べると、きーがペレットを海に投げ込む → 沈んで、底から青い光が広がる → 一枚絵(D88)
   let tkThrowT0 = -1;
+  const tkDeckBob = () => Math.round(Math.sin(tkNow() * 1.3) * 1); // 甲板のゆれ
   const TK_DECK = {
     tile: T,
     bg: "#0a1430",
@@ -3682,7 +3711,7 @@
         }
       }
       const deck = get("bg_deck");
-      if (deck) ctx.drawImage(deck, ox, oy + Math.round(Math.sin(t * 1.3) * 1), 20 * T, 10 * T);
+      if (deck) ctx.drawImage(deck, ox, oy + tkDeckBob(), 20 * T, 10 * T);
       // 外輪がかく水しぶき(エンジンの回転といっしょ)
       const th = tkCrank(api);
       ctx.fillStyle = "rgba(220, 235, 255, 0.75)";
@@ -3721,6 +3750,9 @@
     },
     triggers: [],
     objects: [
+      // 煙突のついた丸い窯と、ろうそく(fg_deck。docs/assets/takarabune/fg_more.py)。窯のうしろとろうそくのマスはふさぐ
+      tkFg("fg_deck", 62, 82, 69, 117, 197, tkDeckBob),
+      tkFg("fg_deck", 143, 85, 19, 29, 113, tkDeckBob),
       tkSpot(
         "bow",
         17.4 * T,
@@ -3901,7 +3933,7 @@
       name: "宝舟と首振りエンジン",
       assetBase: "./assets/worlds/takarabune/",
       images: Object.fromEntries(
-        ["bg_port", "fg_port", "bg_workshop", "bg_gate", "bg_admin", "bg_turbine", "bg_reactor", "fg_reactor", "bg_core", "bg_engineroom", "bg_deck", "sea", "cyl", "fly", "bogi", "pellet", "conrod", "v_cast", "v_glow", "v_kaizu"]
+        ["bg_port", "fg_port", "bg_workshop", "bg_gate", "fg_gate", "bg_admin", "bg_turbine", "fg_turbine", "bg_reactor", "fg_reactor", "bg_core", "bg_engineroom", "bg_deck", "fg_deck", "sea", "cyl", "fly", "bogi", "pellet", "conrod", "v_cast", "v_glow", "v_kaizu"]
           .map((k) => [k, `${k}.png`])
           .concat([["ki", "./assets/worlds/lake/ki_walk.png"]])
       ),
