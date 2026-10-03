@@ -2626,6 +2626,9 @@
       { id: "toRiver", x: 12 * T, y: -T, w: 3 * T, h: 1.3 * T, run: (api) => api.warp(api.flag("fallen") ? "crater" : "river", "south") },
     ],
     objects: [
+      // 鋳物工場ののこぎり屋根は、北の道まで立ち上がっている。道を歩くきーより手前に描く(fg_alley。docs/assets/suzuki/fg_suzuki.py)
+      // 2026-10-03、作者「背景がおかしい」
+      kFg("fg_alley", 478, 258, 200, 76, 440),
       sSpot("shopDoor", 19.25 * T, 7.15 * T, (api) => api.warp("shop", "door")),
       // 印刷屋は無人。伝票を差しこむと、印刷機がひとりでに荷札を刷る(D75)
       sSpot("printer", 8.5 * T, 7.15 * T, (api) => {
@@ -3997,7 +4000,7 @@
       name: "荒川の鈴木商店",
       assetBase: "./assets/worlds/suzuki/",
       images: Object.fromEntries(
-        ["bg_stop", "bg_alley", "bg_shop", "bg_river", "bg_crater", "fg_river", "fg_crater", "bg_orbit", "tetsubin", "v_inside", "v_rise3", "v_fall", "rise_sky", "rise_tube", "rise_earth", "rise_cloud", "v_denpyo", "v_nifuda", "v_nouhin"]
+        ["bg_stop", "bg_alley", "bg_shop", "bg_river", "bg_crater", "fg_river", "fg_crater", "fg_alley", "bg_orbit", "tetsubin", "v_inside", "v_rise3", "v_fall", "rise_sky", "rise_tube", "rise_earth", "rise_cloud", "v_denpyo", "v_nifuda", "v_nouhin"]
           .map((k) => [k, `${k}.png`])
           .concat([["ki", "./assets/worlds/lake/ki_walk.png"]])
       ),
