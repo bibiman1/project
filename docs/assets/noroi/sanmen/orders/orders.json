@@ -1,0 +1,86 @@
+[
+ {
+  "name": "rc_pon_back",
+  "w": 200,
+  "h": 184,
+  "desc": "pixel art game sprite: ponpon car, a Japanese tin toy hot rod: a low wide cream tin dome body with a thin red stripe and no roof and no seats, two round headlight eyes with chrome rings and a big round orange-red nose on the front band, a chrome V8 sunk in the middle of the top with a round crank pulley in front, a chrome GMC blower, an intake with three round mouths facing forward, chrome exhaust pipes four on each side going up and out, fat grooved black tires half hidden under the body. Glossy cream tin with worn edges, mirror chrome reflecting the blue sky, seen from directly behind Redraw EXACTLY the reference underdrawing (a three-view projection): same silhouette, same proportions, every part in the same place, same colors. Do NOT add anything that is not in the underdrawing (no lights, no plates, no letters, no stickers, no windows, no extra wheels, no pipes, no decorations) and do not remove anything. Only improve the rendering to match the style image: realistic detailed pixel shading, one noon sun from above, dark colored outline (not black).",
+  "refs": [
+   {
+    "path": "/home/user/project/docs/assets/noroi/sanmen/orders/rc_pon_back_ref.png",
+    "use": "the underdrawing to redraw exactly"
+   }
+  ],
+  "style": "/home/user/project/docs/assets/noroi/ad/style_frame.png",
+  "seed": 71
+ },
+ {
+  "name": "rc_bogi_back",
+  "w": 136,
+  "h": 80,
+  "desc": "pixel art game sprite: bogicar seen from directly behind: one rounded block of dark walnut wood as wide as it is tall, the front end rising higher behind with an eye hole bored through it, four white nylon door-roller wheels on long steel bolts at both sides outside the block. Glossy persimmon-tannin lacquer with a bright highlight band and wood grain Redraw EXACTLY the reference underdrawing (a three-view projection): same silhouette, same proportions, every part in the same place, same colors. Do NOT add anything that is not in the underdrawing (no lights, no plates, no letters, no stickers, no windows, no extra wheels, no pipes, no decorations) and do not remove anything. Only improve the rendering to match the style image: realistic detailed pixel shading, one noon sun from above, dark colored outline (not black).",
+  "refs": [
+   {
+    "path": "/home/user/project/docs/assets/noroi/sanmen/orders/rc_bogi_back_ref.png",
+    "use": "the underdrawing to redraw exactly"
+   }
+  ],
+  "style": "/home/user/project/docs/assets/noroi/ad/style_frame.png",
+  "seed": 72
+ },
+ {
+  "name": "ponpon_s",
+  "w": 88,
+  "h": 80,
+  "desc": "pixel art game sprite: ponpon car, a Japanese tin toy hot rod: a low wide cream tin dome body with a thin red stripe and no roof and no seats, two round headlight eyes with chrome rings and a big round orange-red nose on the front band, a chrome V8 sunk in the middle of the top with a round crank pulley in front, a chrome GMC blower, an intake with three round mouths facing forward, chrome exhaust pipes four on each side going up and out, fat grooved black tires half hidden under the body. Glossy cream tin with worn edges, mirror chrome reflecting the blue sky, seen from the front and slightly above Redraw EXACTLY the reference underdrawing (a three-view projection): same silhouette, same proportions, every part in the same place, same colors. Do NOT add anything that is not in the underdrawing (no lights, no plates, no letters, no stickers, no windows, no extra wheels, no pipes, no decorations) and do not remove anything. Only improve the rendering to match the style image: realistic detailed pixel shading, one noon sun from above, dark colored outline (not black).",
+  "refs": [
+   {
+    "path": "/home/user/project/docs/assets/noroi/sanmen/orders/ponpon_s_ref.png",
+    "use": "the underdrawing to redraw exactly"
+   }
+  ],
+  "style": "/home/user/project/docs/assets/noroi/ad/style_frame.png",
+  "seed": 73
+ },
+ {
+  "name": "ponpon_e",
+  "w": 88,
+  "h": 80,
+  "desc": "pixel art game sprite: ponpon car, a Japanese tin toy hot rod: a low wide cream tin dome body with a thin red stripe and no roof and no seats, two round headlight eyes with chrome rings and a big round orange-red nose on the front band, a chrome V8 sunk in the middle of the top with a round crank pulley in front, a chrome GMC blower, an intake with three round mouths facing forward, chrome exhaust pipes four on each side going up and out, fat grooved black tires half hidden under the body. Glossy cream tin with worn edges, mirror chrome reflecting the blue sky, seen from the side facing right and slightly above Redraw EXACTLY the reference underdrawing (a three-view projection): same silhouette, same proportions, every part in the same place, same colors. Do NOT add anything that is not in the underdrawing (no lights, no plates, no letters, no stickers, no windows, no extra wheels, no pipes, no decorations) and do not remove anything. Only improve the rendering to match the style image: realistic detailed pixel shading, one noon sun from above, dark colored outline (not black).",
+  "refs": [
+   {
+    "path": "/home/user/project/docs/assets/noroi/sanmen/orders/ponpon_e_ref.png",
+    "use": "the underdrawing to redraw exactly"
+   }
+  ],
+  "style": "/home/user/project/docs/assets/noroi/ad/style_frame.png",
+  "seed": 74
+ },
+ {
+  "name": "tansu_w",
+  "w": 128,
+  "h": 104,
+  "desc": "pixel art game sprite: kuruma-dansu, a dark wooden Japanese chest that rolls on four wooden wheels with iron rims hidden UNDER the box at the four corners, peeking through arched cutouts of the base skirt, iron rope rings on the front and back short faces, a chrome V8 with a chrome blower sunk into the top board near the front, intake scoop mouth facing forward. Dark glossy lacquered wood with grain, black iron fittings, seen from the side and slightly above, front at the LEFT. This long side has three drawers with black iron diamond fittings and small triangle corner fittings; louvers on the skirt between the arches Redraw EXACTLY the reference underdrawing (a three-view projection): same silhouette, same proportions, every part in the same place, same colors. Do NOT add anything that is not in the underdrawing (no lights, no plates, no letters, no stickers, no windows, no extra wheels, no pipes, no decorations) and do not remove anything. Only improve the rendering to match the style image: realistic detailed pixel shading, one noon sun from above, dark colored outline (not black).",
+  "refs": [
+   {
+    "path": "/home/user/project/docs/assets/noroi/sanmen/orders/tansu_w_ref.png",
+    "use": "the underdrawing to redraw exactly"
+   }
+  ],
+  "style": "/home/user/project/docs/assets/noroi/ad/style_frame.png",
+  "seed": 75
+ },
+ {
+  "name": "tansu_e",
+  "w": 128,
+  "h": 104,
+  "desc": "pixel art game sprite: kuruma-dansu, a dark wooden Japanese chest that rolls on four wooden wheels with iron rims hidden UNDER the box at the four corners, peeking through arched cutouts of the base skirt, iron rope rings on the front and back short faces, a chrome V8 with a chrome blower sunk into the top board near the front, intake scoop mouth facing forward. Dark glossy lacquered wood with grain, black iron fittings, seen from the side and slightly above, front at the RIGHT. This long side is the plain back board: horizontal boards only, NO drawers, NO fittings Redraw EXACTLY the reference underdrawing (a three-view projection): same silhouette, same proportions, every part in the same place, same colors. Do NOT add anything that is not in the underdrawing (no lights, no plates, no letters, no stickers, no windows, no extra wheels, no pipes, no decorations) and do not remove anything. Only improve the rendering to match the style image: realistic detailed pixel shading, one noon sun from above, dark colored outline (not black).",
+  "refs": [
+   {
+    "path": "/home/user/project/docs/assets/noroi/sanmen/orders/tansu_e_ref.png",
+    "use": "the underdrawing to redraw exactly"
+   }
+  ],
+  "style": "/home/user/project/docs/assets/noroi/ad/style_frame.png",
+  "seed": 76
+ }
+]
