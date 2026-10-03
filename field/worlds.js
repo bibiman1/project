@@ -2700,26 +2700,31 @@
             const ly = -14;
             const x0 = sx + lx * ca - ly * sa;
             const y0 = sy + 14 + lx * sa + ly * ca;
+            // お湯は注ぎ口から前へ少し出て、そのまま下へ落ちる(上へ弧を描いて鉄瓶の上を越えない。2026-10-03、作者「湯口から反対にでるのはおかしい」)。
+            // 落ちる先は、きーの頭の高さ。横は注ぎ口の前(きーが真下にいても、お湯は注ぎ口の側に落ちる)
+            const lx1 = x0 + side * 10;
+            const hx = Math.abs(tx - x0) < 24 ? lx1 : tx; // きーが離れていれば、きーのほうへ
             ctx.fillStyle = "rgba(220, 240, 255, 1)";
             for (let k = 0; k < 18; k++) {
               const u = ((pe * 1.6 + k / 14) % 1);
-              const x = x0 + (tx - x0) * u;
-              const y = y0 + (ty - y0) * u - Math.sin(u * Math.PI) * 18;
+              const x = x0 + (hx - x0) * u;
+              const y = y0 + (ty - y0) * u * u;
               ctx.fillRect(Math.round(x), Math.round(y), 3, 4);
             }
             ctx.fillStyle = "rgba(255, 255, 255, 0.7)";
             for (let k = 0; k < 6; k++) {
               const u = (pe * 0.8 + k / 6) % 1;
-              ctx.fillRect(Math.round(tx - 10 + k * 4), Math.round(ty - 4 - u * 24), 4, 4);
+              ctx.fillRect(Math.round(hx - 10 + k * 4), Math.round(ty - 4 - u * 24), 4, 4);
             }
           }
           if (api.flag("fallen")) return;
+          // 湯気も注ぎ口から(注ぎ口はきーのほうを向く)
           ctx.fillStyle = "rgba(255, 255, 255, 0.8)";
           const n = this._puff ? 6 : 3;
           for (let k = 0; k < n; k++) {
             const u = (t * 0.7 + k / n) % 1;
             const s = 2 + Math.floor(u * 3);
-            ctx.fillRect(Math.round(sx + 10 + u * 8), Math.round(sy - 8 - u * 22), s, s);
+            ctx.fillRect(Math.round(sx + side * (10 + u * 8)) - (side < 0 ? s : 0), Math.round(sy - 8 - u * 22), s, s);
           }
         },
       },
