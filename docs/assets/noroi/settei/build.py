@@ -42,59 +42,76 @@ def wheel(d, cx, cy, r, col=LN, hub=True, fill=None):
     if hub: d.ellipse((cx - r * 0.35, cy - r * 0.35, cx + r * 0.35, cy + r * 0.35), outline=col, width=2)
 
 # ================= ぼぎカー =================
-im, d = sheet(1800, 1240, 'BUILD SHEET 01  ぼぎカー(きーの車)', 'ビルダーの組み立て図。作者の写真(pic/627c157c.jpg、c1fd15f2.jpg)から板の輪郭をそのまま取った。全部を描く(初稿は左はしが切れた)')
+im, d = sheet(1800, 1500, 'BUILD SHEET 01  ぼぎカー(きーの車)  第 2 版', '作者「ぼぎかーの厚みは…きーの幅と同じくらい。きーはぼぎかーに載って加速すると、つぶれてぼぎかーの背中に張り付き、空気抵抗を減らす」(D122)')
 pk = json.load(open(O + 'plank.json'))
-def plank(ox, oy, k, flip=False, flames=False):
+def plank(ox, oy, k):
     xs = [p[0] for p in pk['poly']]; x0, x1 = min(xs), max(xs)
-    tr = lambda x, y: (ox + ((x1 - (x - x0) - x0) if flip else (x - x0)) * k, oy + (y - 60) * k)
+    tr = lambda x, y: (ox + (x1 - x), oy + (y - 60) * k) if False else (ox + (x1 - x) * k, oy + (y - 60) * k)
     d.polygon([tr(*p) for p in pk['poly']], outline=LN, fill=(60, 44, 40))
-    for hx, hy, hr in pk['holes'][:1]: c = tr(hx, hy); d.ellipse((c[0] - hr * k, c[1] - hr * k, c[0] + hr * k, c[1] + hr * k), outline=LN, width=2, fill=BG)
+    hx, hy, hr = pk['holes'][0]; c = tr(hx, hy); d.ellipse((c[0] - hr * k, c[1] - hr * k, c[0] + hr * k, c[1] + hr * k), outline=LN, width=2, fill=BG)
+    for hx, hy, hr in pk['holes'][1:]:
+        c = tr(hx, hy); wheel(d, c[0], c[1] + 6, 44, fill=(200, 200, 196)); d.ellipse((c[0] - 7, c[1] - 1, c[0] + 7, c[1] + 13), fill=(120, 120, 120))
     return tr
-# 横から(前 = 目穴のある高いはし。右へ進む)
-ox, oy, k = 560, 150, 1.2
-tr = plank(ox, oy, k, flip=True)
-for hx, hy, hr in pk['holes'][1:]:
-    c = tr(hx, hy); wheel(d, c[0], c[1] + 8, 60, fill=(200, 200, 196)); d.ellipse((c[0] - 9, c[1] - 1, c[0] + 9, c[1] + 17), fill=(120, 120, 120))
-box(d, (ox, 120), '横から(東へ進む)')
-eye = tr(*pk['holes'][0][:2])
-label(d, eye, (eye[0] + 60, eye[1] - 60), '目穴(顔の目)。この高いはしが「前」', YL)
-label(d, tr(640, 120), (600, 470), '一枚の反った板。柿渋(つやのある濃い茶)、木目は長さの向き')
-c = tr(252, 246); label(d, (c[0] + 30, c[1] + 40), (c[0] + 60, c[1] + 120), '白いナイロンの戸車(中にベアリング)')
-c = tr(690, 268); label(d, (c[0], c[1] + 8), (c[0] + 40, c[1] + 120), 'ボルトが車軸。座金とナット')
-arrow(d, (1420, 210), (1520, 210)); d.text((1424, 222), '進む向き', fill=GR, font=f(15))
-# きーの乗り方
-ki = Image.open('/tmp/claude-0/-home-user-project/e7cb1a9b-b078-5ece-9cdf-0647f5a9d6fa/scratchpad/ki_east.png').resize((37 * 4, 21 * 4), Image.NEAREST)
-kp = tr(395, 124); im.paste(ki, (int(kp[0]) - 74, int(kp[1]) - 72), ki)
-label(d, (int(kp[0]), int(kp[1]) - 30), (int(kp[0]) - 120, 112), 'きーは顔のうしろのくぼみに、うつぶせ(作者のスケッチ)', GR)
-# 上から・前から
-ty = 640; box(d, (560, ty - 30), '上から')
-L = 685 * 1.2 * 0.9; tx = 560
-d.rectangle((tx, ty + 34, tx + L, ty + 50), outline=LN, fill=(60, 44, 40), width=2)
-for wx in (tx + 60, tx + L - 70):
-    for s in (-1, 1):
-        d.rectangle((wx - 24, ty + 42 + s * 34 - 9, wx + 24, ty + 42 + s * 34 + 9), outline=LN, width=2, fill=(200, 200, 196))
-    d.line((wx, ty + 42 - 46, wx, ty + 42 + 46), fill=(170, 170, 170), width=4)
-label(d, (tx + 60, ty + 42 - 46), (tx + 120, ty - 6), 'ボルトの頭とナットが外に出る')
-label(d, (tx + 300, ty + 42), (tx + 320, ty + 110), '板の厚み(約 2 センチ相当)。戸車は板の両側に 2 つずつ')
-fx = 1500; box(d, (fx - 60, ty - 30), '前から(顔)')
-d.rectangle((fx - 8, ty + 0, fx + 8, ty + 90), outline=LN, fill=(60, 44, 40), width=2)
-d.ellipse((fx - 5, ty + 20, fx + 5, ty + 30), outline=LN)
-for s in (-1, 1): d.rectangle((fx + s * 34 - 9, ty + 66, fx + s * 34 + 9, ty + 114), outline=LN, width=2, fill=(200, 200, 196))
-d.line((fx - 46, ty + 90, fx + 46, ty + 90), fill=(170, 170, 170), width=4)
+ki = Image.open('/tmp/claude-0/-home-user-project/e7cb1a9b-b078-5ece-9cdf-0647f5a9d6fa/scratchpad/ki_east.png')
 # 参考
-w1 = ref(im, P + 'pic/627c157c.jpg', (30, 110), 200, crop=(40, 110, 380, 290), cap='作者の写真(組み立て後)', d=d)
-ref(im, P + 'pic/c1fd15f2.jpg', (30, 340), 230, cap='部品(板、ボルト 2、戸車 4、ナット、座金)', d=d)
-text(d, 30, 820, [
+ref(im, P + 'pic/218717_1007375048_31large.jpg', (30, 110), 230, crop=(340, 0, 640, 230), cap='漫画「ぼぎかー」: 頭を上げた板、きーはうしろの低い所に立つ', d=d)
+ref(im, P + 'pic/218717_1008773116_59large.jpg', (370, 110), 230, crop=(0, 190, 330, 417), cap='漫画「無慣性粘着駆動」: きーがつぶれて背中に張り付く', d=d)
+ref(im, P + 'pic/218717_1010141439_134large.jpg', (750, 110), 230, crop=(500, 230, 640, 417), cap='漫画(競争): 車体はきーの幅ほど厚い', d=d)
+text(d, 960, 110, [
+    '#漫画をこう読んだ',
+    '1 帯の字は「無慣性粘着駆動」(私は「推進」と読み違えていた)',
+    '2 加速すると、きーはつぶれて薄くのび、',
+    '   背中に張り付く(粘着)。顔は前(目穴の側)',
+    '3 止まっているとき、きーは顔のうしろの低い所に立つ',
+    '4 競争のコマで、車体は厚い塊。厚みはきーの幅くらい',
+    '5 目穴は板をつらぬくので、両側に目がある',
+], s=15, gap=6)
+# 横から: ふだんと、加速
+for row, (title, acc) in enumerate([('横から: ふだん(東へ進む。前 = 目穴の高いはし)', False), ('横から: 加速(無慣性粘着駆動)', True)]):
+    ox, oy, k = 120, 470 + row * 330, 0.75
+    d.text((40, oy - 70), title, fill=CY, font=f(18))
+    tr = plank(ox, oy, k)
+    top = pk['top']
+    if not acc:
+        kp = tr(395, 124); kk = ki.resize((37 * 3, 21 * 3), Image.NEAREST); im.paste(kk, (int(kp[0]) - 55, int(kp[1]) - 52), kk)
+        label(d, (int(kp[0]), int(kp[1]) - 30), (int(kp[0]) + 120, oy - 60), 'きーは顔のうしろの低い所に立つ(漫画)', GR)
+    else:
+        pts = [tr(x, y) for x, y in top if 160 < x < 560]
+        upper = [(x, y - 16) for x, y in pts]
+        d.polygon(pts + upper[::-1], fill=(244, 230, 180), outline=(120, 100, 70))
+        fx, fy = upper[0]
+        d.ellipse((fx + 6, fy + 4, fx + 12, fy + 10), fill=(20, 20, 20)); d.polygon([(fx - 2, fy + 8), (fx - 14, fy + 12), (fx - 2, fy + 14)], fill=(230, 140, 60))
+        for j in range(5): d.line((ox - 80 - j * 18, oy + 40 + j * 22, ox - 10 - j * 18, oy + 40 + j * 22), fill=CY, width=2)
+        label(d, (pts[len(pts) // 2][0], pts[len(pts) // 2][1] - 10), (ox + 200, oy - 60), 'きーがつぶれて背中に張り付く。顔は前。空気抵抗を減らす(作者)', GR)
+        arrow(d, (ox + 600, oy + 60), (ox + 700, oy + 60)); d.text((ox + 600, oy + 74), '0〜100km 0.3 秒', fill=GR, font=f(15))
+    label(d, tr(215, 138), (ox + 640, oy + 10), '目穴(顔の目)。板をつらぬく', YL)
+# 上から: 厚い板(きーの幅くらい)
+X, Y = 1140, 470
+d.text((X, Y - 70), '上から(厚み = きーの幅くらい)', fill=CY, font=f(18))
+L, Wd = 480, 240
+d.rounded_rectangle((X, Y, X + L, Y + Wd), 60, outline=LN, fill=(60, 44, 40), width=3)
+d.ellipse((X + L - 120, Y + 20, X + L - 20, Y + Wd - 20), outline=(120, 90, 70), width=2)
+for wx in (X + 70, X + L - 90):
+    for sy in (Y - 26, Y + Wd + 4): d.rectangle((wx - 40, sy, wx + 40, sy + 22), outline=LN, width=2, fill=(200, 200, 196))
+    d.line((wx, Y - 32, wx, Y + Wd + 32), fill=(170, 170, 170), width=5)
+kt = ki.rotate(0).resize((37 * 4, 21 * 4), Image.NEAREST)
+_k = ki.resize((37 * 4, 21 * 4), Image.NEAREST); im.paste(_k, (X + 150, Y + 80), _k)
+arrow(d, (X + L + 20, Y + Wd // 2), (X + L + 110, Y + Wd // 2))
+label(d, (X + 210, Y + 90), (X + 60, Y + Wd + 110), 'きー(正面の幅 32 ドット)と同じくらいの厚み', YL)
+label(d, (X + 70, Y - 30), (X + 300, Y - 50), '長いボルトが車軸。戸車は両はしに', YL)
+# 前から
+FX, FY = 1250, 990
+d.text((FX - 120, FY - 70), '前から(顔)', fill=CY, font=f(18))
+d.rounded_rectangle((FX - 110, FY, FX + 110, FY + 170), 50, outline=LN, fill=(60, 44, 40), width=3)
+for s2 in (-1, 1): d.rectangle((FX + s2 * 130 - 16, FY + 120, FX + s2 * 130 + 16, FY + 200), outline=LN, width=2, fill=(200, 200, 196))
+d.line((FX - 150, FY + 160, FX + 150, FY + 160), fill=(170, 170, 170), width=5)
+text(d, 40, 1200, [
     '#ビルダーの仕様',
-    '形: 写真の板の輪郭そのまま。両はしまで描く。目穴は前の高いはしに一つ',
-    '足まわり: 白いナイロンの戸車 4 つ(戸板用のベアリング)。2 本のボルトが車軸で、板の両側に戸車',
-    '仕上げ: 柿渋(つやのある濃い茶、臭い)。みとんのカスタムで炎: 顔(前)から後ろへ流れる赤・橙・黄、細い白のピンストライプで縁どる',
-    '走り: 無慣性推進駆動(0〜100km 0.3 秒、作者)。出るときも止まるときも傾かない・ゆれない。ほこりだけが遅れてついてくる',
-    '#ゲームの絵',
-    '大きさ: 全長 約 64 ドット、高さ 約 22(タイヤ込み)。きーは 37×21 ドット',
-    '向き: 東(横)、西(東の反転)、北(うしろ)、南(顔)。炎あり・炎なし。戸車が回る 2 コマ。きーが乗った絵と、空の絵',
-    '!初稿の直し: 左はしが切れていた / 進む向きが逆だった(低いはしを前にしていた)→ 目穴の高いはしを前にする',
-], s=17, gap=8)
+    '形: 写真の板の輪郭(横から)。厚みはきーの幅くらいの、角の丸い塊。目穴は板をつらぬき、両側に目',
+    '足まわり: 白いナイロンの戸車 4 つ。長いボルトが車軸で、戸車は両はしに。柿渋(つやのある濃い茶、臭い)。炎はみとんのカスタム',
+    '走り: 無慣性粘着駆動(作者)。押した瞬間に全速、止まるときもぴたっと止まり、傾かない。加速するとき、きーはつぶれて背中に張り付く',
+    '#ゲームの絵: 全長 約 64、厚み 約 30、高さ 約 24 ドット。4 方向。空 / きーが立つ / きーが張り付く。炎あり・炎なし。戸車 2 コマ',
+], s=16, gap=7)
 im.save(O + 'build1_bogicar.png')
 
 # ================= ぽんぽんカー =================
@@ -266,62 +283,82 @@ text(d, 760, 1000, [
 im.save(O + 'build3_toribogi.png')
 
 # ================= 車箪笥 =================
-im, d = sheet(1800, 1300, 'BUILD SHEET 04  車箪笥(みとんの家であり乗物)', '作者「車箪笥の進行方向と、ブロアーの空気注入口の向きはよく観察、考えて」。スケッチ 2 枚を観察した')
-w = ref(im, P + 'pic/218717_989130033_182large.jpg', (30, 110), 380, crop=(90, 280, 310, 520), cap='スケッチ A(pic/218717_989130033_182)', d=d)
-w2 = ref(im, P + 'pic/218717_989129983_28large.jpg', (60 + w, 110), 380, crop=(30, 280, 280, 640), cap='スケッチ B(pic/218717_989129983_28)', d=d)
-text(d, 120 + w + w2, 110, [
-    '#観察',
-    'A: 短い面(左)に「STP」と、四角い板。四角い板はナンバープレートの場所',
-    'A: 天板の左(STP の側)に穴があり、エンジンが沈めて載っている',
-    'A: ブロアーの上の吸気口は、平たい口を STP の側(左)へ向けている',
-    'A: 引き出しは長い面。いちばん下の段の下に横線(ルーバー)',
-    'B: 短い面を正面から見た絵。下に四角い板(ナンバー)と車輪',
-    'B: 吸気口の口(中に 3 つの丸 = 吸気の筒)が、こちら(短い面)を向く',
-    'B: 引き出しは右の長い面に見える',
-    '#結論',
-    '+進む向きは長い向き。前は、ナンバーと STP のある短い面',
-    '+引き出しは車の横腹(ドアの位置)。エンジンは天板の前寄り',
-    '+吸気口は、進む向き(前)に口を開けて、走る風を飲む',
-    '江戸の車箪笥も、長い向きに引いて火事から逃げた',
-], s=16, gap=7)
-# 上から
-X, Y = 120, 620
-d.text((X, Y - 30), '上から(前 = 右)', fill=CY, font=f(18))
-d.rectangle((X, Y, X + 420, Y + 180), outline=LN, fill=(110, 70, 44), width=3)
-d.rectangle((X + 280, Y + 40, X + 400, Y + 140), outline=LN, fill=(150, 150, 156), width=2)
-d.rectangle((X + 300, Y + 60, X + 380, Y + 120), outline=LN, fill=(200, 200, 206), width=2)
-d.polygon([(X + 380, Y + 60), (X + 420, Y + 52), (X + 420, Y + 128), (X + 380, Y + 120)], outline=YL, fill=(30, 30, 34), width=2)
-arrow(d, (X + 440, Y + 90), (X + 560, Y + 90)); d.text((X + 450, Y + 104), '進む向き', fill=GR, font=f(15))
-for (cx, cy) in [(X + 30, Y - 8), (X + 390, Y - 8), (X + 30, Y + 188), (X + 390, Y + 188)]: d.rectangle((cx - 22, cy - 8, cx + 22, cy + 8), outline=LN, fill=(60, 60, 64))
-d.ellipse((X + 20, Y + 20, X + 44, Y + 44), outline=LN, width=2)
-label(d, (X + 410, Y + 90), (X + 470, Y + 160), '吸気口の口は前へ', YL)
-label(d, (X + 340, Y + 120), (X + 120, Y + 250), 'エンジンは天板の前寄りに沈める(スケッチ A)', YL)
-label(d, (X + 32, Y + 32), (X - 60, Y + 290), '排気の煙突(スケッチ B の左上の管)はうしろの角', YL)
-# 横から(承認ずみの初稿の絵の向き)
-X2, Y2 = 800, 600
-d.text((X2 - 60, Y2 - 10), '横から: 初稿の絵(○)。左の短い面に STP = 前 → この絵は西向き', fill=CY, font=f(18))
-s2 = Image.open(G + 'tansu.png').convert('RGBA'); s2 = s2.resize((s2.width * 4, s2.height * 4), Image.NEAREST)
-im.paste(s2, (X2, Y2 + 30), s2)
-arrow(d, (X2 - 20, Y2 + 150), (X2 - 120, Y2 + 150))
-label(d, (X2 + 120, Y2 + 50), (X2 + 260, Y2 + 30), '吸気口の口を前(左)へ向ける', RD)
-label(d, (X2 + 30, Y2 + 230), (X2 + 260, Y2 + 260), '前の面(STP)。東へ走るときは左右を反転', YL)
-# 前から
-X3, Y3 = 1350, 700
-d.text((X3 - 40, Y3 - 160), '前から(南へ来るとき)', fill=CY, font=f(18))
-d.rectangle((X3, Y3, X3 + 200, Y3 + 240), outline=LN, fill=(110, 70, 44), width=3)
-d.rectangle((X3 + 60, Y3 + 190, X3 + 140, Y3 + 220), outline=LN, fill=(220, 220, 210), width=2)
-d.ellipse((X3 + 50, Y3 + 120, X3 + 150, Y3 + 170), outline=LN, width=2); d.text((X3 + 78, Y3 + 133), 'STP', fill=LN, font=f(18))
-d.rectangle((X3 + 50, Y3 - 70, X3 + 150, Y3), outline=LN, fill=(200, 200, 206), width=2)
-d.rectangle((X3 + 40, Y3 - 110, X3 + 160, Y3 - 70), outline=YL, fill=(30, 30, 34), width=2)
-for k in range(3): d.ellipse((X3 + 52 + k * 36, Y3 - 104, X3 + 80 + k * 36, Y3 - 76), outline=LN, width=2)
-for sx in (X3 - 10, X3 + 190): d.rectangle((sx, Y3 + 220, sx + 20, Y3 + 262), outline=LN, fill=(60, 60, 64))
-label(d, (X3 + 100, Y3 - 90), (X3 + 220, Y3 - 40), '吸気口の口と 3 本の筒')
-label(d, (X3 + 100, Y3 + 205), (X3 + 220, Y3 + 230), 'ナンバーの板(字はない)')
-text(d, 30, 1060, [
-    '#ゲームの絵',
-    '西: 初稿の絵(○ 作者「イメージ通り」。左の短い面に STP があるので西向き)。東はその左右反転。吸気口の口は進む向き',
-    '南: 前の面(ナンバー、STP、吸気口の口と筒)。北: うしろの面(排気の煙突)',
-    '動き: 止まり = ドッドッドッと箪笥ごとゆれる、ブロアーのベルトが回る。走る = 鉄の車輪。下の引き出しが開く(ぼぎカーが出る)',
+im, d = sheet(1800, 1560, 'BUILD SHEET 04  車箪笥(みとんの家であり乗物)  第 2 版', '作者「引き出しがあるほうが正面じゃなくて、STPのステッカーがあるほうが正面。進行方向が９０度ちがうから、ブロアーの吸入口も進行方向」(D122)')
+w = ref(im, P + 'pic/218717_989130033_182large.jpg', (30, 110), 330, crop=(90, 280, 310, 520), cap='スケッチ A', d=d)
+w2 = ref(im, P + 'pic/218717_989129983_28large.jpg', (50 + w, 110), 330, crop=(30, 280, 280, 640), cap='スケッチ B', d=d)
+text(d, 90 + w + w2, 110, [
+    '#調べたこと',
+    '・車箪笥は、四方に大ぶりの車輪を付けた箪笥。火事のとき、貴重品を入れたまま',
+    '  引いて逃げるためのもの(ラフジュ「車箪笥とは」)',
+    '・綱を通す鉄の環が側面・四隅にあり、綱で引いて転がした(Zentner Collection)',
+    '・車輪は樫や杉などの木、鉄の輪をはめたものもある。台車(台輪)に車軸を通す',
+    '!・どちらへ転がるかを、はっきり書いた文は見つからなかった',
+    '  (ページの本文は、この環境の通信の制限で開けなかった)',
+    '#スケッチから読んだ車輪',
+    '・A: 四隅の車輪は、引き出しの面から丸く見える → 車軸は奥行きの向き',
+    '  → 車輪は長い向きに転がる(引き出しの面に沿って、左右へ)',
+    '・B: 短い面(ナンバー)から見ると、車輪は細く(横から)見える',
+    '+結論: 進む向きは長い向き。前は STP とナンバーの短い面(作者 D122)',
+    '+引き出しは横腹。ブロアーの吸気口は前(STP の側)へ口を開ける',
+], s=15, gap=6)
+# 上から(前 = 右)
+X, Y = 60, 560
+d.text((X, Y - 110), '上から(前 = 右、東へ進む)', fill=CY, font=f(18))
+d.rectangle((X, Y, X + 460, Y + 190), outline=LN, fill=(110, 70, 44), width=3)
+for k in range(3): d.rectangle((X + 30 + k * 140, Y - 12, X + 150 + k * 140, Y), outline=YL, fill=(90, 56, 36))
+d.text((X + 140, Y - 40 + 2), '', fill=YL)
+d.rectangle((X + 300, Y + 40, X + 430, Y + 150), outline=LN, fill=(150, 150, 156), width=2)
+d.rectangle((X + 320, Y + 60, X + 410, Y + 130), outline=LN, fill=(200, 200, 206), width=2)
+d.polygon([(X + 410, Y + 60), (X + 456, Y + 50), (X + 456, Y + 140), (X + 410, Y + 130)], outline=YL, fill=(30, 30, 34), width=2)
+for (cx, cy) in [(X + 60, Y - 30), (X + 400, Y - 30), (X + 60, Y + 220), (X + 400, Y + 220)]:
+    d.rectangle((cx - 50, cy - 10, cx + 50, cy + 10), outline=LN, fill=(150, 110, 70), width=2)
+for cx in (X + 60, X + 400): d.line((cx, Y - 40, cx, Y + 230), fill=(170, 170, 170), width=4)
+for (cx, cy) in [(X + 470, Y + 95), (X - 10, Y + 95)]: d.ellipse((cx - 9, cy - 9, cx + 9, cy + 9), outline=YL, width=3)
+arrow(d, (X + 500, Y + 95), (X + 600, Y + 95))
+label(d, (X + 230, Y - 6), (X + 280, Y - 70), '引き出し(横腹。進む向きの左側)', YL)
+label(d, (X + 60, Y + 220), (X + 120, Y + 300), '大きな木の車輪(鉄の輪)。車軸は奥行きの向き → 長い向きに転がる', YL)
+label(d, (X + 440, Y + 95), (X + 300, Y + 330), '吸気口の口は前(STP の側)', YL)
+label(d, (X + 470, Y + 95), (X + 520, Y + 160), '綱を通す鉄の環(前とうしろ)', YL)
+# 4 方向の見え方
+VX, VY = 820, 560
+d.text((VX, VY - 40), 'ゲームの 4 方向(斜め上から)', fill=CY, font=f(18))
+def chest(x, y, mode):
+    if mode in ('W', 'E'):
+        d.rectangle((x, y, x + 220, y + 120), outline=LN, fill=(110, 70, 44), width=3)
+        if mode == 'W':
+            for k in range(3): d.rectangle((x + 14, y + 10 + k * 36, x + 206, y + 40 + k * 36), outline=YL, width=2)
+        else:
+            for k in range(4): d.line((x + 10, y + 26 + k * 26, x + 210, y + 26 + k * 26), fill=(80, 50, 30), width=2)
+        for wx in (x + 30, x + 190): wheel(d, wx, y + 130, 22, fill=(150, 110, 70))
+        fx = x if mode == 'W' else x + 220
+        d.ellipse((fx - 18 if mode == 'W' else fx - 4, y + 56, fx + 4 if mode == 'W' else fx + 18, y + 80), outline=LN, width=2)
+        ex = x + 30 if mode == 'W' else x + 150
+        d.rectangle((ex, y - 40, ex + 40, y), outline=LN, fill=(200, 200, 206), width=2)
+        mx = ex - 12 if mode == 'W' else ex + 40
+        d.rectangle((mx, y - 56, mx + 12, y - 30), fill=(20, 20, 24), outline=YL)
+    else:
+        d.rectangle((x + 50, y, x + 170, y + 120), outline=LN, fill=(110, 70, 44), width=3)
+        if mode == 'S':
+            d.ellipse((x + 80, y + 40, x + 140, y + 70), outline=LN, width=2); d.text((x + 94, y + 46), 'STP', fill=LN, font=f(14))
+            d.rectangle((x + 85, y + 86, x + 135, y + 104), outline=LN, fill=(220, 220, 210))
+            d.rectangle((x + 80, y - 40, x + 140, y), outline=LN, fill=(200, 200, 206), width=2)
+            d.rectangle((x + 74, y - 60, x + 146, y - 38), outline=YL, fill=(20, 20, 24))
+            for k in range(3): d.ellipse((x + 80 + k * 22, y - 56, x + 96 + k * 22, y - 42), outline=LN)
+            d.line((x + 172, y + 6, x + 172, y + 116), fill=YL, width=3)
+        else:
+            d.rectangle((x + 80, y - 40, x + 140, y), outline=LN, fill=(200, 200, 206), width=2)
+            d.line((x + 48, y + 6, x + 48, y + 116), fill=YL, width=3)
+        for wx in (x + 54, x + 166): d.rectangle((wx - 6, y + 112, wx + 6, y + 146), outline=LN, fill=(150, 110, 70))
+for k, (m, t) in enumerate([('W', '西へ: 引き出しの面(左に STP、口も左)'), ('E', '東へ: 背板の面(引き出しなし。右に STP、口も右)'), ('S', 'こちらへ: STP とナンバーの面、口がこちら'), ('N', '向こうへ: うしろの面')]):
+    x = VX + (k % 2) * 480; y = VY + 70 + (k // 2) * 330
+    chest(x + 60, y, m); d.text((x, y + 170), t, fill=YL, font=f(15))
+d.text((VX, VY + 650), '黄色の線 = 引き出しの面の端(こちら・向こうから見ると、横腹の引き出しが細く見える)', fill=CY, font=f(14))
+text(d, 40, 1300, [
+    '#ビルダーの仕様',
+    '!PixelLab の見本(前回)の誤り: 吸気口の口と車輪が、引き出しの面を正面として作られていた。車輪も小さなキャスターだった',
+    '前: STP とナンバーの短い面。引き出しは進む向きの左側の横腹(右側は背板)。東へ走る絵は、西の絵の反転ではなく背板の面',
+    '車輪: 四隅に大きな木の車輪(鉄の輪)。車軸は奥行きの向きで、長い向きに転がる。前後の短い面に綱を通す鉄の環',
+    'エンジン: 天板の前寄りに沈めた V8 とブロアー。吸気口の口は前。引き出しの下にルーバー。ゼッケン「1」、STP',
 ], s=16, gap=7)
 im.save(O + 'build4_tansu.png')
 
