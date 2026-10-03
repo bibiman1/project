@@ -15,3 +15,6 @@ g.alpha_composite(mx, (54, 4))
 g.save(OUT + 'v_glow.png')
 Image.open(S + 'cast2b_s5.png').convert('RGBA').save(OUT + 'v_cast.png')
 print('ok')
+# 最後の絵は、構図案 C(水の中から見上げる)に描き直した(D89)。月は入れない。上の版を置きかえる
+Image.open(S + 'glow3_s5.png').convert('RGBA').save(OUT + 'v_glow.png')
+print('v_glow = glow3_s5')

@@ -2679,9 +2679,10 @@
 
   // D 土手と河川敷。単結晶は、両端が狭まった透明な円柱(作者)。両端に穴が空いている
   // 荷札を持って穴を調べると、荷札を結んで中へ入る → 一枚絵 → 上昇(成層圏、熱圏)→ 衛星軌道
+  // 筒の中の絵を閉じると、暗転せずに、絵の上から上昇の場面へじかに重ねる(D91。前のマップを見せない)
   const sEnter = (api) => {
     api.setFlag("launched");
-    api.show("v_inside", () => api.warp("rise", "view"), { full: true });
+    api.show("v_inside", null, { full: true, into: { map: "rise", spawn: "view" } });
   };
   const sHole = (id, x) =>
     sSpot(id, x, 5.6 * T, sEnter, { range: 50, canInteract: (api) => api.hasItem("荷札") && !api.flag("launched") });
@@ -2702,7 +2703,7 @@
     legend: K_LEGEND,
     drawGround(ctx, ox, oy, img) {
       const get = (k) => (typeof img === "function" ? img(k) : null);
-      const t = Math.min(RISE_DUR, performance.now() / 1000 - riseT0);
+      const t = Math.max(0, Math.min(RISE_DUR, performance.now() / 1000 - riseT0));
       const p = Math.pow(t / RISE_DUR, 1.7);
       const sky = get("rise_sky");
       const VWm = 15 * T;
@@ -2732,8 +2733,9 @@
     },
     spawns: { view: { x: 7 * T, y: 5 * T, facing: "east" } },
     onEnter(api) {
-      riseT0 = performance.now() / 1000;
-      api.later(RISE_DUR * 1000 + 400, () => api.show("v_rise3", () => api.warp("orbit", "west"), { full: true }));
+      // 筒の中の絵が薄くなりきってから(0.8 秒)、上がりはじめる
+      riseT0 = performance.now() / 1000 + 0.8;
+      api.later(RISE_DUR * 1000 + 1200, () => api.show("v_rise3", null, { full: true, into: { map: "orbit", spawn: "west" } }));
     },
     triggers: [],
     objects: [],
@@ -2825,13 +2827,26 @@
     spawns: { view: { x: 7 * T, y: 4 * T, facing: "south" } }, // カメラが画面のいちばん上(oy = 0)に来る位置
     onEnter(api) {
       spaceT0 = performance.now() / 1000;
+      // 流れ星 → 爆発(D91): ボタンを待たない。流れ星の絵から、流れ星の頭へ寄る絵を、だんだん短く切りかえる(1.3 → 0.6 → 0.3 → 0.15 秒)
+      // → 白く光った裏で、夜の河川敷のクレーターへ(暗転しない)
+      const HX = 212; // 流れ星の頭(v_fall の中のドット)
+      const HY = 91;
       api.later(SPACE_DUR * 1000, () =>
-        api.show("v_fall", () => {
-          api.setFlag("fallen");
-          api.setFlag("charred"); // 着地のあと、きーは真っ黒
-          api.setFlag("landing");
-          api.warp("crater", "center");
-        }, { full: true })
+        api.burst(
+          [
+            { img: "v_fall", sec: 1.6, z0: 1, z1: 1.12, cx: 160, cy: 96, fadeIn: 0.3 },
+            { img: "v_fall", sec: 0.6, z0: 1.7, z1: 1.9, cx: HX + 4, cy: HY + 3 },
+            { img: "v_fall", sec: 0.3, z0: 2.8, z1: 3.1, cx: HX + 4, cy: HY + 3 },
+            { img: "v_fall", sec: 0.15, z0: 4.5, z1: 5, cx: HX + 3, cy: HY + 2 },
+            { white: true, sec: 0.08 },
+          ],
+          () => {
+            api.setFlag("fallen");
+            api.setFlag("charred"); // 着地のあと、きーは真っ黒
+            api.setFlag("landing");
+            api.cut("crater", "center");
+          }
+        )
       );
     },
     triggers: [],
@@ -2852,8 +2867,11 @@
     bg: "#101830",
     onEnter(api) {
       if (api.flag("landing")) {
+        // 白が引くと、もう火の玉が上がっている。画面がゆれ、煙が晴れるまで、きーは動かない(D91)
         api.setFlag("landing", false);
-        boomT0 = performance.now() / 1000 + 1.3; // 暗転が明けてから
+        boomT0 = performance.now() / 1000;
+        api.shake(0.7, 7);
+        api.freeze(1.9);
       }
     },
     drawOverlay(ctx, ox, oy) {
