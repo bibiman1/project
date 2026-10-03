@@ -9,6 +9,19 @@ d.rectangle((474, 250, 483, 395), fill=255)                                     
 d.polygon([(674, 262), (688, 249), (712, 247), (730, 257), (738, 270), (728, 284), (712, 292), (700, 300), (684, 300), (674, 284)], fill=255)   # 竜頭
 d.polygon([(684, 294), (702, 298), (692, 318), (674, 338), (652, 354), (630, 368), (614, 364), (636, 346), (658, 326), (674, 306)], fill=255)   # 首(舳先の反り)
 d.rectangle((318, 320, 338, 380), fill=255)                                                              # 煙突
+# 竜頭と首は、上の多角形が細かった(首のふちが外れて、きーが首の上に乗って見えた。2026-10-03、作者「クビの後ろになってない」)。
+# 多角形を 10 ドット太らせて、その中の暗い色(岸壁の青より暗い、青みの弱い色)を竜頭と首に足す
+import numpy as np
+dm = Image.new('L', bg.size, 0); dd = ImageDraw.Draw(dm)
+dd.polygon([(674, 262), (688, 249), (712, 247), (730, 257), (738, 270), (728, 284), (712, 292), (700, 300), (684, 300), (674, 284)], fill=255)
+dd.polygon([(684, 294), (702, 298), (692, 318), (674, 338), (652, 354), (630, 368), (614, 364), (636, 346), (658, 326), (674, 306)], fill=255)
+dm = dm.filter(ImageFilter.MaxFilter(21))
+px = np.array(bg)[..., :3].astype(int)
+dark = px[..., 2] < 82
+dark[:250] = False   # 竜頭より上は奥の小屋の壁(壁の看板は足さない)
+add = Image.fromarray(np.where((np.array(dm) > 0) & dark, 255, 0).astype(np.uint8))
+add = add.filter(ImageFilter.MaxFilter(5)).filter(ImageFilter.MinFilter(5))   # たてがみの明るい点のすきまをうめる
+m = Image.fromarray(np.where((np.array(m) > 0) | ((np.array(add) > 0) & (np.array(dm) > 0)), 255, 0).astype(np.uint8))
 fg = Image.new('RGBA', bg.size, (0, 0, 0, 0)); fg.paste(bg, (0, 0), m)
 fg.save(A + 'fg_port.png')
 chk = bg.copy(); ov = Image.new('RGBA', bg.size, (255, 0, 0, 0)); ov.putalpha(m.point(lambda v: 90 if v else 0)); chk.alpha_composite(ov)
