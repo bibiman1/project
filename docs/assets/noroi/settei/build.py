@@ -109,71 +109,73 @@ text(d, 40, 1200, [
     '#ビルダーの仕様',
     '形: 写真の板の輪郭(横から)。厚みはきーの幅くらいの、角の丸い塊。目穴は板をつらぬき、両側に目',
     '足まわり: 白いナイロンの戸車 4 つ。長いボルトが車軸で、戸車は両はしに。柿渋(つやのある濃い茶、臭い)。炎はみとんのカスタム',
-    '走り: 無慣性粘着駆動(作者)。押した瞬間に全速、止まるときもぴたっと止まり、傾かない。加速するとき、きーはつぶれて背中に張り付く',
+    '無慣性(作者): 言葉どおり。光速でも直角に曲がる。押した瞬間に全速、ぴたっと止まり、傾かない・すべらない',
+    '粘着駆動(作者、ダブルミーニング): 車輪が摩擦で路面をけって進む / きーが車体に粘着して空気抵抗を減らす',
     '#ゲームの絵: 全長 約 64、厚み 約 30、高さ 約 24 ドット。4 方向。空 / きーが立つ / きーが張り付く。炎あり・炎なし。戸車 2 コマ',
 ], s=16, gap=7)
 im.save(O + 'build1_bogicar.png')
 
 # ================= ぽんぽんカー =================
-im, d = sheet(1800, 1240, 'BUILD SHEET 02  ぽんぽんカー(呪いの野犬の頭)', '作者「そもそもぼぎなので、ひとがのるすぺーすがいらない。車体にでかいV8が搭載されているだけでいい」。扉絵 pic/218717_989129975_3 から')
-ref(im, P + 'docs/assets/noroi/ref/ponpon.png', (30, 110), 300, cap='作者のスケッチ(扉絵)', d=d)
-# 横から
-bx, by = 760, 600
-d.rounded_rectangle((bx, by - 90, bx + 420, by), 40, outline=LN, fill=(214, 200, 168), width=3)   # 低い桶の車体
-d.line((bx + 20, by - 50, bx + 400, by - 50), fill=(200, 60, 50), width=6)
-# V8 のブロック(車体からはみ出す)
-d.rectangle((bx + 110, by - 160, bx + 330, by - 90), outline=LN, fill=(150, 150, 156), width=2)
-for k in range(4): d.rectangle((bx + 120 + k * 52, by - 186, bx + 166 + k * 52, by - 160), outline=LN, fill=(190, 190, 196))   # ヘッドのフィン
-d.rectangle((bx + 150, by - 250, bx + 300, by - 186), outline=LN, fill=(200, 200, 206), width=2)   # ブロアー
-for k in range(9): d.line((bx + 156 + k * 16, by - 246, bx + 156 + k * 16, by - 190), fill=(150, 150, 156))
-d.polygon([(bx + 170, by - 250), (bx + 300, by - 250), (bx + 300, by - 300), (bx + 200, by - 300)], outline=LN, fill=(220, 220, 226))   # 吸気口(前向き)
-d.rectangle((bx + 288, by - 298, bx + 300, by - 252), fill=(20, 20, 24))   # 吸気口の口(前を向く)
-for k in range(4):  # 排気の管(ゾーミー)
-    x = bx + 140 + k * 48; d.line((x, by - 110, x - 40, by - 140), fill=LN, width=6); d.ellipse((x - 48, by - 148, x - 32, by - 132), outline=LN, width=2)
-d.ellipse((bx + 390, by - 280, bx + 420, by - 250), outline=YL, width=2)   # ベルト(前)
-d.line((bx + 300, by - 230, bx + 405, by - 265), fill=YL, width=3)
-wheel(d, bx + 70, by + 10, 70, fill=(40, 40, 44)); wheel(d, bx + 370, by + 30, 40, fill=(40, 40, 44))
-d.ellipse((bx + 400, by - 70, bx + 440, by - 30), outline=LN, width=3, fill=(220, 220, 210))    # 目(ライト)
-d.ellipse((bx + 420, by - 30, bx + 452, by + 2), outline=LN, width=3, fill=(200, 60, 50))        # 鼻(バンパー)
-# 桶の火と荷車
-d.line((bx - 10, by - 30, bx - 120, by - 30), fill=LN, width=4)
-d.rectangle((bx - 240, by - 130, bx - 120, by - 20), outline=LN, fill=(130, 90, 54), width=3)
-for yy in (by - 110, by - 50): d.line((bx - 240, yy, bx - 120, yy), fill=(60, 60, 60), width=4)
-for k in range(5): d.polygon([(bx - 230 + k * 22, by - 130), (bx - 220 + k * 22, by - 175 - (k % 2) * 20), (bx - 210 + k * 22, by - 130)], fill=(255, 150, 50))
-wheel(d, bx - 210, by + 4, 22); wheel(d, bx - 150, by + 4, 22)
-d.line((bx - 130, by - 120, bx - 60, by - 150, bx + 110, by - 140), fill=(30, 30, 30), width=6); d.line((bx - 130, by - 120, bx - 60, by - 150, bx + 110, by - 140), fill=LN, width=1)
-box(d, (bx - 240, 130), '横から(東へ進む)')
-arrow(d, (bx + 470, by - 160), (bx + 570, by - 160))
-label(d, (bx + 294, by - 280), (bx + 120, by - 380), '吸気口(バグキャッチャー)の口は進む向き(前)')
-label(d, (bx + 225, by - 220), (bx - 300, by - 380), 'ブロアー(GMC 6-71 の銀の箱)。前のベルトで回す')
-label(d, (bx + 220, by - 125), (bx + 300, by + 195), 'V8: 左右 4 本ずつの排気の管(ゾーミー)')
-label(d, (bx + 250, by - 30), (bx + 60, by + 130), '低い桶の車体。人の乗る所はない。V8 が載っているだけ')
-label(d, (bx + 440, by - 15), (bx + 300, by + 165), '顔: ライトの目、丸いバンパーの鼻')
-label(d, (bx + 70, by + 10), (bx - 20, by + 110), '太い後輪(スリック)')
-label(d, (bx - 60, by - 150), (bx - 300, by - 290), '桶の火から黒いホースで熱(ポンポン船の仕組み)')
-# 前から(V のバンク)
-fx, fy = 1560, 640; box(d, (fx - 120, 290), '前から(顔)')
-d.rounded_rectangle((fx - 120, fy - 90, fx + 120, fy), 40, outline=LN, fill=(214, 200, 168), width=3)
-d.polygon([(fx - 110, fy - 90), (fx - 30, fy - 170), (fx - 10, fy - 170), (fx - 50, fy - 90)], outline=LN, fill=(150, 150, 156))
-d.polygon([(fx + 110, fy - 90), (fx + 30, fy - 170), (fx + 10, fy - 170), (fx + 50, fy - 90)], outline=LN, fill=(150, 150, 156))
-d.rectangle((fx - 50, fy - 250, fx + 50, fy - 170), outline=LN, fill=(200, 200, 206), width=2)
-d.rectangle((fx - 50, fy - 300, fx + 50, fy - 250), outline=LN, fill=(30, 30, 34), width=2)
-for k in range(3): d.ellipse((fx - 40 + k * 28, fy - 290, fx - 16 + k * 28, fy - 262), outline=LN, width=2)
-for s in (-1, 1): d.ellipse((fx + s * 60 - 22, fy - 70, fx + s * 60 + 22, fy - 26), outline=LN, width=3, fill=(220, 220, 210))
-d.ellipse((fx - 18, fy - 40, fx + 18, fy - 4), outline=LN, width=3, fill=(200, 60, 50))
-for s in (-1, 1): d.rectangle((fx + s * 150 - 30, fy - 60, fx + s * 150 + 30, fy + 60), outline=LN, width=2, fill=(40, 40, 44))
-for s in (-1, 1): d.rectangle((fx + s * 110 - 12, fy - 10, fx + s * 110 + 12, fy + 40), outline=LN, width=2, fill=(40, 40, 44))
-text(d, 30, 820, [
+im, d = sheet(1800, 1500, 'BUILD SHEET 02  ぽんぽんカー(呪いの野犬の頭)  第 2 版', '作者「そもそもぼぎなので、ひとがのるすぺーすがいらない。車体にでかいV8が搭載されているだけでいい」。扉絵 pic/218717_989129975_3 を読み直した')
+ref(im, P + 'pic/218717_989129975_3large.jpg', (30, 110), 360, crop=(60, 250, 420, 560), cap='作者のスケッチ(扉絵)', d=d)
+text(d, 470, 110, [
+    '#扉絵をこう読んだ',
+    '1 体は、正面から見て低く横に広いドーム(つぶれた饅頭のよう)。屋根も座席もない',
+    '2 前の面に帯。丸いライトの目 2 つ、まん中に大きな丸い鼻',
+    '3 V8 は天板のまん中の穴に沈む。前にクランクの丸い滑車。上にブロアー',
+    '4 ブロアーの上の吸気口(中に丸い筒 3 つ)は前を向く',
+    '5 排気の管は、エンジンの左右から上と外へ 4 本ずつ(短い管)',
+    '6 黒いホースは、エンジンの右から出て、横の桶の火の中へ垂れる',
+    '7 桶(たが 2 本)には薪と炭が盛られて燃える。桶はれんが 2 つの上(荷車ではない)',
+    '8 前輪は溝のある太いタイヤ。体の下に半分かくれる',
+    '!第 1 版の誤り: 桶を荷車で引く形にしていた。排気の管をうしろ向きにしていた',
+], s=16, gap=7)
+# 前から(扉絵どおり)
+FX, FY = 500, 900
+d.text((FX - 260, FY - 400), '前から(扉絵どおり)', fill=CY, font=f(18))
+d.chord((FX - 230, FY - 230, FX + 230, FY + 90), 180, 360, outline=LN, fill=(214, 200, 168), width=3)
+d.rectangle((FX - 230, FY - 70, FX + 230, FY + 40), outline=LN, fill=(214, 200, 168), width=3)
+d.rounded_rectangle((FX - 180, FY - 60, FX + 180, FY + 30), 30, outline=LN, fill=(230, 220, 196), width=3)
+for sx in (-1, 1): d.ellipse((FX + sx * 120 - 24, FY - 40, FX + sx * 120 + 24, FY + 8), outline=LN, width=3, fill=(240, 240, 232))
+d.ellipse((FX - 46, FY - 44, FX + 46, FY + 20), outline=LN, width=3, fill=(220, 90, 70))
+d.polygon([(FX - 80, FY - 70), (FX - 50, FY - 170), (FX + 50, FY - 170), (FX + 80, FY - 70)], outline=LN, fill=(150, 150, 156), width=2)
+d.ellipse((FX - 26, FY - 120, FX + 26, FY - 72), outline=LN, width=3)
+d.rectangle((FX - 46, FY - 230, FX + 46, FY - 170), outline=LN, fill=(200, 200, 206), width=2)
+d.polygon([(FX - 60, FY - 290), (FX + 60, FY - 290), (FX + 46, FY - 230), (FX - 46, FY - 230)], outline=YL, fill=(30, 30, 34), width=2)
+for k in range(3): d.ellipse((FX - 40 + k * 28, FY - 280, FX - 16 + k * 28, FY - 256), outline=LN, width=2)
+for sx in (-1, 1):
+    for k in range(4):
+        bx0 = FX + sx * (100 + k * 26); d.line((bx0, FY - 100 - k * 8, bx0 + sx * 18, FY - 150 - k * 8), fill=LN, width=8); d.line((bx0, FY - 100 - k * 8, bx0 + sx * 18, FY - 150 - k * 8), fill=(170, 170, 176), width=4)
+for sx in (-1, 1): d.rectangle((FX + sx * 150 - 40, FY + 30, FX + sx * 150 + 40, FY + 110), outline=LN, width=2, fill=(40, 40, 44))
+d.line((FX + 70, FY - 110, FX + 200, FY - 120, FX + 300, FY - 60, FX + 330, FY + 10), fill=(20, 20, 20), width=6)
+d.rectangle((FX + 290, FY - 10, FX + 410, FY + 120), outline=LN, fill=(150, 104, 64), width=3)
+for yy in (FY + 20, FY + 90): d.line((FX + 290, yy, FX + 410, yy), fill=(60, 60, 60), width=5)
+for k in range(5): d.polygon([(FX + 296 + k * 22, FY - 10), (FX + 306 + k * 22, FY - 60 - (k % 2) * 20), (FX + 316 + k * 22, FY - 10)], fill=(255, 150, 50))
+for bx0 in (FX + 280, FX + 360): d.rectangle((bx0, FY + 120, bx0 + 60, FY + 150), outline=LN, fill=(170, 80, 60))
+label(d, (FX, FY - 260), (FX - 330, FY - 340), '吸気口(筒 3 つ)は前', YL)
+label(d, (FX + 160, FY - 140), (FX + 230, FY - 330), '排気の管 左右 4 本ずつ、上と外へ', YL)
+label(d, (FX, FY - 96), (FX - 330, FY - 200), 'クランクの丸い滑車', YL)
+label(d, (FX, FY - 12), (FX - 330, FY + 140), '大きな丸い鼻、ライトの目 2 つ', YL)
+label(d, (FX + 250, FY - 100), (FX + 160, FY + 190), '黒いホース: エンジンの右から桶の火へ', YL)
+label(d, (FX + 390, FY + 135), (FX + 300, FY + 230), '桶はれんが 2 つの上', YL)
+# 上から
+TX, TY = 1290, 820
+d.text((TX - 200, TY - 300), '上から(前 = 下)', fill=CY, font=f(18))
+d.ellipse((TX - 200, TY - 240, TX + 200, TY + 200), outline=LN, fill=(214, 200, 168), width=3)
+d.rectangle((TX - 80, TY - 140, TX + 80, TY + 100), outline=LN, fill=(150, 150, 156), width=2)
+d.rectangle((TX - 40, TY - 100, TX + 40, TY + 80), outline=LN, fill=(200, 200, 206), width=2)
+d.rectangle((TX - 50, TY + 80, TX + 50, TY + 120), outline=YL, fill=(30, 30, 34))
+for sx in (-1, 1):
+    for k in range(4): d.ellipse((TX + sx * 110 - 9, TY - 110 + k * 50 - 9, TX + sx * 110 + 9, TY - 110 + k * 50 + 9), outline=LN, width=3)
+d.rounded_rectangle((TX - 150, TY + 150, TX + 150, TY + 200), 20, outline=LN, width=2)
+arrow(d, (TX, TY + 220), (TX, TY + 300)); d.text((TX + 10, TY + 260), '進む向き', fill=GR, font=f(15))
+label(d, (TX + 110, TY - 60), (TX + 230, TY - 140), '排気の管の口', YL)
+text(d, 40, 1260, [
     '#ビルダーの仕様',
-    '!初稿の直し: フォルクスワーゲンの形(屋根と座席)だった → 屋根も座席もない。低い桶の車体に、でかい V8 がどんと載る',
-    '車体: 低い桶(バスタブ)型の丸い箱。日本製のアメ車のブリキのおもちゃの塗り(クリームに赤い線、メッキ)',
-    'エンジン: 車体より大きく見えるほどの V8。上にブロアーと吸気口。吸気口の口は進む向き。左右 4 本ずつの排気の管',
-    '顔: 前の面に丸いライトの目 2 つ、丸い赤いバンパーの鼻(きーの鼻と同じ形)',
-    '熱: うしろに引く荷車の桶で火を焚き、黒いホースでエンジンへ。排気の管から「ポン　ポン」と煙の輪',
-    '#ゲームの絵',
-    '大きさ: 車体 約 64×24 ドット、ブロアーまで高さ 約 52。桶の荷車は別の絵(約 36×40)でうしろにつなぐ',
-    '向き: 東・西・北・南。動き: 止まり(ブロアーのベルト、エンジンの振動 2 コマ)、走る(車輪 2 コマ、煙の輪)',
-], s=17, gap=8)
+    '体: 低く横に広いドームの殻に、でかい V8 が沈んで載るだけ。前の帯に顔(ライトの目 2 つ、大きな丸い鼻)。塗りはクリームに赤のブリキ(作者「任せる」D120)',
+    'エンジン: V8 とブロアー、吸気口は前(筒 3 つ)。排気の管は左右 4 本ずつ、上と外へ。前輪は溝のある太いタイヤ',
+    '熱: 黒いホースがエンジンの右から、れんがの上の桶の火へ。ぼぎが薪と炭を運んでくる(「もってきた　ぽんぽんカー　もってきた」)',
+], s=16, gap=7)
 im.save(O + 'build2_ponpon.png')
 
 # ================= とりぼぎかー =================
