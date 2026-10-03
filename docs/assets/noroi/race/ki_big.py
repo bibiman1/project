@@ -19,7 +19,7 @@ def draw(rx, ry, W, H):
         if any((x + a, y + b) not in m for a, b in ((1, 0), (-1, 0), (0, 1), (0, -1))): px[x, y] = OUT
     return im.crop(im.getbbox())
 out = sys.argv[1]
-K = 2   # 1 倍で描いて、ドットのまま 2 倍にする(ぼぎカーの幅 = きーの幅 D122)(ゲームのきーとドットの大きさまで同じ)
+K = 3   # 1 倍で描いて、ドットのまま 3 倍にする(競争の画面は 3 倍。赤べこのうしろ姿の幅から)(ゲームのきーとドットの大きさまで同じ)
 def big(im): return im.resize((im.width * K, im.height * K), Image.NEAREST)
 big(Image.open(sys.argv[2]).crop((0, 64, 64, 128)).crop(Image.open(sys.argv[2]).crop((0, 64, 64, 128)).getbbox())).save(f'{out}/rc_ki_back.png')  # 立つ = 歩きの絵の向こう向きそのまま
 big(draw(19, 5.5, 50, 20)).save(f'{out}/rc_ki_stick.png')          # 張り付く(同じ楕円を薄くのばす)
