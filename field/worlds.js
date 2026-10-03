@@ -3368,21 +3368,48 @@
 
   // F 格納容器の中(炉心)。行き止まり。ふたの開いた炉はプール。ふちで調べると飛び込んで、ペレットを抱えて上がってくる → 暗転して港へ(D88)
   let tkDiveT0 = -1;
+  let tkDiveFrom = [8 * T, 10.4 * T]; // 飛び込んだ場所(ふちのどこからでも)
   const TK_DIVE = 2.4;
+  // プールのふち(だ円)。きーにいちばん近いふちの点
+  const TK_POOL = { cx: 8 * T, cy: 6 * T + 5, rx: 5 * T + 10, ry: 4 * T + 16 };
+  const tkRim = (x, y) => {
+    const a = Math.atan2((y - TK_POOL.cy) / TK_POOL.ry, (x - TK_POOL.cx) / TK_POOL.rx);
+    return [TK_POOL.cx + TK_POOL.rx * Math.cos(a), TK_POOL.cy + TK_POOL.ry * Math.sin(a)];
+  };
+  const tkDive = (api) => {
+    if (tkDiveT0 >= 0) return;
+    const pl = api.player();
+    tkDiveFrom = [pl.x, pl.y];
+    tkDiveT0 = tkNow();
+    TK_CORE._ki = api.image("ki");
+    api.freeze(TK_DIVE + 1.6);
+    api.later(TK_DIVE * 1000, () => {
+      tkDiveT0 = -1;
+      api.giveItem("ペレット");
+      api.later(1400, () => api.warp("port", "shop"));
+    });
+  };
   const TK_CORE = tkMap("core", 16, 14, {
     spawns: { south: { x: 8 * T, y: 12.3 * T, facing: "north" } },
     drawOverlay(ctx, ox, oy, t) {
       tkLight(ctx, ox + 8 * T, oy + 6 * T, 7 * T, "120, 210, 255", 0.14 + 0.06 * Math.sin(t * 2.1));
       if (tkDiveT0 < 0) return;
       const e = tkNow() - tkDiveT0;
-      const x = ox + 8 * T;
-      const y = oy + 8.4 * T;
+      // 跳びこむ先: ふちから、プールの水の上へ 3 マス
+      const [fx, fy] = tkDiveFrom;
+      const dx = TK_POOL.cx - fx;
+      const dy = TK_POOL.cy - fy;
+      const dl = Math.hypot(dx, dy) || 1;
+      const x = ox + fx + (dx / dl) * 3 * T;
+      const y = oy + fy + (dy / dl) * 3 * T;
       // 跳びこむ(弧)→ しぶきと波紋 → 水の中で光る → ペレットを抱えて上がってくる
       const ki = this._ki;
       if (e < 0.5 && ki) {
         const u = e / 0.5;
-        const footY = oy + 10.4 * T + (8.4 * T - 10.4 * T) * u - Math.sin(u * Math.PI) * 30; // ふちから、炉のまんなかへ
-        ctx.drawImage(ki, 0, 64, 64, 64, Math.round(x - 32), Math.round(footY - 64 + 17), 64, 64);
+        const row = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 2 : 3) : dy < 0 ? 1 : 0;
+        const kx = ox + fx + (x - ox - fx) * u;
+        const footY = oy + fy + (y - oy - fy) * u - Math.sin(u * Math.PI) * 30;
+        ctx.drawImage(ki, 0, row * 64, 64, 64, Math.round(kx - 32), Math.round(footY - 64 + 17), 64, 64);
       }
       if (e > 0.45 && e < 2.2) {
         const u = (e - 0.45) / 1.75;
@@ -3406,21 +3433,41 @@
     },
     triggers: [{ id: "toReactor", x: 7 * T, y: 13.5 * T, w: 2 * T, h: T, warp: { map: "reactor", spawn: "north" } }],
     objects: [
-      tkSpot(
-        "pool",
-        8 * T,
-        10.4 * T,
-        (api) => {
-          tkDiveT0 = tkNow();
-          TK_CORE._ki = api.image("ki");
-          api.later(TK_DIVE * 1000, () => {
-            tkDiveT0 = -1;
-            api.giveItem("ペレット");
-            api.later(1400, () => api.warp("port", "shop"));
-          });
+      // プールのふち: どこからでも、調べると飛び込む。水に向かって歩きつづけても飛び込む(作者「プールに入れない」2026-10-03)
+      {
+        id: "pool",
+        x: 8 * T,
+        y: 10.4 * T,
+        w: 1,
+        h: 1,
+        range: 54,
+        headY: 30,
+        canInteract: (api) => !api.hasItem("ペレット") && !api.flag("cast") && tkDiveT0 < 0,
+        interact: (api) => tkDive(api),
+        update(dt, t, api) {
+          // ▼ と調べる場所を、きーにいちばん近いふちに置く
+          const pl = api.player();
+          const [rx, ry] = tkRim(pl.x, pl.y);
+          this.x = rx;
+          this.y = ry;
+          if (api.hasItem("ペレット") || api.flag("cast") || tkDiveT0 >= 0) return;
+          // ふちで、水のほうを向いて立ち止まったまま(壁を押している)なら飛び込む
+          const near = Math.hypot(pl.x - rx, pl.y - ry) < 26;
+          const fx = { east: 1, west: -1 }[pl.facing] || 0;
+          const fy = { south: 1, north: -1 }[pl.facing] || 0;
+          const tx = TK_POOL.cx - pl.x;
+          const ty = TK_POOL.cy - pl.y;
+          const toward = (fx * tx + fy * ty) / (Math.hypot(tx, ty) || 1) > 0.5;
+          const still = this._lx === pl.x && this._ly === pl.y;
+          this._lx = pl.x;
+          this._ly = pl.y;
+          this._push = near && toward && still ? (this._push || 0) + dt : 0;
+          if (this._push > 0.35) {
+            this._push = 0;
+            tkDive(api);
+          }
         },
-        { range: 50, canInteract: (api) => !api.hasItem("ペレット") && !api.flag("cast") && tkDiveT0 < 0 }
-      ),
+      },
     ],
   });
   // 飛び込んでいるあいだは、きーを消す(水の中)
