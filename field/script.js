@@ -363,6 +363,16 @@
     }
   }
 
+  // はじめから(デバッグ用): 保存を消して、読みこみ直す(最初の状態にもどる)
+  function resetGame() {
+    try {
+      localStorage.removeItem(SAVE_KEY);
+    } catch (e) {
+      // 保存できない環境でも、読みこみ直せば最初からになる
+    }
+    location.reload();
+  }
+
   function saveState() {
     try {
       localStorage.setItem(SAVE_KEY, JSON.stringify(gameState));
@@ -466,6 +476,7 @@
     { key: "words", label: "ことば" },
     { key: "skills", label: "とくぎ" },
     { key: "frags", label: "断片" },
+    { key: "reset", label: "はじめから" }, // デバッグ用(作者 2026-10-03)。本番の前に消す
   ];
   // きーの能力(とくぎ)。断片で習得する。新しい能力はここに 1 行足し、断片で api.learnAbility(id) を呼ぶ
   const ABILITIES = [{ id: "jump", text: "ジャンプ", note: "Bボタン / Xキーで　とぶ。" }];
@@ -494,8 +505,8 @@
     // 左: コマンド
     stWindow(12, 12, 156, 118);
     ST_CMDS.forEach((c, i) => {
-      stText(c.label, 42, 24 + i * 24);
-      if (stMenu.cmd === i) stCursor(24, 27 + i * 24);
+      stText(c.label, 42, 20 + i * 21, c.key === "reset" ? "#8a8a8a" : "#ffffff");
+      if (stMenu.cmd === i) stCursor(24, 23 + i * 21);
     });
     // 右: 要約(数だけ。いくつ増えてもあふれない)
     const frags = hub.fragments || [];
@@ -505,7 +516,17 @@
     stText(`ばしょ：${rpg.isHub ? hub.name : rpg.worldName}`, 192, 48, "#ffffff", 264);
     stText(`断片　${found}/${frags.length}`, 192, 72);
     stText(`どうぐ　${gameState.items.length}　ことば　${gameState.words.length}`, 192, 96);
-    if (stMenu.mode === "list") {
+    if (stMenu.mode === "reset") {
+      // はじめから(デバッグ用): 保存を消して、最初の状態から遊び直す
+      stWindow(12, 138, 456, 150);
+      stText("はじめから　(デバッグ用)", 28, 150);
+      stText("どうぐ、ことば、断片、とくぎを　ぜんぶ消して", 40, 178);
+      stText("最初の状態にもどしますか？", 40, 200);
+      ["いいえ", "はい"].forEach((t, i) => {
+        stText(t, 80 + i * 120, 240);
+        if (stMenu.cur === i) stCursor(62 + i * 120, 243);
+      });
+    } else if (stMenu.mode === "list") {
       const cmd = ST_CMDS[stMenu.cmd];
       const rows = stRows(cmd.key);
       const pages = Math.max(1, Math.ceil(rows.length / ST_PAGE));
@@ -562,9 +583,15 @@
       if (action === "up") stMenu.cmd = (stMenu.cmd + ST_CMDS.length - 1) % ST_CMDS.length;
       else if (action === "down") stMenu.cmd = (stMenu.cmd + 1) % ST_CMDS.length;
       else if (action === "a") {
-        stMenu.mode = "list";
+        stMenu.mode = ST_CMDS[stMenu.cmd].key === "reset" ? "reset" : "list";
         stMenu.cur = 0;
       } else if (action === "b" || action === "c") return toggleStatus(false);
+    } else if (stMenu.mode === "reset") {
+      if (action === "left" || action === "right" || action === "up" || action === "down") stMenu.cur = 1 - stMenu.cur;
+      else if (action === "a") {
+        if (stMenu.cur === 1) return resetGame();
+        stMenu.mode = "top";
+      } else if (action === "b" || action === "c") stMenu.mode = "top";
     } else {
       const n = stRows(ST_CMDS[stMenu.cmd].key).length;
       if (action === "up" && n) stMenu.cur = (stMenu.cur + n - 1) % n;
