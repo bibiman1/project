@@ -2970,8 +2970,8 @@
       "..#######..#####..#####.....",
       "..#######...................",
       "...##.......................",
-      ".............#####.#####....",
-      ".............#####.#####....",
+      "............................",
+      "............................",
       "############################",
       "############################",
       "############################",
@@ -3208,6 +3208,20 @@
   };
 
   // A 漁港と岸壁(入口で出口。西の坂道。東の坂道の先が岬の発電所)
+  // 切り出した絵(fg_*.png の x0, y0, w, h)を、足もとの y(base)できーと前後させる。bob は絵のゆれ(甲板)
+  const tkFg = (img, x0, y0, w, h, base, bob) => ({
+    id: `fg${x0}_${y0}`,
+    x: x0 + w / 2,
+    y: base,
+    w: 1,
+    h: 1,
+    draw(ctx, sx, sy, t, api) {
+      const im = api.image(img);
+      const dy = bob ? bob() : 0;
+      if (im) ctx.drawImage(im, x0, y0, w, h, sx - this.x + x0, sy - this.y + y0 + dy, w, h);
+    },
+  });
+  const tkWall = (x0, y0, x1, y1) => ({ id: `wall${x0}`, x: (x0 + x1) / 2, y: (y0 + y1) / 2, w: 1, h: 1, solid: { w: x1 - x0, h: y1 - y0 } });
   const TK_PORT = tkMap("port", 28, 14, {
     spawns: {
       start: { x: 1.2 * T, y: 6.6 * T, facing: "east" },
@@ -3227,15 +3241,12 @@
     ],
     objects: [
       // 宝舟は岸壁より手前(水の上)。帆・帆柱・竜頭・煙突は、岸壁を歩くきーより手前に描く(fg_port。docs/assets/takarabune/fg_port.py)
-      // 帆と竜頭のうしろの岸壁は通れない(うしろに入ると、きーが帆にすっかり隠れるので。2026-10-03、作者「宝船の帆の前後がおかしい」)
-      {
-        x: 0,
-        y: 11.6 * T,
-        draw(ctx, sx, sy, t, api) {
-          const im = api.image("fg_port");
-          if (im) ctx.drawImage(im, sx, sy - 11.6 * T);
-        },
-      },
+      // 帆と竜頭のうしろの岸壁も通れる。うしろに入ると、きーは帆に隠れる(2026-10-03、作者「帆の後ろは通り抜けるが、きーが隠れるはできる？」)
+      // 切り出しは物ごとに分けて、それぞれの x に置く(一枚のまま x: 0 に置くと、画面が右へ動いたとき画面の外の物として描かれなかった)
+      tkFg("fg_port", 412, 254, 136, 108, 11.6 * T), // 帆
+      tkFg("fg_port", 472, 248, 13, 149, 11.6 * T), // 帆柱
+      tkFg("fg_port", 612, 245, 128, 125, 11.6 * T), // 竜頭と首
+      tkFg("fg_port", 316, 318, 24, 64, 11.6 * T), // 煙突
       // 鋳物小屋(鋳造工房)の大戸
       tkSpot("shopDoor", 5.6 * T, 7.2 * T, (api) => api.warp("workshop", "door"), { range: 44 }),
       // 宝舟: 乗りこむと機関室。沖から帰ってきたら、舵のそばに白紙の海図
@@ -3314,24 +3325,10 @@
   // 正門の前後(fg_gate。docs/assets/takarabune/fg_gate.py)。2026-10-03、作者「金網フェンスは？前後関係」
   // フェンスの根もと(y 158)より北へは行けない。門は半開きで、2 枚の扉のあいだだけ通れる(扉の足もとの線の奥はふさぐ)。
   // 扉は地面に斜めに立つので、幅 6 の縦の帯に切って、帯ごとの足もとの y できーと前後を決める。守衛所と立て札は足もとの y で
-  // 切り出した絵(fg_*.png の x0, y0, w, h)を、足もとの y(base)できーと前後させる。bob は絵のゆれ(甲板)
-  const tkFg = (img, x0, y0, w, h, base, bob) => ({
-    id: `fg${x0}_${y0}`,
-    x: x0 + w / 2,
-    y: base,
-    w: 1,
-    h: 1,
-    draw(ctx, sx, sy, t, api) {
-      const im = api.image(img);
-      const dy = bob ? bob() : 0;
-      if (im) ctx.drawImage(im, x0, y0, w, h, sx - this.x + x0, sy - this.y + y0 + dy, w, h);
-    },
-  });
   const TK_GATE_FG = [];
   for (let x = 356; x < 414; x += 6) TK_GATE_FG.push(tkFg("fg_gate", x, 68, 6, 136, 160 + ((x + 3 - 355) * 40) / 55));   // 左の扉: (355,160)→(410,200)
   for (let x = 424; x < 478; x += 6) TK_GATE_FG.push(tkFg("fg_gate", x, 68, 6, 136, 158 + ((478 - x - 3) * 32) / 51));   // 右の扉: (478,158)→(427,190)
   TK_GATE_FG.push(tkFg("fg_gate", 537, 125, 113, 90, 214), tkFg("fg_gate", 646, 174, 32, 43, 216));   // 守衛所、立て札
-  const tkWall = (x0, y0, x1, y1) => ({ id: `wall${x0}`, x: (x0 + x1) / 2, y: (y0 + y1) / 2, w: 1, h: 1, solid: { w: x1 - x0, h: y1 - y0 } });
   const TK_GATE = tkMap("gate", 28, 10, {
     spawns: {
       west: { x: 1.2 * T, y: 7.4 * T, facing: "east" },
