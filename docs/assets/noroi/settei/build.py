@@ -160,79 +160,102 @@ text(d, 30, 820, [
 im.save(O + 'build2_ponpon.png')
 
 # ================= とりぼぎかー =================
-im, d = sheet(1800, 1400, 'BUILD SHEET 03  とりぼぎかー(呪いの野犬)', '作者「グレートアトラクターにけん引されて駆動する宇宙的な動力源を持っている。後ろの子鴨がのっている構造もよく考えて」。スケッチ pic/218717_1007375036_214 から作り直す')
-ref(im, P + 'pic/218717_1007375036_214large.jpg', (30, 110), 300, crop=(0, 0, 640, 417), cap='作者のスケッチ(図解)', d=d)
-ref(im, P + 'pic/218717_1007375036_214large.jpg', (520, 110), 300, crop=(400, 0, 640, 300), cap='子がもの内部図解と回転台', d=d)
-# 宇宙の引力源(左上の概念図)
-gx, gy = 1040, 250
-for k in range(7):
-    r = 18 + k * 16; d.arc((gx - r, gy - r * 0.55, gx + r, gy + r * 0.55), 20 * k, 20 * k + 250, fill=(180, 170, 255), width=2)
-d.ellipse((gx - 8, gy - 6, gx + 8, gy + 6), fill=(255, 255, 230))
-d.text((gx - 120, gy + 80), 'グレートアトラクター', fill=YL, font=f(18))
-text(d, 1220, 120, [
-    '#グレートアトラクター(実在)',
-    '天の川銀河を含む銀河の群れは、ケンタウルス座・じょうぎ座の方角、',
-    '約 1.5〜2.5 億光年先の、重力の大きな集まりへ向かって、',
-    '秒速 約 600 キロで引かれている。その引力源の名前',
-    '#メイン動力: 重力トラクター',
-    'ひもの先をグレートアトラクターに結んである(作者のスケッチ)。',
-    'とりぼぎかーは、いつも宇宙の向こうへ引かれている。',
-    'ひもは鴨の胸の糸巻きから出る。巻くと速く、ゆるめると流す',
+im, d = sheet(1800, 1500, 'BUILD SHEET 03  とりぼぎかー(呪いの野犬)  第 2 版', '作者「こがもは３匹いる。上から見て円形のだいざにならんでいる。とりぼぎかーが前進すると子鴨のくちばしからじぇっとがでて回転する」')
+ref(im, P + 'pic/218717_1007375036_214large.jpg', (30, 110), 260, crop=(0, 0, 640, 417), cap='スケッチ: 全体の図解', d=d)
+ref(im, P + 'pic/218717_1007375036_214large.jpg', (450, 110), 260, crop=(395, 0, 560, 120), cap='子がもの内部図解(とがった方が噴射口)', d=d)
+ref(im, P + 'pic/218717_1008773116_59large.jpg', (840, 110), 260, crop=(330, 120, 640, 417), cap='漫画「シュッ」: 桶の上で子がもが回る', d=d)
+text(d, 1180, 110, [
+    '#スケッチをこう読んだ',
+    '1 図解の子がもは、まるい方に吸気口、とがった方に噴射口',
+    '   とがった方 = くちばし。ジェットはくちばしから出る',
+    '2 子がも 2 の顔の丸い輪は、くちばしの噴射口を前から見た所',
+    '3 「回転」の矢印は、子がもの乗った台座が回ること',
+    '4 漫画「シュッ」で、桶の上の子がもが流れる線で回っている',
+    '   丸が上下 2 段に 3 つずつ = 子がも 3 羽の頭と胴',
+    '5 桶のま下に車輪が 1 つ。台座の軸の線上にある',
+    '6 ひもは鴨の前の下から、宇宙の引力源へのびる',
 ], s=15, gap=6)
-# 横から: 鴨(前)+ 引き棒 + 桶(うしろ)
-dx, dy = 1000, 760
-d.line((dx + 120, dy - 100, dx + 520, dy - 330), fill=(255, 240, 160), width=2)    # ひも(空へ)
-d.text((dx + 380, dy - 330), '≈', fill=(255, 240, 160), font=f(30)); arrow(d, (dx + 440, dy - 300), (dx + 520, dy - 340), (255, 240, 160), 2)
-d.text((dx + 330, dy - 290), 'ひも → 空のかなたの引力源へ', fill=(255, 240, 160), font=f(15))
-d.ellipse((dx - 20, dy - 120, dx + 150, dy - 10), outline=LN, fill=(170, 110, 60), width=3)     # 鴨の胴
-d.ellipse((dx + 70, dy - 210, dx + 150, dy - 120), outline=LN, fill=(170, 110, 60), width=3)    # 頭
+# 上から: 円形の台座に 3 羽、くちばしは接線の向き
+cx, cy, R = 330, 640, 150
+d.text((40, 420), '上から(台座と子がも 3 羽)', fill=CY, font=f(18))
+d.ellipse((cx - R - 30, cy - R - 30, cx + R + 30, cy + R + 30), outline=LN, width=3, fill=(150, 104, 64))
+d.ellipse((cx - R, cy - R, cx + R, cy + R), outline=YL, width=2, fill=(120, 90, 60))
+d.ellipse((cx - 10, cy - 10, cx + 10, cy + 10), outline=YL, width=2)
+for k in range(3):
+    a0 = -math.pi / 2 + k * 2 * math.pi / 3
+    px, py = cx + 95 * math.cos(a0), cy + 95 * math.sin(a0)
+    tx, ty = -math.sin(a0), math.cos(a0)          # 接線(時計回りの向き)
+    d.ellipse((px - 34, py - 34, px + 34, py + 34), outline=LN, width=2, fill=(236, 214, 150))
+    hx, hy = px + tx * 42, py + ty * 42
+    d.ellipse((hx - 20, hy - 20, hx + 20, hy + 20), outline=LN, width=2, fill=(236, 214, 150))
+    bx2, by2 = hx + tx * 26, hy + ty * 26
+    d.polygon([(hx + tx * 18 - ty * 7, hy + ty * 18 + tx * 7), (bx2, by2), (hx + tx * 18 + ty * 7, hy + ty * 18 - tx * 7)], fill=(230, 150, 60))
+    for j in range(4): d.line((bx2 + tx * (8 + j * 14), by2 + ty * (8 + j * 14), bx2 + tx * (16 + j * 14), by2 + ty * (16 + j * 14)), fill=(255, 170, 80), width=5 - j)
+    d.text((px - 12, py - 8), str(k + 1), fill=(60, 40, 20), font=f(16))
+d.arc((cx - R - 60, cy - R - 60, cx + R + 60, cy + R + 60), 200, 320, fill=GR, width=4)
+ang = math.radians(200); ex, ey = cx + (R + 60) * math.cos(ang), cy + (R + 60) * math.sin(ang)
+arrow(d, (ex + 30, ey - 40), (ex, ey))
+d.text((cx - 190, cy + R + 40), '台座の回る向き(ジェットと逆)', fill=GR, font=f(15))
+label(d, (cx + 30, cy - 160), (cx + 200, cy - 230), 'くちばし(噴射口)は円の接線の向き', YL)
+label(d, (cx - 60, cy - 70), (cx + 200, cy - 190), '尾(吸気口)は反対側', YL)
+label(d, (cx, cy), (cx + 220, cy + 30), '中心の軸(燃料も通る)', YL)
+# 横から
+dx, dy = 1320, 860
+d.text((760, 450), '横から(東へ進む)', fill=CY, font=f(18))
+d.line((dx + 150, dy - 10, dx + 400, dy - 330), fill=(255, 240, 160), width=2)
+d.text((dx + 260, dy - 260), '≈', fill=(255, 240, 160), font=f(30)); arrow(d, (dx + 340, dy - 260), (dx + 400, dy - 330), (255, 240, 160), 2)
+d.text((dx + 190, dy - 340), 'ひも → 宇宙の引力源', fill=(255, 240, 160), font=f(15))
+d.ellipse((dx - 20, dy - 120, dx + 150, dy - 10), outline=LN, fill=(170, 110, 60), width=3)
+d.ellipse((dx + 70, dy - 210, dx + 150, dy - 120), outline=LN, fill=(170, 110, 60), width=3)
 d.ellipse((dx + 100, dy - 190, dx + 126, dy - 164), outline=LN, fill=(240, 240, 230)); d.ellipse((dx + 108, dy - 182, dx + 120, dy - 170), fill=(20, 20, 20))
 d.polygon([(dx + 148, dy - 170), (dx + 200, dy - 160), (dx + 148, dy - 148)], outline=LN, fill=(220, 160, 60))
-d.ellipse((dx + 105, dy - 108, dx + 135, dy - 78), outline=YL, width=2)   # 糸巻き
-d.arc((dx, dy - 100, dx + 110, dy - 30), 200, 340, fill=LN, width=2)       # 羽の彫り
-wheel(d, dx + 60, dy + 6, 30, fill=(150, 100, 60))
-d.line((dx - 20, dy - 40, dx - 130, dy - 40), fill=LN, width=6)            # 引き棒
-tx, ty = dx - 330, dy
-d.rectangle((tx, ty - 130, tx + 200, ty - 10), outline=LN, fill=(150, 104, 64), width=3)   # 桶
-for yy in (ty - 112, ty - 30): d.line((tx, yy, tx + 200, yy), fill=(60, 60, 60), width=5)
-d.rectangle((tx + 10, ty - 150, tx + 190, ty - 130), outline=YL, fill=(120, 90, 60), width=2)   # 回転台
-d.line((tx + 100, ty - 130, tx + 100, ty - 40), fill=YL, width=3)                               # 軸(燃料も通る)
-d.rectangle((tx + 50, ty - 60, tx + 150, ty - 30), outline=CY, width=2); d.text((tx + 62, ty - 58), '燃料', fill=CY, font=f(14))
-for k, cx in enumerate((tx + 50, tx + 140)):                                                     # 子がも 2 羽
-    d.ellipse((cx - 36, ty - 210, cx + 36, ty - 150), outline=LN, fill=(236, 214, 150), width=2)
-    d.ellipse((cx + 10, ty - 236, cx + 44, ty - 202), outline=LN, fill=(236, 214, 150), width=2)
-    d.polygon([(cx + 42, ty - 222), (cx + 60, ty - 218), (cx + 42, ty - 212)], fill=(230, 150, 60))
-    d.polygon([(cx - 36, ty - 186), (cx - 56, ty - 176), (cx - 36, ty - 166)], fill=(255, 200, 120))
-for wx in (tx + 50, tx + 150): wheel(d, wx, ty + 4, 24, fill=(150, 100, 60))
-arrow(d, (tx + 30, ty - 270), (tx + 170, ty - 270), YL, 2); d.arc((tx - 10, ty - 300, tx + 210, ty - 240), 200, 340, fill=YL, width=2)
-box(d, (tx - 20, 1000 - 560 + 60), '')
-label(d, (tx + 100, ty - 145), (40, ty - 200), '回転台(作者の図「回転」)。軸のまわりを回る')
-label(d, (tx + 140, ty - 180), (40, ty - 300), '子がも 1・2 = ターボジェット。口が吸気、尾が噴射口')
-label(d, (tx + 100, ty - 70), (40, ty - 100), '燃料のタンクは桶の底。軸の中を通って子がもへ')
-label(d, (dx + 120, dy - 93), (dx + 220, dy - 30), '胸の糸巻き(ひもを巻く・ゆるめる)')
-label(d, (dx + 60, dy - 60), (dx + 230, dy + 10), '木の鴨の引き車(柿渋)。鉄山温泉の途中の土産物屋で作られた')
-label(d, (dx - 75, dy - 40), (dx - 120, dy + 70), '引き棒')
+d.arc((dx, dy - 100, dx + 110, dy - 30), 200, 340, fill=LN, width=2)
+wheel(d, dx + 100, dy + 6, 30, fill=(150, 100, 60))
+d.line((dx - 20, dy - 40, dx - 110, dy - 40), fill=LN, width=6)
+tx0, ty0 = dx - 330, dy
+d.rectangle((tx0, ty0 - 130, tx0 + 220, ty0 - 20), outline=LN, fill=(150, 104, 64), width=3)
+for yy in (ty0 - 112, ty0 - 40): d.line((tx0, yy, tx0 + 220, yy), fill=(60, 60, 60), width=5)
+d.rectangle((tx0 + 10, ty0 - 150, tx0 + 210, ty0 - 132), outline=YL, fill=(120, 90, 60), width=2)
+d.line((tx0 + 110, ty0 - 132, tx0 + 110, ty0 + 4), fill=YL, width=4)
+d.rectangle((tx0 + 40, ty0 - 80, tx0 + 90, ty0 - 50), outline=CY, width=2); d.text((tx0 + 44, ty0 - 78), '燃料', fill=CY, font=f(13))
+wheel(d, tx0 + 110, ty0 + 20, 30, fill=(150, 100, 60))
+for k, (px, face) in enumerate([(tx0 + 50, 1), (tx0 + 110, 0), (tx0 + 170, -1)]):
+    d.ellipse((px - 30, ty0 - 205, px + 30, ty0 - 150), outline=LN, fill=(236, 214, 150), width=2)
+    hx = px + face * 22
+    d.ellipse((hx - 17, ty0 - 236, hx + 17, ty0 - 202), outline=LN, fill=(236, 214, 150), width=2)
+    if face: d.polygon([(hx + face * 15, ty0 - 224), (hx + face * 34, ty0 - 219), (hx + face * 15, ty0 - 212)], fill=(230, 150, 60))
+    else: d.ellipse((hx - 6, ty0 - 224, hx + 6, ty0 - 212), outline=(230, 150, 60), width=3)
+d.line((tx0 + 225, ty0 - 219, tx0 + 280, ty0 - 219), fill=(255, 170, 80), width=4)
+d.line((tx0 - 5, ty0 - 219, tx0 - 60, ty0 - 219), fill=(255, 170, 80), width=4)
+d.text((tx0 + 40, ty0 - 290), 'シュッ', fill=(255, 200, 120), font=f(22))
+label(d, (tx0 + 110, ty0 - 141), (tx0 - 200, ty0 - 330), '円形の台座。子がも 3 羽が並ぶ', YL)
+label(d, (tx0 + 110, ty0 - 210), (tx0 - 200, ty0 - 370), '真ん中の子がもは、くちばしの噴射口をこちらへ向けた所(子がも 2 の丸い輪)', YL)
+label(d, (tx0 + 110, ty0 - 10), (tx0 - 200, ty0 + 80), '解釈: 台座の軸は桶の中を通って、ま下の車輪を回す(確かめたい)', RD)
+label(d, (tx0 + 65, ty0 - 65), (tx0 - 200, ty0 + 40), '燃料のタンク(桶の中)', YL)
+label(d, (dx - 65, dy - 40), (dx - 70, dy + 40), '引き棒', YL)
+label(d, (dx + 60, dy - 60), (dx + 160, dy + 70), '木の鴨の引き車(柿渋)', YL)
 # 子がもの断面
-cx, cy = 1400, 960
-d.text((1180, 1140), '子がもの断面(作者の図解のとおり)', fill=CY, font=f(18))
+cx, cy = 300, 1110
+d.text((40, 1290), '子がもの断面(作者の図解。とがった方 = くちばし = 噴射口)', fill=CY, font=f(18))
 d.ellipse((cx - 150, cy - 60, cx + 150, cy + 60), outline=LN, width=3)
 for k in range(5): d.line((cx - 110 + k * 12, cy - 44, cx - 110 + k * 12, cy + 44), fill=CY, width=3)
 d.rectangle((cx - 30, cy - 34, cx + 60, cy + 34), outline=RD, width=2)
 d.polygon([(cx + 60, cy - 34), (cx + 150, cy - 10), (cx + 150, cy + 10), (cx + 60, cy + 34)], outline=LN, width=2)
-d.polygon([(cx + 150, cy - 10), (cx + 210, cy), (cx + 150, cy + 10)], fill=(255, 170, 80))
-d.line((cx, cy + 60, cx, cy + 110), fill=YL, width=3); d.rectangle((cx - 50, cy + 110, cx + 50, cy + 150), outline=YL, width=2)
-for (xy, t, txy) in [((cx - 150, cy), '吸気口(くちばし)', (cx - 210, cy - 100)), ((cx - 100, cy - 44), '圧縮機', (cx - 120, cy - 130)), ((cx + 15, cy - 34), '燃焼室', (cx + 10, cy - 120)), ((cx + 190, cy), '噴射口(尾)「シュッ」', (cx + 120, cy - 90)), ((cx, cy + 90), '燃料噴射装置', (cx + 60, cy + 90)), ((cx, cy + 130), '燃料(桶の底)', (cx + 60, cy + 140))]:
+d.polygon([(cx + 150, cy - 10), (cx + 220, cy), (cx + 150, cy + 10)], fill=(255, 170, 80))
+d.line((cx, cy + 60, cx, cy + 100), fill=YL, width=3); d.rectangle((cx - 50, cy + 100, cx + 50, cy + 140), outline=YL, width=2)
+for (xy, t, txy) in [((cx - 150, cy), '吸気口(尾)', (cx - 260, cy - 90)), ((cx - 100, cy - 44), '圧縮機', (cx - 130, cy - 120)), ((cx + 15, cy - 34), '燃焼室', (cx + 10, cy - 110)), ((cx + 200, cy), '噴射口(くちばし)「シュッ」', (cx + 150, cy - 80)), ((cx, cy + 80), '燃料噴射装置', (cx + 70, cy + 80)), ((cx, cy + 120), '燃料', (cx + 70, cy + 125))]:
     label(d, xy, txy, t, YL, 14)
-text(d, 30, 1000, [
-    '#ビルダーの仕様',
-    '!前の絵(卵を積んだアヒルの車)は却下。スケッチから作り直す',
-    '前: 木の鴨の引き車。大きな丸い目、平たいくちばし、彫った羽、柿渋の木目。腹の下に車輪 2 つ。胸に糸巻き',
-    'メイン動力: 重力トラクター。胸の糸巻きから出たひもが、空のかなたのグレートアトラクターへのびる(ひもは細く、少し光る)',
-    'うしろ: 引き棒でつないだ丸い桶(鉄のたが 2 本、車輪 2 つ)。桶の上に回転台。回転台に子がも 2 羽が並んで乗る',
-    'サブ動力: 子がもターボジェット ×2。くちばしが吸気、尾から「シュッ」と噴く。燃料は桶の底のタンクから、回転台の軸の中を通る',
-    '走らせ方(ビルダーの考え): まっすぐ = 子がもは前を向いて押す。曲がる = 回転台を回して横へ噴く。止まる = 回転台を半回りさせて前へ噴く',
+text(d, 760, 1000, [
+    '#しくみ(ビルダーの読み)',
+    '1 グレートアトラクターに、ひもで引かれて前へ進む(メイン動力: 重力トラクター)',
+    '2 前へ進むと、走る風が子がもの尾の吸気口から入る',
+    '3 圧縮機で押しこみ、燃焼室で燃料を燃やす',
+    '4 くちばしの噴射口からジェット「シュッ」',
+    '5 くちばしは円の接線の向きなので、噴射の反動で台座が回る',
+    '   (ヘロンの蒸気機関や、回る散水機と同じ)',
+    '!6 解釈: 台座の回転が軸を通って桶の下の車輪を回す = サブ動力(確かめたい)',
     '#ゲームの絵',
-    '大きさ: 鴨と桶で 約 80×52 ドット。向き: 4 方向。動き: 車輪、回転台が回る(4 コマ)、噴射の炎(2 コマ)。ひもは空へのびる光る線',
+    '鴨と桶で 約 80×56 ドット。4 方向。台座が回る(4 コマ)、くちばしのジェット(2 コマ)、ひもは空へのびる光る線',
 ], s=16, gap=7)
 im.save(O + 'build3_toribogi.png')
 
