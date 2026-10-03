@@ -3021,18 +3021,18 @@
       "####################",
       "####################",
       "#..................#",
-      "#..................#",
+      "#.#..............#.#",
       "#.......####.......#",
       "#.....########.....#",
       "#.....########.....#",
       "#....##########....#",
       "#....##########....#",
       "#....##########....#",
-      "#.....########.....#",
+      "#.#...########...#.#",
       "#.....########.....#",
       "........####.......#",
       "...................#",
-      "...................#",
+      "..##################",
       "####################",
     ],
     core: [
@@ -3362,6 +3362,24 @@
   let tkDoorT0 = -1; // 二重扉が開きはじめた時刻(一度開いたら、開いたまま)
   const tkDoorOpen = (api) => api.flag("airlock");
   const TK_DOOR = { x0: 279, y0: 3, x1: 361, y1: 68, fx0: 262, fx1: 380 }; // 扉の板と、それが引きこまれる枠(背景の絵のドット)
+  // 床に立つものは、きーとの前後を足もとの y で決める(fg_reactor。docs/assets/takarabune/fg_reactor.py)。
+  // [x0, y0, w, h, 足もとの y]。回転灯は通れない(マスをふさぐ)。標識の列も通れない(うしろに入ると、きーが板にすっかり隠れるので)。格納容器は北半分(盛り上がったふち)
+  // 2026-10-03、作者「原子炉建屋内の前後関係もみて」
+  const TK_REACTOR_FG = [
+    ...[[2, 3], [17, 3], [2, 10], [17, 10]].map(([c, r]) => [c * T - 4, r * T - 6, 41, 44, r * T + 32]),
+    ...[82, 178, 400, 495].map((x0) => [x0, 444, 54, 36, 480]),
+    [157, 130, 326, 144, 274],
+  ].map(([x0, y0, w, h, base], i) => ({
+    id: "fg" + i,
+    x: x0 + w / 2,
+    y: base,
+    w: 1,
+    h: 1,
+    draw(ctx, sx, sy, t, api) {
+      const im = api.image("fg_reactor");
+      if (im) ctx.drawImage(im, x0, y0, w, h, sx - this.x + x0, sy - this.y + y0, w, h);
+    },
+  }));
   const TK_REACTOR = tkMap("reactor", 20, 16, {
     spawns: {
       west: { x: 1.2 * T, y: 13.5 * T, facing: "east" },
@@ -3399,6 +3417,7 @@
 
     ],
     objects: [
+      ...TK_REACTOR_FG,
       { id: "alarm", x: 10 * T, y: 1.4 * T, w: 1, h: 1, headY: 4 },
       // 二重扉: 調べると、重い扉が右の壁へすべって開く(0.9 秒)。開いた奥は暗く、炉心の青い光がもれる
       // 二重扉が開いているときだけ、炉心へ入れる(2026-10-03、作者「プール前の扉が閉まったまま入れたりするのは変」)。
@@ -3882,7 +3901,7 @@
       name: "宝舟と首振りエンジン",
       assetBase: "./assets/worlds/takarabune/",
       images: Object.fromEntries(
-        ["bg_port", "fg_port", "bg_workshop", "bg_gate", "bg_admin", "bg_turbine", "bg_reactor", "bg_core", "bg_engineroom", "bg_deck", "sea", "cyl", "fly", "bogi", "pellet", "conrod", "v_cast", "v_glow", "v_kaizu"]
+        ["bg_port", "fg_port", "bg_workshop", "bg_gate", "bg_admin", "bg_turbine", "bg_reactor", "fg_reactor", "bg_core", "bg_engineroom", "bg_deck", "sea", "cyl", "fly", "bogi", "pellet", "conrod", "v_cast", "v_glow", "v_kaizu"]
           .map((k) => [k, `${k}.png`])
           .concat([["ki", "./assets/worlds/lake/ki_walk.png"]])
       ),
