@@ -565,6 +565,8 @@ const ASSET_V = (() => {
         if (done) done();
         return true;
       }
+      // A ボタンをマップが自分で受けとる(競争の合図など、調べる物がない場面)
+      if (!pan && map.onA) return map.onA(world.api) !== false;
       if (pan || !nearObj) return false;
       player.vx = 0;
       player.vy = 0;
