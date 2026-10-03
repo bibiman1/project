@@ -103,13 +103,15 @@ const ASSET_V = (() => {
         // 一枚絵を、だんだん速く切りかえながら寄っていく(ボタンを待たない)。steps: [{ img, sec, z0, z1, cx, cy, fadeIn }]
         // 最後に白く光り、光ったところで onDone(その裏でマップを切りかえる。白は flash で引かせる)
         // opts.white === false なら、最後に白く光らずに、最後の一コマのまま onDone(続けて一枚絵を出すときなど)
+        // opts.hold なら、最後の一コマのまま止まって A を待ち、押されたら onDone(寄ってきた絵が、そのままキメの一枚絵になる)
         burst(steps, onDone, opts) {
-          cutscene = { burst: steps, t0: clock, onDone: onDone || null, full: true, white: !(opts && opts.white === false) };
+          cutscene = { burst: steps, t0: clock, onDone: onDone || null, full: true, white: !(opts && (opts.white === false || opts.hold)), hold: !!(opts && opts.hold) };
         },
         // 手に入れた物を、きーの頭の上に掲げて見せる(きらっと光る)。そのあいだ、きーは正面を向いて動かない
-        hold(imgKey, sec, onDone) {
+        // opts.rot: 長い物(コンロッドなど)は、ななめに傾けて掲げる
+        hold(imgKey, sec, onDone, opts) {
           player.facing = "south";
-          held = { img: imgKey, t0: clock, sec: sec || 1.6, onDone: onDone || null };
+          held = { img: imgKey, t0: clock, sec: sec || 1.6, onDone: onDone || null, rot: (opts && opts.rot) || 0 };
           freezeUntil = Math.max(freezeUntil, clock + held.sec);
         },
         flash(sec) {
@@ -541,6 +543,12 @@ const ASSET_V = (() => {
     function interact() {
       if (!world) return false;
       if (cutscene) {
+        if (cutscene.burst && cutscene.held) {
+          const done = cutscene.onDone;
+          cutscene = null;
+          if (done) done();
+          return true;
+        }
         if (cutscene.seq || cutscene.burst || cutscene.outT0 != null) return true;
         if (clock - cutscene.t0 < 0.6) return true;
         const done = cutscene.onDone;
@@ -717,7 +725,14 @@ const ASSET_V = (() => {
       ctx.fillStyle = "rgba(255, 255, 255, 0.85)";
       ctx.fillRect(sx - 1, sy - r, 2, 2 * r);
       ctx.fillRect(sx - r, sy - 1, 2 * r, 2);
-      if (im) ctx.drawImage(im, Math.round(sx - im.width / 2), Math.round(sy - im.height / 2));
+      if (!im) return;
+      if (held.rot) {
+        ctx.save();
+        ctx.translate(sx, sy);
+        ctx.rotate(held.rot);
+        ctx.drawImage(im, Math.round(-im.width / 2), Math.round(-im.height / 2));
+        ctx.restore();
+      } else ctx.drawImage(im, Math.round(sx - im.width / 2), Math.round(sy - im.height / 2));
     }
 
     function drawPlayer(ox, oy, t) {
@@ -905,6 +920,12 @@ const ASSET_V = (() => {
       while (i < steps.length && el >= steps[i].sec) {
         el -= steps[i].sec;
         i++;
+      }
+      if (i >= steps.length && cutscene.hold) {
+        const last = steps[steps.length - 1];
+        drawBurstFrame(last, last.sec);
+        cutscene.held = true; // ここから A で閉じられる
+        return;
       }
       if (i >= steps.length && !cutscene.white) {
         // 白く光らずに、最後の一コマのまま次へ(onDone で一枚絵を出すと、同じ絵がそのまま残る)
