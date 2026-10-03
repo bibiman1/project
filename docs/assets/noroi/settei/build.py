@@ -192,12 +192,16 @@ for k in range(3):
     d.polygon([(hx + tx * 18 - ty * 7, hy + ty * 18 + tx * 7), (bx2, by2), (hx + tx * 18 + ty * 7, hy + ty * 18 - tx * 7)], fill=(230, 150, 60))
     for j in range(4): d.line((bx2 + tx * (8 + j * 14), by2 + ty * (8 + j * 14), bx2 + tx * (16 + j * 14), by2 + ty * (16 + j * 14)), fill=(255, 170, 80), width=5 - j)
     d.text((px - 12, py - 8), str(k + 1), fill=(60, 40, 20), font=f(16))
+    qx, qy = px - tx * 34, py - ty * 34                       # 尾の吸気口(ジェットエンジンのような穴、D121)
+    d.ellipse((qx - 11, qy - 11, qx + 11, qy + 11), outline=LN, width=2, fill=(20, 20, 24))
+    for j in range(6):
+        aa = j * math.pi / 3; d.line((qx, qy, qx + 9 * math.cos(aa), qy + 9 * math.sin(aa)), fill=(150, 160, 170), width=1)
 d.arc((cx - R - 60, cy - R - 60, cx + R + 60, cy + R + 60), 200, 320, fill=GR, width=4)
 ang = math.radians(200); ex, ey = cx + (R + 60) * math.cos(ang), cy + (R + 60) * math.sin(ang)
 arrow(d, (ex + 30, ey - 40), (ex, ey))
 d.text((cx - 190, cy + R + 40), '台座の回る向き(ジェットと逆)', fill=GR, font=f(15))
 label(d, (cx + 30, cy - 160), (cx + 200, cy - 230), 'くちばし(噴射口)は円の接線の向き', YL)
-label(d, (cx - 60, cy - 70), (cx + 200, cy - 190), '尾(吸気口)は反対側', YL)
+label(d, (cx - 60, cy - 70), (cx + 200, cy - 190), '尾の吸気口は穴が開く(ジェットエンジンのよう、作者)', YL)
 label(d, (cx, cy), (cx + 220, cy + 30), '中心の軸(燃料も通る)', YL)
 # 横から
 dx, dy = 1320, 860
@@ -242,6 +246,8 @@ for k in range(5): d.line((cx - 110 + k * 12, cy - 44, cx - 110 + k * 12, cy + 4
 d.rectangle((cx - 30, cy - 34, cx + 60, cy + 34), outline=RD, width=2)
 d.polygon([(cx + 60, cy - 34), (cx + 150, cy - 10), (cx + 150, cy + 10), (cx + 60, cy + 34)], outline=LN, width=2)
 d.polygon([(cx + 150, cy - 10), (cx + 220, cy), (cx + 150, cy + 10)], fill=(255, 170, 80))
+d.ellipse((cx - 168, cy - 36, cx - 132, cy + 36), outline=LN, width=3, fill=(20, 20, 24))   # 尾の穴(D121)
+for j in range(8): aa = j * math.pi / 4; d.line((cx - 150, cy, cx - 150 + 14 * math.cos(aa), cy + 30 * math.sin(aa)), fill=(150, 160, 170))
 d.line((cx, cy + 60, cx, cy + 100), fill=YL, width=3); d.rectangle((cx - 50, cy + 100, cx + 50, cy + 140), outline=YL, width=2)
 for (xy, t, txy) in [((cx - 150, cy), '吸気口(尾)', (cx - 260, cy - 90)), ((cx - 100, cy - 44), '圧縮機', (cx - 130, cy - 120)), ((cx + 15, cy - 34), '燃焼室', (cx + 10, cy - 110)), ((cx + 200, cy), '噴射口(くちばし)「シュッ」', (cx + 150, cy - 80)), ((cx, cy + 80), '燃料噴射装置', (cx + 70, cy + 80)), ((cx, cy + 120), '燃料', (cx + 70, cy + 125))]:
     label(d, xy, txy, t, YL, 14)
