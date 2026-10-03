@@ -2980,11 +2980,11 @@
     gate: [
       "###########....#############",
       "###########....#############",
-      "............................",
       "###########....#############",
-      ".................###........",
-      ".................###........",
-      ".................###........",
+      "###########....#############",
+      "###########....#############",
+      ".................####.......",
+      ".................####.......",
       "............................",
       "............................",
       "############################",
@@ -2994,7 +2994,7 @@
       "########################",
       "#.############.........#",
       "#.############..######.#",
-      "#...########....######.#",
+      "#.############..######.#",
       "#......................#",
       "#......................#",
       "#......................#",
@@ -3018,21 +3018,21 @@
       "############################",
     ],
     reactor: [
-      "#########..#########",
-      "#########..#########",
+      "####################",
+      "####################",
       "#..................#",
-      "#..................#",
+      "#.#..............#.#",
       "#.......####.......#",
       "#.....########.....#",
       "#.....########.....#",
       "#....##########....#",
       "#....##########....#",
       "#....##########....#",
-      "#.....########.....#",
+      "#.#...########...#.#",
       "#.....########.....#",
       "........####.......#",
       "...................#",
-      "...................#",
+      "..##################",
       "####################",
     ],
     core: [
@@ -3055,7 +3055,7 @@
       "####################",
       "####################",
       "####################",
-      "##...............###",
+      "#####............###",
       "####..###.#.......##",
       "####..###.#.......##",
       "##...............###",
@@ -3226,6 +3226,15 @@
       { id: "leave", x: -T, y: 5 * T, w: 1.45 * T, h: 3 * T, run: (api) => api.exit() },
     ],
     objects: [
+      // 宝舟は岸壁より手前(水の上)。帆・帆柱・竜頭・煙突は、岸壁を歩くきーより手前に描く(fg_port。docs/assets/takarabune/fg_port.py)
+      {
+        x: 0,
+        y: 11.6 * T,
+        draw(ctx, sx, sy, t, api) {
+          const im = api.image("fg_port");
+          if (im) ctx.drawImage(im, sx, sy - 11.6 * T);
+        },
+      },
       // 鋳物小屋(鋳造工房)の大戸
       tkSpot("shopDoor", 5.6 * T, 7.2 * T, (api) => api.warp("workshop", "door"), { range: 44 }),
       // 宝舟: 乗りこむと機関室。沖から帰ってきたら、舵のそばに白紙の海図
@@ -3301,16 +3310,38 @@
   });
 
   // B 正門(西から坂道で上がってくる。鎖の切れた門を抜けて北へ)
+  // 正門の前後(fg_gate。docs/assets/takarabune/fg_gate.py)。2026-10-03、作者「金網フェンスは？前後関係」
+  // フェンスの根もと(y 158)より北へは行けない。門は半開きで、2 枚の扉のあいだだけ通れる(扉の足もとの線の奥はふさぐ)。
+  // 扉は地面に斜めに立つので、幅 6 の縦の帯に切って、帯ごとの足もとの y できーと前後を決める。守衛所と立て札は足もとの y で
+  // 切り出した絵(fg_*.png の x0, y0, w, h)を、足もとの y(base)できーと前後させる。bob は絵のゆれ(甲板)
+  const tkFg = (img, x0, y0, w, h, base, bob) => ({
+    id: `fg${x0}_${y0}`,
+    x: x0 + w / 2,
+    y: base,
+    w: 1,
+    h: 1,
+    draw(ctx, sx, sy, t, api) {
+      const im = api.image(img);
+      const dy = bob ? bob() : 0;
+      if (im) ctx.drawImage(im, x0, y0, w, h, sx - this.x + x0, sy - this.y + y0 + dy, w, h);
+    },
+  });
+  const TK_GATE_FG = [];
+  for (let x = 356; x < 414; x += 6) TK_GATE_FG.push(tkFg("fg_gate", x, 68, 6, 136, 160 + ((x + 3 - 355) * 40) / 55));   // 左の扉: (355,160)→(410,200)
+  for (let x = 424; x < 478; x += 6) TK_GATE_FG.push(tkFg("fg_gate", x, 68, 6, 136, 158 + ((478 - x - 3) * 32) / 51));   // 右の扉: (478,158)→(427,190)
+  TK_GATE_FG.push(tkFg("fg_gate", 537, 125, 113, 90, 214), tkFg("fg_gate", 646, 174, 32, 43, 216));   // 守衛所、立て札
+  const tkWall = (x0, y0, x1, y1) => ({ id: `wall${x0}`, x: (x0 + x1) / 2, y: (y0 + y1) / 2, w: 1, h: 1, solid: { w: x1 - x0, h: y1 - y0 } });
   const TK_GATE = tkMap("gate", 28, 10, {
     spawns: {
       west: { x: 1.2 * T, y: 7.4 * T, facing: "east" },
-      north: { x: 12.9 * T, y: 1.3 * T, facing: "south" },
+      north: { x: 419, y: 1.3 * T, facing: "south" },
     },
     triggers: [
       { id: "toPort", x: -T, y: 6 * T, w: 1.45 * T, h: 3 * T, warp: { map: "port", spawn: "east" } },
       { id: "toAdmin", x: 11 * T, y: -T, w: 4 * T, h: 1.45 * T, warp: { map: "admin", spawn: "south" } },
     ],
-    objects: [],
+    // 門の通り道(x 404〜432)の左右: 扉の足もとの線より奥を、段々にふさぐ
+    objects: [...TK_GATE_FG, tkWall(352, 0, 378, 180), tkWall(378, 0, 404, 200), tkWall(432, 0, 455, 192), tkWall(455, 0, 480, 175)],
   });
 
   // C 管理棟(南の玄関から入り、東の扉から出る)。非常灯の緑だけが、ゆっくり明滅する
@@ -3345,11 +3376,38 @@
       { id: "toAdmin", x: -T, y: 8 * T, w: 1.45 * T, h: 2 * T, warp: { map: "admin", spawn: "east" } },
       { id: "toReactor", x: 27.55 * T, y: 2 * T, w: 1.45 * T, h: 2 * T, warp: { map: "reactor", spawn: "west" } },
     ],
-    objects: [],
+    // 床に立つ操作盤と立て看板(fg_turbine。docs/assets/takarabune/fg_more.py)。足もとはふさぐ
+    objects: [
+      tkFg("fg_turbine", 393, 240, 27, 61, 300),
+      tkFg("fg_turbine", 812, 238, 39, 47, 284),
+      tkWall(392, 284, 420, 300),
+      tkWall(812, 226, 851, 285), // 看板のうしろもふさぐ(きーが看板にすっかり隠れるので)
+    ],
   });
 
   // E 原子炉建屋(西から入る。北の二重扉の先が炉心)。赤い回転灯が回り、警報が鳴りっぱなし
   let tkAlarmT = -99;
+  let tkDoorT0 = -1; // 二重扉が開きはじめた時刻(一度開いたら、開いたまま)
+  const tkDoorOpen = (api) => api.flag("airlock");
+  const TK_DOOR = { x0: 279, y0: 3, x1: 361, y1: 68, fx0: 262, fx1: 380 }; // 扉の板と、それが引きこまれる枠(背景の絵のドット)
+  // 床に立つものは、きーとの前後を足もとの y で決める(fg_reactor。docs/assets/takarabune/fg_reactor.py)。
+  // [x0, y0, w, h, 足もとの y]。回転灯は通れない(マスをふさぐ)。標識の列も通れない(うしろに入ると、きーが板にすっかり隠れるので)。格納容器は北半分(盛り上がったふち)
+  // 2026-10-03、作者「原子炉建屋内の前後関係もみて」
+  const TK_REACTOR_FG = [
+    ...[[2, 3], [17, 3], [2, 10], [17, 10]].map(([c, r]) => [c * T - 4, r * T - 6, 41, 44, r * T + 32]),
+    ...[82, 178, 400, 495].map((x0) => [x0, 444, 54, 36, 480]),
+    [157, 130, 326, 144, 274],
+  ].map(([x0, y0, w, h, base], i) => ({
+    id: "fg" + i,
+    x: x0 + w / 2,
+    y: base,
+    w: 1,
+    h: 1,
+    draw(ctx, sx, sy, t, api) {
+      const im = api.image("fg_reactor");
+      if (im) ctx.drawImage(im, x0, y0, w, h, sx - this.x + x0, sy - this.y + y0, w, h);
+    },
+  }));
   const TK_REACTOR = tkMap("reactor", 20, 16, {
     spawns: {
       west: { x: 1.2 * T, y: 13.5 * T, facing: "east" },
@@ -3384,9 +3442,66 @@
     },
     triggers: [
       { id: "toTurbine", x: -T, y: 12 * T, w: 1.45 * T, h: 3 * T, warp: { map: "turbine", spawn: "east" } },
-      { id: "toCore", x: 9 * T, y: -T, w: 2 * T, h: 1.45 * T, warp: { map: "core", spawn: "south" } },
+
     ],
-    objects: [{ id: "alarm", x: 10 * T, y: 1.4 * T, w: 1, h: 1, headY: 4 }],
+    objects: [
+      ...TK_REACTOR_FG,
+      { id: "alarm", x: 10 * T, y: 1.4 * T, w: 1, h: 1, headY: 4 },
+      // 二重扉: 調べると、重い扉が右の壁へすべって開く(0.9 秒)。開いた奥は暗く、炉心の青い光がもれる
+      // 二重扉が開いているときだけ、炉心へ入れる(2026-10-03、作者「プール前の扉が閉まったまま入れたりするのは変」)。
+      // 開いたあとは、A でも、扉へ向かって歩きつづけても入る。扉の絵はきーより奥に描く(y を壁ぎわに置き、調べる場所は iy で手前に)
+      {
+        id: "airlock",
+        x: 10 * T,
+        y: 1 * T,
+        iy: 1.6 * T,
+        w: 1,
+        h: 1,
+        range: 46,
+        headY: 0,
+        interact(api) {
+          if (tkDoorOpen(api)) return api.warp("core", "south");
+          tkDoorT0 = tkNow();
+          api.setFlag("airlock");
+          api.bubble("airlock", "ゴゴゴ……", 1200); // 仮
+          api.freeze(0.9);
+        },
+        update(dt, t, api) {
+          if (!tkDoorOpen(api) || tkNow() - tkDoorT0 < 0.9) return;
+          const pl = api.player();
+          const at = Math.abs(pl.x - this.x) < 0.9 * T && pl.y < 2.5 * T && pl.facing === "north";
+          const still = this._ly === pl.y;
+          this._ly = pl.y;
+          this._push = at && still ? (this._push || 0) + dt : 0;
+          if (this._push > 0.2) {
+            this._push = -99;
+            api.warp("core", "south");
+          }
+        },
+        draw(ctx, sx, sy, t, api) {
+          if (!tkDoorOpen(api)) return;
+          const bg = api.image("bg_reactor");
+          if (!bg) return;
+          const ox = sx - this.x;
+          const oy = sy - this.y;
+          const D = TK_DOOR;
+          const u = tkDoorT0 < 0 ? 1 : Math.min(1, (tkNow() - tkDoorT0) / 0.9);
+          const k = u * u * (3 - 2 * u);
+          // 開いた奥: 暗がりと、炉心の青い光
+          ctx.fillStyle = "#06080e";
+          ctx.fillRect(ox + D.x0, oy + D.y0, D.x1 - D.x0, D.y1 - D.y0);
+          tkLight(ctx, ox + (D.x0 + D.x1) / 2, oy + D.y1, 50, "120, 210, 255", 0.55 * k);
+          // 扉の板(背景の絵の扉を切り出して)を、右の枠の中へすべらせる。枠の外ははみ出さない
+          ctx.save();
+          ctx.beginPath();
+          ctx.rect(ox + D.fx0, oy + D.y0, D.fx1 - D.fx0, D.y1 - D.y0);
+          ctx.clip();
+          const dx = Math.round((D.x1 - D.x0 + 4) * k);
+          ctx.drawImage(bg, D.x0, D.y0, D.x1 - D.x0, D.y1 - D.y0, ox + D.x0 + dx, oy + D.y0, D.x1 - D.x0, D.y1 - D.y0);
+          ctx.restore();
+        },
+      },
+    ],
   });
 
   // F 格納容器の中(炉心)。行き止まり。ふたの開いた炉はプール。ふちで調べると飛び込んで、ペレットを抱えて上がってくる → 暗転して港へ(D88)
@@ -3572,6 +3687,7 @@
   // G 宝舟の甲板。海が西へ流れる(舳先は東)。煙突から、エンジンが蒸気を吐くたびに湯気。外輪がかく水しぶき
   // 舳先で調べると、きーがペレットを海に投げ込む → 沈んで、底から青い光が広がる → 一枚絵(D88)
   let tkThrowT0 = -1;
+  const tkDeckBob = () => Math.round(Math.sin(tkNow() * 1.3) * 1); // 甲板のゆれ
   const TK_DECK = {
     tile: T,
     bg: "#0a1430",
@@ -3595,7 +3711,7 @@
         }
       }
       const deck = get("bg_deck");
-      if (deck) ctx.drawImage(deck, ox, oy + Math.round(Math.sin(t * 1.3) * 1), 20 * T, 10 * T);
+      if (deck) ctx.drawImage(deck, ox, oy + tkDeckBob(), 20 * T, 10 * T);
       // 外輪がかく水しぶき(エンジンの回転といっしょ)
       const th = tkCrank(api);
       ctx.fillStyle = "rgba(220, 235, 255, 0.75)";
@@ -3634,6 +3750,9 @@
     },
     triggers: [],
     objects: [
+      // 煙突のついた丸い窯と、ろうそく(fg_deck。docs/assets/takarabune/fg_more.py)。窯のうしろとろうそくのマスはふさぐ
+      tkFg("fg_deck", 62, 82, 69, 117, 197, tkDeckBob),
+      tkFg("fg_deck", 143, 85, 19, 29, 113, tkDeckBob),
       tkSpot(
         "bow",
         17.4 * T,
@@ -3814,7 +3933,7 @@
       name: "宝舟と首振りエンジン",
       assetBase: "./assets/worlds/takarabune/",
       images: Object.fromEntries(
-        ["bg_port", "bg_workshop", "bg_gate", "bg_admin", "bg_turbine", "bg_reactor", "bg_core", "bg_engineroom", "bg_deck", "sea", "cyl", "fly", "bogi", "pellet", "conrod", "v_cast", "v_glow", "v_kaizu"]
+        ["bg_port", "fg_port", "bg_workshop", "bg_gate", "fg_gate", "bg_admin", "bg_turbine", "fg_turbine", "bg_reactor", "fg_reactor", "bg_core", "bg_engineroom", "bg_deck", "fg_deck", "sea", "cyl", "fly", "bogi", "pellet", "conrod", "v_cast", "v_glow", "v_kaizu"]
           .map((k) => [k, `${k}.png`])
           .concat([["ki", "./assets/worlds/lake/ki_walk.png"]])
       ),
