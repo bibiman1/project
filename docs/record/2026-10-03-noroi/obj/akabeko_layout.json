@@ -1,0 +1,77 @@
+{
+ "object": {
+  "id": "e15b6b8c-f375-492f-8ef9-055492cf76d4",
+  "name": "base",
+  "prompt": "akabeko, a red papier-mache cow folk toy from Aizu Japan customized into a hot rod car: red cow body with black spots and gold and black patterns, chrome supercharger blower sticking out of its back, fat black tires, the cow head with small horns at the front",
+  "size": {
+   "width": 85,
+   "height": 85
+  },
+  "directions": 8,
+  "view": "low top-down"
+ },
+ "spritesheet": {
+  "path": "akabeko_a_red_papier-mache_co.png",
+  "cell_size": {
+   "width": 85,
+   "height": 85
+  },
+  "sheet_size": {
+   "width": 680,
+   "height": 425
+  },
+  "columns": 8,
+  "pivot": "cell-center",
+  "rows": [
+   {
+    "row": 0,
+    "type": "rotations",
+    "frame_count": 8,
+    "directions": [
+     "south",
+     "south-east",
+     "east",
+     "north-east",
+     "north",
+     "north-west",
+     "west",
+     "south-west"
+    ]
+   },
+   {
+    "row": 1,
+    "type": "animation",
+    "frame_count": 7,
+    "animation": "drive",
+    "animation_group_id": "7e062e8f-abe6-43e7-8b57-996c5f30e0fb",
+    "direction": "south"
+   },
+   {
+    "row": 2,
+    "type": "animation",
+    "frame_count": 7,
+    "animation": "drive",
+    "animation_group_id": "7e062e8f-abe6-43e7-8b57-996c5f30e0fb",
+    "direction": "east"
+   },
+   {
+    "row": 3,
+    "type": "animation",
+    "frame_count": 7,
+    "animation": "drive",
+    "animation_group_id": "7e062e8f-abe6-43e7-8b57-996c5f30e0fb",
+    "direction": "north"
+   },
+   {
+    "row": 4,
+    "type": "animation",
+    "frame_count": 7,
+    "animation": "drive",
+    "animation_group_id": "7e062e8f-abe6-43e7-8b57-996c5f30e0fb",
+    "direction": "west"
+   }
+  ]
+ },
+ "export_version": "1.0",
+ "export_date": "2026-10-03T11:26:24.389198+00:00"
+}
