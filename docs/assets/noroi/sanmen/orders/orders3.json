@@ -1,0 +1,30 @@
+[
+ {
+  "name": "tansu_w3",
+  "w": 128,
+  "h": 104,
+  "desc": "pixel art game sprite: kuruma-dansu, a dark wooden Japanese chest that rolls on four wooden wheels with iron rims hidden UNDER the box at the four corners, peeking through arched cutouts of the base skirt, iron rope rings on the front and back short faces, a chrome V8 with a chrome blower sunk into the top board near the front, intake scoop mouth facing forward. Warm dark BROWN glossy wood (not black) with grain, black iron fittings, seen from slightly above at an angle so the front short face is visible at the LEFT, front at the LEFT. This long side has three drawers with black iron diamond fittings and small triangle corner fittings; louvers on the skirt between the arches Redraw EXACTLY the reference underdrawing (a three-view projection): same silhouette, same proportions, every part in the same place, same colors. Do NOT add anything that is not in the underdrawing (no lights, no plates, no letters, no stickers, no windows, no extra wheels, no pipes, no decorations) and do not remove anything. Only improve the rendering to match the style image: realistic detailed pixel shading, one noon sun from above, dark colored outline (not black).. The visible front short face at the LEFT carries a cream number plate (blank, no letters) above a red and white oval STP sticker, and an iron ring between them. Nothing else on that face",
+  "refs": [
+   {
+    "path": "/home/user/project/docs/assets/noroi/sanmen/orders/tansu_w3_ref.png",
+    "use": "the underdrawing to redraw exactly, including its viewing angle"
+   }
+  ],
+  "style": "/home/user/project/docs/assets/noroi/ad/style_frame.png",
+  "seed": 91
+ },
+ {
+  "name": "tansu_e3",
+  "w": 128,
+  "h": 104,
+  "desc": "pixel art game sprite: kuruma-dansu, a dark wooden Japanese chest that rolls on four wooden wheels with iron rims hidden UNDER the box at the four corners, peeking through arched cutouts of the base skirt, iron rope rings on the front and back short faces, a chrome V8 with a chrome blower sunk into the top board near the front, intake scoop mouth facing forward. Warm dark BROWN glossy wood (not black) with grain, black iron fittings, seen from slightly above at an angle so the front short face is visible at the RIGHT, front at the RIGHT. This long side is the plain back board: horizontal boards only, NO drawers, NO fittings Redraw EXACTLY the reference underdrawing (a three-view projection): same silhouette, same proportions, every part in the same place, same colors. Do NOT add anything that is not in the underdrawing (no lights, no plates, no letters, no stickers, no windows, no extra wheels, no pipes, no decorations) and do not remove anything. Only improve the rendering to match the style image: realistic detailed pixel shading, one noon sun from above, dark colored outline (not black).. The visible front short face at the RIGHT carries a cream number plate (blank, no letters) above a red and white oval STP sticker, and an iron ring between them. Nothing else on that face",
+  "refs": [
+   {
+    "path": "/home/user/project/docs/assets/noroi/sanmen/orders/tansu_e3_ref.png",
+    "use": "the underdrawing to redraw exactly, including its viewing angle"
+   }
+  ],
+  "style": "/home/user/project/docs/assets/noroi/ad/style_frame.png",
+  "seed": 92
+ }
+]

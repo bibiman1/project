@@ -1,0 +1,45 @@
+{
+ "object": {
+  "id": "c2055184-93cb-40ca-bf4e-19991df8f119",
+  "name": "base",
+  "prompt": "bogi car, a minimal handmade wooden toy car carved from one thick solid block of dark brown glossy persimmon-tannin stained wood, wave shaped in side view: a high raised front end with a small round eye hole bored through it, a low hollow seat-like dip behind it; the block is as thick as it is tall with rounded edges; four white nylon roller wheels on two steel bolt axles with nuts; no engine, no windows",
+  "size": {
+   "width": 97,
+   "height": 97
+  },
+  "directions": 8,
+  "view": "low top-down"
+ },
+ "spritesheet": {
+  "path": "bogi_car_a_minimal_handmade_w.png",
+  "cell_size": {
+   "width": 97,
+   "height": 97
+  },
+  "sheet_size": {
+   "width": 776,
+   "height": 97
+  },
+  "columns": 8,
+  "pivot": "cell-center",
+  "rows": [
+   {
+    "row": 0,
+    "type": "rotations",
+    "frame_count": 8,
+    "directions": [
+     "south",
+     "south-east",
+     "east",
+     "north-east",
+     "north",
+     "north-west",
+     "west",
+     "south-west"
+    ]
+   }
+  ]
+ },
+ "export_version": "1.0",
+ "export_date": "2026-10-03T12:04:01.360661+00:00"
+}

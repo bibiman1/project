@@ -1,0 +1,45 @@
+{
+ "object": {
+  "id": "89d7b966-fd15-4454-9da7-94fae37feee1",
+  "name": "base",
+  "prompt": "ponpon car: a cute custom hot rod folk toy with a face, no cabin and no seats: low rounded cream tin body with red pinstripes, a huge chrome V8 engine with a silver supercharger blower whose air scoop faces forward, short chrome exhaust pipes up and out on both sides, two round headlight eyes and a big round red bumper nose on the front, fat black treaded tires, a black cable from the engine",
+  "size": {
+   "width": 113,
+   "height": 113
+  },
+  "directions": 8,
+  "view": "low top-down"
+ },
+ "spritesheet": {
+  "path": "ponpon_car_a_cute_custom_hot.png",
+  "cell_size": {
+   "width": 113,
+   "height": 113
+  },
+  "sheet_size": {
+   "width": 904,
+   "height": 113
+  },
+  "columns": 8,
+  "pivot": "cell-center",
+  "rows": [
+   {
+    "row": 0,
+    "type": "rotations",
+    "frame_count": 8,
+    "directions": [
+     "south",
+     "south-east",
+     "east",
+     "north-east",
+     "north",
+     "north-west",
+     "west",
+     "south-west"
+    ]
+   }
+  ]
+ },
+ "export_version": "1.0",
+ "export_date": "2026-10-03T12:46:46.573439+00:00"
+}

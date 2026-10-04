@@ -1,0 +1,45 @@
+{
+ "object": {
+  "id": "d2fd9668-c851-4806-9f51-eca92dba7a21",
+  "name": "base",
+  "prompt": "kuruma-dansu hot rod: an old dark wooden Japanese chest of drawers on four wooden wheels with iron rims. The reference shows its narrow FRONT end (round STP sticker, blank license plate) coming toward the viewer. The chest is long from front to back. Its LEFT long side has three drawers with diamond shaped iron fittings; its RIGHT long side is a plain back panel. A chrome V8 engine with a silver supercharger blower is sunk into the top near the front, and the air scoop mouth always faces FORWARD (the direction the front end points). The wheels roll forward and back along the long sides",
+  "size": {
+   "width": 136,
+   "height": 136
+  },
+  "directions": 8,
+  "view": "low top-down"
+ },
+ "spritesheet": {
+  "path": "kuruma-dansu_hot_rod_an_old_d.png",
+  "cell_size": {
+   "width": 136,
+   "height": 136
+  },
+  "sheet_size": {
+   "width": 1088,
+   "height": 136
+  },
+  "columns": 8,
+  "pivot": "cell-center",
+  "rows": [
+   {
+    "row": 0,
+    "type": "rotations",
+    "frame_count": 8,
+    "directions": [
+     "south",
+     "south-east",
+     "east",
+     "north-east",
+     "north",
+     "north-west",
+     "west",
+     "south-west"
+    ]
+   }
+  ]
+ },
+ "export_version": "1.0",
+ "export_date": "2026-10-03T12:42:16.393615+00:00"
+}

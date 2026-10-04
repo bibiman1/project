@@ -1,0 +1,86 @@
+[
+ {
+  "name": "v_custom_101",
+  "w": 480,
+  "h": 288,
+  "nobg": false,
+  "seed": 101,
+  "desc": "pixel art game cutscene, same scene and composition as the first reference: in a cracked desert parking lot at noon, miton the pink pig lady with round glasses and a pearl necklace paints hot rod flames on the side of bogicar, a minimal dark wooden toy car with white roller wheels, a red paint can at her feet. In the background stands the kuruma-dansu chest exactly like the second reference: a dark brown wooden chest with drawers and black iron diamond fittings, a chrome V8 with blower on top, and SMALL wooden wheels hidden UNDER the box at the four corners (no big wheels outside the box). Realistic detailed shading, glossy paint and chrome, warm noon light. No text, no letters",
+  "refs": [
+   {
+    "path": "/home/user/project/docs/assets/noroi/v2/scenes/v_custom_old.png",
+    "use": "the composition and characters to keep"
+   },
+   {
+    "path": "/home/user/project/docs/assets/noroi/v2/scenes/tansu_w_ref.png",
+    "use": "the exact design of the chest in the background"
+   }
+  ],
+  "style": "/home/user/project/docs/assets/noroi/ad/style_frame.png"
+ },
+ {
+  "name": "v_finish_101",
+  "w": 480,
+  "h": 288,
+  "nobg": false,
+  "seed": 101,
+  "desc": "pixel art game cutscene, side view of the finish of a desert drag race at noon, ONLY TWO cars racing to the right: in front, bogicar (a minimal dark wooden toy car with white roller wheels and hot rod flames, a flattened cream blob stuck on its back) just crossing a black and white checkered finish line, behind it the red akabeko hot rod (a red papier-mache cow body with gold patterns, chrome blower, fat tires) exactly like the third reference. Speed lines, tire smoke. Behind the track, old wooden bleachers filled with pale translucent bluish ghost spectators cheering. Red mesas, blue sky. Realistic detailed shading, glossy paint, mirror chrome. No other cars, no text, no letters",
+  "refs": [
+   {
+    "path": "/home/user/project/docs/assets/noroi/v2/scenes/v_finish_old.png",
+    "use": "the side-view composition and mood"
+   },
+   {
+    "path": "/home/user/project/docs/assets/noroi/v2/scenes/bogicar_e_flame_ref.png",
+    "use": "the exact design of the leading wooden car"
+   },
+   {
+    "path": "/home/user/project/docs/assets/noroi/v2/scenes/akabeko_e_ref.png",
+    "use": "the exact design of the red hot rod"
+   }
+  ],
+  "style": "/home/user/project/docs/assets/noroi/ad/style_frame.png"
+ },
+ {
+  "name": "v_custom_102",
+  "w": 480,
+  "h": 288,
+  "nobg": false,
+  "seed": 102,
+  "desc": "pixel art game cutscene, same scene and composition as the first reference: in a cracked desert parking lot at noon, miton the pink pig lady with round glasses and a pearl necklace paints hot rod flames on the side of bogicar, a minimal dark wooden toy car with white roller wheels, a red paint can at her feet. In the background stands the kuruma-dansu chest exactly like the second reference: a dark brown wooden chest with drawers and black iron diamond fittings, a chrome V8 with blower on top, and SMALL wooden wheels hidden UNDER the box at the four corners (no big wheels outside the box). Realistic detailed shading, glossy paint and chrome, warm noon light. No text, no letters",
+  "refs": [
+   {
+    "path": "/home/user/project/docs/assets/noroi/v2/scenes/v_custom_old.png",
+    "use": "the composition and characters to keep"
+   },
+   {
+    "path": "/home/user/project/docs/assets/noroi/v2/scenes/tansu_w_ref.png",
+    "use": "the exact design of the chest in the background"
+   }
+  ],
+  "style": "/home/user/project/docs/assets/noroi/ad/style_frame.png"
+ },
+ {
+  "name": "v_finish_102",
+  "w": 480,
+  "h": 288,
+  "nobg": false,
+  "seed": 102,
+  "desc": "pixel art game cutscene, side view of the finish of a desert drag race at noon, ONLY TWO cars racing to the right: in front, bogicar (a minimal dark wooden toy car with white roller wheels and hot rod flames, a flattened cream blob stuck on its back) just crossing a black and white checkered finish line, behind it the red akabeko hot rod (a red papier-mache cow body with gold patterns, chrome blower, fat tires) exactly like the third reference. Speed lines, tire smoke. Behind the track, old wooden bleachers filled with pale translucent bluish ghost spectators cheering. Red mesas, blue sky. Realistic detailed shading, glossy paint, mirror chrome. No other cars, no text, no letters",
+  "refs": [
+   {
+    "path": "/home/user/project/docs/assets/noroi/v2/scenes/v_finish_old.png",
+    "use": "the side-view composition and mood"
+   },
+   {
+    "path": "/home/user/project/docs/assets/noroi/v2/scenes/bogicar_e_flame_ref.png",
+    "use": "the exact design of the leading wooden car"
+   },
+   {
+    "path": "/home/user/project/docs/assets/noroi/v2/scenes/akabeko_e_ref.png",
+    "use": "the exact design of the red hot rod"
+   }
+  ],
+  "style": "/home/user/project/docs/assets/noroi/ad/style_frame.png"
+ }
+]
