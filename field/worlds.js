@@ -3882,7 +3882,7 @@
   // 芯(作者 D126): 人も車も絶えて久しい寂寥感のある世界で、ちゃんがいなくなっても走らずにいられないアッパー系ぼぎが、スピードへの衝動を発散している。
   // ゴールラインをこえたぼぎには、かつてのちゃんの歓声がきこえてくる。ダイナーはレースの日のまま止まった店(D127、D128)
   // 流れ: 峠で、木の葉のぼぎがドラム缶の焚火に木の葉を足す → ぽんぽんカー(有線、D125)がドラム缶を引きずって去る
-  // → ドライブイン跡(ダイナーの中に入れる)。みとんがぼぎカーに炎を塗る → 旧国道の直線でドラッグレース(赤べこと並ぶ。ぽんぽんカーは隣でバンジー)
+  // → ドライブイン跡(ダイナーの中に入れる)。みとんがぼぎカーに炎を塗る → 旧国道の直線でドラッグレース(勝ち抜き戦: ぽんぽんカー → とりぼぎかー → 赤べこ)
   // → 勝つと歓声、一枚絵、タイムスリップ → 道具「クラブの札」。トンネルからいつでも帰れる。台詞はエンジンの音だけで、すべて仮
   const N_GRIDS = {
     pass: [
@@ -4192,7 +4192,8 @@
     ],
   });
 
-  // D 旧国道の直線(ドラッグストリップ)。炎を塗ったあと、野犬たちが北の路肩に並び、スタートの白線に三台(ぽんぽんカーとドラム缶、赤べこ、ぼぎカー)
+  // D 旧国道の直線(ドラッグストリップ)。競争の画面と同じ場所(D140): 北と南に空っぽの木のスタンド、スタートの白線と信号の柱、東にゴールの線と計時の小屋
+  // 炎を塗ったあと、野犬たちが北の路肩に並び、スタートの白線の手前に三台(ぽんぽんカー、赤べこ、ぼぎカー)
   const nRace = (api) => api.warp("race", "view");
   const N_STRIP = nMap("strip", 28, 12, {
     spawns: {
@@ -4215,17 +4216,12 @@
       }
     },
     drawOverlay(ctx, ox, oy, t, api) {
-      for (let k = 0; k < 6; k++) {
-        const y = 5 * T + k * 22 + Math.sin(t * 2 + k) * 4;
-        ctx.fillStyle = "rgba(255, 248, 230, 0.10)";
-        ctx.fillRect(ox + 21 * T + Math.sin(t * 3 + k * 1.7) * 10, oy + y, 7 * T, 6);
-      }
       if (nAtStrip(api)) nCable(ctx, ox - 10, oy + 4.2 * T, ox + 7.6 * T - 40, oy + 5.25 * T - 24, 18); // 線は西の峠のドラム缶から
       nDrawPuffs(ctx, ox, oy);
     },
     triggers: [{ id: "toDrivein", x: -T, y: 3 * T, w: 1.45 * T, h: 7 * T, warp: { map: "drivein", spawn: "east" } }],
     objects: [
-      nSprite("tree", "tree", 6 * T - 14, 4.9 * T, 20, 65, { solid: { w: 12, h: 10, dy: -5 } }),
+      nSprite("tree", "tree", 9 * T, 4.9 * T, 20, 65, { solid: { w: 12, h: 10, dy: -5 } }), // 信号の柱はスタートの白線(D140)
       nSprite("toribogi", "tori_e", 12 * T, 4.4 * T, 93, 81, { hidden: (api) => !nAtStrip(api), range: 60, interact: nTalk("toribogi") }),
       nSprite("kokeshi", "kokeshi_e", 15.4 * T, 4.4 * T, 72, 51, { hidden: (api) => !nAtStrip(api), range: 56, interact: nTalk("kokeshi") }),
       nSprite("tansu", "tansu_e", 19.4 * T, 4.4 * T, 118, 89, { hidden: (api) => !nAtStrip(api), shake: true, range: 70, interact: nTalk("tansu") }),
